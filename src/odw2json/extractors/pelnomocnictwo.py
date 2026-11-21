@@ -32,7 +32,7 @@ def find_attorneys(text: str, cfg: dict, evidence: dict[str, str], signers: set[
         candidates.append((m.start(), m.end(), m.group(1), m.group(0)))
     # The title after the name: "Pani Annie Nowak, adwokat, PESEL ...".
     masc, fem = common.first_names()
-    for m in re.finditer(rf"({NAME})(?:,\s*| )(?:{titles})(?![{LOW}])", text):
+    for m in re.finditer(rf"({NAME})(?:,\s*| |\s*\(\s*)(?:{titles})(?![{LOW}])", text):
         known = common.to_nominative(m.group(1)).split()[0] in masc | fem  # not "Kancelaria Adwokacka adw."
         if known and not any(s <= m.start(1) < e for s, e, _, _ in candidates):
             candidates.append((m.start(), m.end(), m.group(1), m.group(0)))
@@ -43,6 +43,17 @@ def find_attorneys(text: str, cfg: dict, evidence: dict[str, str], signers: set[
     for m in re.finditer(rf"({NAME})\s*[(,]\s*(?:nr\s+wpisu|wpis\s+na\s+listę)", text):
         if not any(s <= m.start(1) < e for s, e, _, _ in candidates):
             candidates.append((m.start(), m.end(), m.group(1), m.group(0)))
+    # A list of names after "udziela pełnomocnictwa:", one name on each line.
+    for block in re.finditer(r"(?i:udziela\w*|ustanawia\w*)\s+(?i:pełnomocnictw\w*|pełnomocnik\w*)\s*:[ \t]*\n", text):
+        for line in re.finditer(r"[ \t]*(?:\d+[.)]|[-–•])?[ \t]*([^\n]*)\n?", text[block.end() :]):
+            m = re.match(rf"({NAME})(?=[ \t]*(?:\(|,|$))", line.group(1))
+            if not m or not line.group(1):
+                break
+            start = block.end() + line.start(1)
+            if common.to_nominative(m.group(1)).split()[0] in masc | fem and not any(
+                s <= start < e for s, e, _, _ in candidates
+            ):
+                candidates.append((start, start + len(m.group(1)), m.group(1), line.group(1).strip()))
     if not candidates:
         # No title: use a name after "Pan" or "Pani" or after the heading of the attorney.
         label = rf"(?:Pani?|Pana|Panu|Panią|Pełnomocnik\w*:?)\s+({NAME})"
@@ -211,7 +222,8 @@ def find_signers(text: str, cfg: dict) -> list[tuple[int, str, str]]:
         dots_before = (has_dots and not line) or (has_dots and bool(re.match(r"(?:Za|W imieniu)\b", line)))
     # The prose can name the signers: "my, Jan Nowak (Prezes Zarządu)" or "przez Prokurenta Jana Nowaka".
     before = _alt(cfg.get("roles_before_name", []))
-    prose = [rf"({NAME})\s*\(\s*{role}\s*\)"] + ([rf"(?<![{LOW}])(?:{before})\s+({NAME})"] if before else [])
+    prose = [rf"({NAME})\s*\(\s*{role}\s*\)", rf"przez\s*:?\s+({NAME})\s*[–—-]\s*{role}"]
+    prose += [rf"(?<![{LOW}])(?:{before})\s+({NAME})"] if before else []
     for pattern in prose:
         for m in re.finditer(pattern, text[:limit]):
             name = common.to_nominative(m.group(1))

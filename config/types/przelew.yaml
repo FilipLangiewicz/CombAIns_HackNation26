@@ -70,6 +70,10 @@ labels:
   # These words can be a part of a title. They end it only when a number does not follow.
   stop_ambiguous: [nr, numer, id, typ, type, reference, transaction]
 
+# Accounts that many payments use (the account of the UZP for the entry fee of an appeal).
+# The OCR can damage some digits of an account. A damaged account near to one of these becomes this account.
+known_accounts: ['60101010100081362231000000']
+
 fallback:
   numer_transakcji: '\bCEN\d{10,}\b'
 

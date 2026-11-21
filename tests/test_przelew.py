@@ -112,3 +112,31 @@ def test_foreign_iban_and_polish_account():
     )
     assert box["z_rachunku"] == "DE89370400440532013000"
     assert box["na_rachunek"] == "68438223049992295262834736"
+
+
+def _transfer(text: str) -> dict:
+    from odw2json.classify import load_types
+    from odw2json.extractors import przelew
+
+    doc_type = next(t for t in load_types() if t.name == "przelew")
+    return przelew.extract(text, doc_type, {})["przelew_bankowy"]
+
+
+def test_date_in_the_next_line_is_not_the_amount():
+    box = _transfer("Potwierdzenie transakcji\nKwota\n11.09.2026\n7 500,00 PLN\n")
+    assert box["kwota"] == 7500.0
+
+
+def test_reference_with_a_slash_is_not_a_page_number():
+    box = _transfer("Kwota przelewu\n15 000,00 PLN\nNumer transakcji\n20260715/3219039\n")
+    assert box["numer_transakcji"] == "20260715/3219039"
+
+
+def test_account_with_a_dot_from_the_ocr():
+    box = _transfer("Rachunek beneficjenta\n60 1010 1010 0081.3622 3100 0000\nKwota\n100,00 PLN\n")
+    assert box["na_rachunek"] == "60101010100081362231000000"
+
+
+def test_damaged_account_of_the_uzp():
+    box = _transfer("Dane odbiorcy\nNumer rachunku\nUrza a blich Pstep17A 60 101001362231000\nKwota\n7 500,00 PLN\n")
+    assert box["na_rachunek"] == "60101010100081362231000000"

@@ -5,6 +5,7 @@ The label aliases are in the key "labels" of config/types/przelew.yaml.
 
 from __future__ import annotations
 
+import difflib
 import re
 
 from odw2json import common
@@ -14,7 +15,7 @@ LEADER = re.compile(r"\s*\.{3,}\s*")
 PRINT_LINE = re.compile(r"wydruk|wygenerowan|sporządzon|^\s*\w+,\s+\d", re.IGNORECASE)
 # A Polish account (26 digits, with or without "PL") or an IBAN of another country (two letters, two digits).
 ACCOUNT = re.compile(
-    r"(?<![\w])(?:(?:PL[\s-]*)?(?:\d{2}(?:[\s-]?\d{4}){6}|\d{26})(?!\d)"
+    r"(?<![\w])(?:(?:PL[\s-]*)?(?:\d{2}(?:[\s-]?\d{4}){6}|\d{26}|\d(?:[ .\-]?\d){25})(?![\d.]?\d)"
     r"|(?!PL)[A-Z]{2}\d{2}(?:[\s-]?[A-Z0-9]{4}){2,7}(?:[\s-]?[A-Z0-9]{1,3})?(?![\w]))"
 )
 # A fee or a balance is not the amount of the transfer.
@@ -23,7 +24,7 @@ CURRENCY = re.compile(r"\bPLN\b|(?<![\wąćęłńóśźż])zł(?![\wąćęłńó
 # A second label for the same field after a slash, for example "Tytuł / Title:".
 ALTERNATIVE = re.compile(r"^/\s*[^:/\d]{1,40}:\s*")
 PAGE_MARKER = re.compile(
-    r"(?:strona|str\.?|page)\s*\d+(?:\s*(?:z|/|of)\s*\d+)?|[-–]\s*\d+\s*[-–]|\d+\s*/\s*\d+", re.IGNORECASE
+    r"(?:strona|str\.?|page)\s*\d+(?:\s*(?:z|/|of)\s*\d+)?|[-–]\s*\d{1,3}\s*[-–]|\d{1,3}\s*/\s*\d{1,3}", re.IGNORECASE
 )
 OPEN_QUOTES, CLOSE_QUOTES = '„"«', '”"»'
 
@@ -97,6 +98,8 @@ def parse_amount(part: str) -> float | None:
     # A bare number without a decimal part or a currency is not an amount (for example a date).
     if not re.search(r"\d[,.]\d{1,2}(?!\d)|PLN|zł", part):
         return None
+    if re.fullmatch(r"\s*\d{1,4}[./-]\d{1,2}[./-]\d{1,4}\s*", part):
+        return None  # a date, for example "11.09.2026" in the next line of a table
     return common.parse_amount(re.sub(r"(?<=\d)\s*(?:PLN|zł)", "", part))
 
 
@@ -236,4 +239,18 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
     put("tytul", find_title(lines, labels, box["numer_transakcji"]))
     for role, found in find_accounts(lines, labels).items():
         put(role, found)
+    if not box["na_rachunek"]:
+        put("na_rachunek", known_account(lines, doc_type.raw.get("known_accounts", [])))
     return data
+
+
+def known_account(lines: list[str], accounts: list[str]) -> tuple[str, str] | None:
+    """Repair an account that the OCR damaged, if it is near to a known account, for example of the UZP."""
+    for line in lines:
+        found = common.digits(line)
+        if len(found) < 14:
+            continue
+        for account in accounts:
+            if difflib.SequenceMatcher(None, found, account).ratio() >= 0.75:
+                return ("PL" if re.search(r"\bPL\s*\d", line) else "") + account, line
+    return None

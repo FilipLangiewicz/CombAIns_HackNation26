@@ -65,10 +65,11 @@ extract:
     - 'sp\.\s?(?:k|j|p|komandytowa|jawna|partnerska)\.'
     - 'sp\.\s?k\.a\.'
     - 'S\.\s?A\.'
-    - 'spółka\s+(?:akcyjna|cywilna)'
+    - '(?i:spółk[aąi]\s+(?:akcyjn\w+|cywiln\w+|jawn\w+|partnersk\w+|komandytow\w+(?:-akcyjn\w+)?))'
+    - '(?i:spółk[aąi]\s+z\s+ograniczoną\s+odpowiedzialnością)'
     - 's\.\s?c\.'
   # Words that can stand before a company name but are not part of it.
-  stop_words: [Mocodawca, Mocodawcą, Mocodawcy, Za, Wykonawca, Wykonawcy, Pełnomocnictwo, Pełnomocnik, Pełnomocnicy, Konsorcjum, Lider, Partner, Dane, Firma, Zamawiający, Postępowanie, Data, PEŁNOMOCNICTWO, PROCESOWE, MOCODAWCA, PEŁNOMOCNIK, Ja, Pan, Pani]
+  stop_words: [Mocodawca, Mocodawcą, Mocodawcy, Za, Wykonawca, Wykonawcy, Pełnomocnictwo, Pełnomocnik, Pełnomocnicy, Konsorcjum, Lider, Partner, Dane, Firma, Zamawiający, Postępowanie, Data, PEŁNOMOCNICTWO, PELNOMOCNICTWO, NICTWO, PROCESOWE, MOCODAWCA, PEŁNOMOCNIK, Ja, Pan, Pani]
 
 # Validation of the fields (see src/odw2json/validate.py). A value that is not valid becomes null.
 validate:

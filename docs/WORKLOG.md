@@ -2,6 +2,24 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): repairs for the OCR path
+
+- `pelnomocnictwo`: a list of names after "udziela Pełnomocnictwo:" gives the attorneys. A title in parentheses after the name also marks an attorney.
+- `pelnomocnictwo`: the full legal forms, for example "Spółka z ograniczoną odpowiedzialnością".
+- `pelnomocnictwo`: "przez: Jan Nowak - Wiceprezes Zarządu" gives a signer also across a line break.
+- `przelew`: a date in the next line of a table is not an amount.
+- `przelew`: "20260715/3219039" is not a page number.
+- `przelew`: an account can have a dot or other separators from the OCR.
+- `przelew`: a damaged account near to a known account (`known_accounts`, the UZP account) becomes this account.
+
+| Test set | Before | After |
+|---|---|---|
+| Organizer dev and holdout (text) | 1.000 | 1.000 |
+| OCR train / val | 0.980 / 0.963 | 0.982 / 0.974 |
+| OCR val, real scans 0001-0004 | 0.935 | 0.979 |
+| OCR test, all / real scans 0005-0010 (one run) | 0.933 / 0.866 | 0.936 / 0.889 |
+| Generator 2, seeds 1, 7, 101 (one run) | no change | no change |
+
 ## 2026-11-22 (main): the headings of the parties and the signature of the attorney
 
 Generator 2 did not find the appellant in 8 of 20 appeals. Only the summary of the fields was read, not the documents. The rules below come from new probe texts.

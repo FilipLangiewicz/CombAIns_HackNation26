@@ -160,3 +160,19 @@ def test_letterhead_of_the_law_firm_is_not_a_principal():
     assert principal["data"]["krs"] == "0002947999"
     assert names(principal["podpisujacy"]) == ["Magdalena Szewczyk"]
     assert names(data["pelnomocnicy"]) == ["Natalia Majewska"]
+
+
+def test_list_of_attorneys_without_titles():
+    data = run(
+        "PEŁNOMOCNICTWO\nKalinex Logistyka Spółka z ograniczoną odpowiedzialnością z siedzibą w Wrocław, ul.\n"
+        "Leśna 58, KRS: 9998927009, NIP: 9990864252, reprezentowana przez: Szymon Jabłoń -\n"
+        "Wiceprezes Zarządu, niniejszym udziela Pełnomocnictwo:\nAleksandra Rybak\n"
+        "Krzysztof Jodłowski (radca prawny, nr wpisu PO-4973, PESEL: 69102340858)\ndo reprezentowania Mocodawcy.\n"
+    )
+    principal = data["mocodawca"][0]
+    assert principal["data"]["nazwa"] == "Kalinex Logistyka Spółka z ograniczoną odpowiedzialnością"
+    assert names(principal["podpisujacy"]) == ["Szymon Jabłoń"]
+    assert data["pelnomocnicy"] == [
+        {"imie_nazwisko": "Aleksandra Rybak", "pesel": None},
+        {"imie_nazwisko": "Krzysztof Jodłowski", "pesel": "69102340858"},
+    ]
