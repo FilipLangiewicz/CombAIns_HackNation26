@@ -21,6 +21,19 @@ F1 of the OCR path, no LLM (the text path stays at 1.0 on the organizer examples
 | first action after "wnoszę odwołanie wobec" | ce790c2 | 0.978 | 0.952 | 0.891 |
 | more repairs for the real scans | 27a2c25 | 0.979 | 0.953 | 0.916 |
 
+Final measurement on the test split (no rule was tuned on it), commit ffc53cb:
+
+| Path | Test set | F1 |
+|---|---|---|
+| text | organizer holdout cases | 1.000 |
+| text | generator 2, seeds 1, 7 and 101 | odwolanie 0.83-0.84, pelnomocnictwo 0.97-0.99, przelew 0.97-0.99 |
+| OCR | organizer holdout cases as scans | 0.989 |
+| OCR | generator 2 as scans | 0.871 |
+| OCR | real scans 0005-0010 | 0.845 |
+| OCR | all | 0.907 |
+
+The real scans give 0.916 in val and 0.845 in test. Thus a part of the repairs fits the 12 real scans of val. The weakest type is the appeal with a new layout.
+
 - Time: 12 real scans took 250 s before the page limit and 135 s after it (about 11 s for each document, 8 cores).
 - The organizer confirmed: a bank account as in the document, with the country code and without spaces.
 
