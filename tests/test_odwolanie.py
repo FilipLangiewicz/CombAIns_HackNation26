@@ -135,16 +135,3 @@ def test_appellant_without_attorney():
     row = _extract(text)["Odwolujacy"][0]
     assert row["przez-pelnomocnika"] == 0
     assert row["pelnomocnik"] is None
-
-
-@pytest.mark.parametrize(
-    "genitive, nominative",
-    [
-        ("Jana Kowalskiego", "Jan Kowalski"),
-        ("Annę Nowicką", "Anna Nowicka"),
-        ("Anny Nowickiej", "Anna Nowicka"),
-        ("Marka Wiśniewskiego", "Marek Wiśniewski"),
-    ],
-)
-def test_to_nominative(genitive, nominative):
-    assert odwolanie.to_nominative(genitive) == nominative

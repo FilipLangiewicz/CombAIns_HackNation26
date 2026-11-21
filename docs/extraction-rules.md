@@ -7,7 +7,8 @@ This file tells how the application extracts the data from a document after the 
 - Each type has one extractor in `src/odw2json/extractors/`. The words and the labels are in `config/types/<type>.yaml`, not in the code.
 - An extractor uses anchors: labels ("Kwota", "NIP"), section names ("Odwołujący:", "Zamawiający:") and titles of persons ("r. pr.", "adw.").
 - Values with a fixed form (NIP, KRS, REGON, PESEL, account number, date, amount, e-mail) come from regular expressions in `src/odw2json/common.py`.
-- Each extractor records the source text of each value (evidence). The web interface shows it next to the value.
+- Each extractor records the source text of each value (evidence), under the path of the value, for example `Odwolujacy[0].nip` or `mocodawca[1].data.krs`. The web interface shows it next to the value.
+- Each value that is not `null` has an evidence entry. A test checks this for all dev documents (`tests/test_evidence.py`). The test also checks that the source text occurs in the text of the document.
 - If a rule finds no value, the field is `null`. The application does not invent values.
 
 ## Common normalization
@@ -38,7 +39,7 @@ The code is in `extractors/przelew.py`. The labels are in the key `labels` of `p
 
 ## Power of attorney (`pelnomocnictwo`)
 
-The code is in `extractors/pelnomocnictwo.py`. The words are in the key `extract` of `pelnomocnictwo.yaml`: `titles`, `roles`, `legal_forms`, `stop_words`, `first_names_masc`, `first_names_fem`.
+The code is in `extractors/pelnomocnictwo.py`. The words are in the key `extract` of `pelnomocnictwo.yaml`: `titles`, `roles`, `legal_forms`, `stop_words`.
 
 1. **Natural person:** if the text has "niżej podpisany <Name Surname>,", the principal is a natural person (`typ: osoba_fizyczna`). `nazwa` is the text after "pod firmą" up to the address. If there is no such text, `nazwa` is the name of the person. The person is also the signer.
 2. **Companies:** if there is no natural person, each group of labelled identifiers (KRS, NIP, REGON) is one company (`typ: osoba_prawna`). A new group starts when a label repeats, after a ";", or after a gap of more than 150 characters. Groups with the same NIP (or KRS) are kept once. Thus a consortium gives more than one principal.
@@ -72,17 +73,44 @@ The code is in `extractors/odwolanie.py`. The action codes and their rules are i
     - `numer_postepowania`: the word after "nr referencyjny", "numer sprawy", "znak postępowania" and similar labels.
     - `tytul`: the text in quotes after "pn.". If there is none, the first text in quotes.
 
+## Evidence
+
+The evidence of a field is a short text from the document. It is the label with the value when a label exists, for example "NIP: 999-928-40-65".
+
+| Field | Source text |
+|---|---|
+| Identifier (`krs`, `nip`, `regon`) | The label and the number, as written. |
+| Name (`nazwa`, `imie_nazwisko`) | The name as written, with the title or the role when they stand next to it. A name in another case stays in that case, because it is the source. |
+| `przelew` fields | The line of the label and the value. For a title on more lines, the lines of the title. |
+| Account of `przelew` | The text from the keyword of the role ("Płatnik", "Beneficjent") to the account, at most 150 characters. |
+| `czynnosc_powod_id`, `czynnosc_opis` | The words that match the rule of the action, with 60 characters on each side. |
+| `czynnosc_dzien` | The text "w dniu <date>", or the first date with some text before it. |
+| `przez-pelnomocnika` | The text "reprezentowany przez …". If it is absent, the first 100 characters of the section of the appellant. |
+| `prowadzacy_postepowanie` | The role text of the party ("Lider", "Zamawiający prowadzący"). If the role is empty, the name of the party. |
+| `typ` (`pelnomocnictwo`) | For a natural person, the text "niżej podpisany <Name>". For a company, the first identifier of its group. |
+| `numer_bzp`, `numer_ted`, `numer_postepowania`, `tytul` | The text that the rule matches, as written. |
+
+The text of `przelew` is read line by line. Thus a row of dots in the source is a colon in the evidence.
+
 ## Names in the nominative
 
-The organizer wants names in the nominative ("Mateusz Szymański", not "Mateusza Szymańskiego"). The code has three implementations now:
+The organizer wants names in the nominative ("Mateusz Szymański", not "Mateusza Szymańskiego"). One function does this: `common.to_nominative(name, first_names_masc, first_names_fem)`. The two lists are optional. If they are absent, the function reads them from `config/names.yaml` (one time, with `functools.cache`).
 
-| Place | When it applies | Method |
-|---|---|---|
-| `pelnomocnictwo.nominative` | Each name of a signer or an attorney | The first name must be in `first_names_masc` or `first_names_fem`, as it is or after the removal of a case suffix ("Piotra" → "Piotr", "Katarzynie" → "Katarzyna"). The surname follows the gender ("Nowaka" → "Nowak", "Kowalskiej" → "Kowalska"). A name with an unknown first name does not change. |
-| `odwolanie.to_nominative` | Only after "reprezentowanego/-ej/-ych przez" | Endings of the surname ("-skiego" → "-ski", "-skiej" → "-ska") and of the first name, with a short list of irregular forms ("Marka" → "Marek"). |
-| `common.to_nominative` | Used by `odwolanie.to_nominative` for the surname | A list of endings for surnames. |
+The extractors call the function in these places:
 
-Open item: join the three implementations into one function in `common.py` with the name lists from the configuration.
+- `pelnomocnictwo`: for each name of a principal who is a natural person, of a signer and of an attorney.
+- `odwolanie`: only for the attorney, and only after "reprezentowanego/-ej/-ych przez".
+
+The rules of the function:
+
+1. A name with less than two words does not change.
+2. The first name gives the gender. If it is in a list, the name is nominative. Else the function removes a case suffix and tests the result in the lists. Examples: "Piotra" → "Piotr", "Marka" → "Marek", "Katarzynie" → "Katarzyna", "Annę" → "Anna".
+3. For a male first name, a surname with the ending "-iego", "-iemu" or "-im" changes to "-i" ("Kowalskiego" → "Kowalski"). If the first name had a case suffix, the suffix of the surname is removed too ("Nowaka" → "Nowak").
+4. For a female first name, the endings "-iej", "-ej" and "-ą" of the surname change to "-a" ("Nowickiej" → "Nowicka").
+5. If the first name is not in the lists, only a surname that ends in "-skiego", "-ckiego", "-zkiego", "-skiemu", "-skim" and similar changes. Also "-skiej" and "-ską" change to "-ska". The first name does not change.
+6. A name that is already nominative does not change. Thus "Jolanta Zajkowski" and "Bartosz Szymanski" stay as written, like in the expected JSON.
+
+`config/names.yaml` has about 140 male and 125 female first names in the nominative. Add a name there if the application leaves its case unchanged.
 
 ## The risk of a too close fit to the examples
 

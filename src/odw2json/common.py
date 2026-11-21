@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import functools
 import re
 from datetime import date
+from pathlib import Path
+
+import yaml
 
 MONTHS = {
     "stycznia": 1, "styczeń": 1, "styczen": 1, "lutego": 2, "luty": 2, "marca": 3, "marzec": 3,
@@ -94,16 +98,21 @@ def digits(text: str) -> str:
     return re.sub(r"\D", "", text)
 
 
-def labelled_number(text: str, label: str, length: int | tuple[int, ...]) -> str | None:
-    """Find a number after a label, for example "NIP: 123-456-32-18". Give only the digits."""
+def labelled(text: str, label: str, length: int | tuple[int, ...]) -> tuple[str, str] | None:
+    """Find a number after a label, for example "NIP: 123-456-32-18". Give the digits and the source text."""
     lengths = (length,) if isinstance(length, int) else length
     pattern = re.compile(rf"\b{label}\b\s*(?:nr|numer)?\s*[:.\-]?\s*(?:PL)?\s*([\d][\d \-]{{6,22}}\d)", re.IGNORECASE)
     for m in pattern.finditer(text):
         value = digits(m.group(1))
         for n in sorted(lengths, reverse=True):
             if len(value) >= n:
-                return value[:n]
+                return value[:n], normalize_spaces(m.group(0))
     return None
+
+
+def labelled_number(text: str, label: str, length: int | tuple[int, ...]) -> str | None:
+    found = labelled(text, label, length)
+    return found[0] if found else None
 
 
 def find_nip(text: str) -> str | None:
@@ -145,36 +154,75 @@ def strip_titles(name: str) -> str:
     return re.sub(r"\s+", " ", name).strip(" ,.;:")
 
 
-# Endings of the genitive or other cases, and the nominative form.
-SURNAME_ENDINGS = [
-    ("skiego", "ski"), ("ckiego", "cki"), ("dzkiego", "dzki"), ("skiemu", "ski"), ("ckiemu", "cki"),
-    ("skim", "ski"), ("ckim", "cki"), ("skiej", "ska"), ("ckiej", "cka"), ("dzkiej", "dzka"),
-    ("ską", "ska"), ("cką", "cka"),
-]  # fmt: skip
+NAMES_FILE = Path(__file__).resolve().parents[2] / "config" / "names.yaml"
+
+# Surname endings of the adjective type: "Kowalskiego", "Kowalskim" (masculine), "Kowalskiej", "Kowalską" (feminine).
+MASC_ADJECTIVE = re.compile(r"(?:iego|iemu|im)$")
+UNAMBIGUOUS_MASC = re.compile(r"(?<=[scz]k)(?:iego|iemu|im)$")
+UNAMBIGUOUS_FEM = re.compile(r"(?<=[scz]k)(?:iej|ą)$")
+# A case suffix of a first name and the ending of the nominative.
+MASC_SUFFIXES = (("iem", ""), ("owi", ""), ("em", ""), ("iego", "i"), ("ego", "y"), ("a", ""), ("u", ""))
+FEM_SUFFIXES = (("ą", "a"), ("ę", "a"), ("y", "a"), ("i", "a"), ("dze", "ga"), ("dze", "da"), ("cie", "ta"),
+                ("ce", "ka"), ("rze", "ra"), ("ie", "a"), ("ze", "za"))  # fmt: skip
 
 
-def to_nominative(name: str, known_names: set[str] | None = None) -> str:
-    """Convert a name from the genitive to the nominative with simple rules.
+@functools.cache
+def first_names() -> tuple[frozenset[str], frozenset[str]]:
+    """Read the male and the female first names from config/names.yaml."""
+    cfg = yaml.safe_load(NAMES_FILE.read_text(encoding="utf-8"))
+    return frozenset(cfg["first_names_masc"]), frozenset(cfg["first_names_fem"])
 
-    Use this only when the context shows that the name is not in the nominative.
+
+def _masc_first_name(token: str, names: frozenset[str]) -> str | None:
+    for suffix, nominative in MASC_SUFFIXES:
+        if token.endswith(suffix) and len(token) > len(suffix) + 2:
+            stem = token[: len(token) - len(suffix)]
+            # A stem can lose a vowel in the oblique case: Marek -> Marka.
+            for candidate in (stem + nominative, stem[:-1] + "e" + stem[-1] + nominative):
+                if candidate in names:
+                    return candidate
+    return None
+
+
+def _fem_first_name(token: str, names: frozenset[str]) -> str | None:
+    for suffix, nominative in FEM_SUFFIXES:
+        if token.endswith(suffix) and token[: len(token) - len(suffix)] + nominative in names:
+            return token[: len(token) - len(suffix)] + nominative
+    return None
+
+
+def to_nominative(
+    name: str, first_names_masc: frozenset[str] | None = None, first_names_fem: frozenset[str] | None = None
+) -> str:
+    """Change a name from another case to the nominative.
+
+    The first name gives the gender. A name that is already nominative does not change.
+    If the first name is unknown, only a surname with an unambiguous ending ("-skiego", "-ską") changes.
     """
+    if first_names_masc is None or first_names_fem is None:
+        first_names_masc, first_names_fem = first_names()
     parts = name.split()
-    out = []
-    for part in parts:
-        lower = part.lower()
-        new = part
-        for end, nom in SURNAME_ENDINGS:
-            if lower.endswith(end):
-                new = part[: len(part) - len(end)] + nom
-                break
-        else:
-            if known_names is not None and part not in known_names:
-                for end, nom in (("a", ""), ("ę", "a"), ("y", "a"), ("i", "a")):
-                    if lower.endswith(end) and part[: len(part) - len(end)] + nom in known_names:
-                        new = part[: len(part) - len(end)] + nom
-                        break
-        out.append(new)
-    return " ".join(out)
+    if len(parts) < 2:
+        return name
+    first, last = parts[0], parts[-1]
+    oblique = False
+    if first in first_names_masc or first in first_names_fem:
+        masculine = first in first_names_masc
+    elif _masc_first_name(first, first_names_masc):
+        first, masculine, oblique = _masc_first_name(first, first_names_masc), True, True
+    elif _fem_first_name(first, first_names_fem):
+        first, masculine, oblique = _fem_first_name(first, first_names_fem), False, True
+    else:
+        last = UNAMBIGUOUS_MASC.sub("i", last)
+        last = UNAMBIGUOUS_FEM.sub("a", last)
+        return " ".join([first, *parts[1:-1], last])
+    if masculine and MASC_ADJECTIVE.search(last):
+        last = MASC_ADJECTIVE.sub("i", last)
+    elif masculine and oblique:
+        last = re.sub(r"(?:kiem|owi|em|a|u)$", lambda m: "k" if m.group(0) == "kiem" else "", last)
+    elif not masculine:
+        last = re.sub(r"(?:iej|ej|ą)$", "a", last)
+    return " ".join([first, *parts[1:-1], last])
 
 
 def normalize_spaces(text: str) -> str:

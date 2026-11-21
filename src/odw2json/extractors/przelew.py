@@ -13,8 +13,10 @@ from odw2json.classify import DocType
 LEADER = re.compile(r"\s*\.{3,}\s*")
 PRINT_LINE = re.compile(r"wydruk|wygenerowan|sporządzon|^\s*\w+,\s+\d", re.IGNORECASE)
 ACCOUNT = re.compile(r"(?<![\w])(?:PL\s*)?(?:\d{2}(?:\s?\d{4}){6}|\d{26})(?!\d)")
-PAGE_MARKER = re.compile(r"(?:strona|str\.?|page)\s*\d+(?:\s*(?:z|/|of)\s*\d+)?|[-–]\s*\d+\s*[-–]|\d+\s*/\s*\d+", re.IGNORECASE)
-OPEN_QUOTES, CLOSE_QUOTES = "„\"«", "”\"»"
+PAGE_MARKER = re.compile(
+    r"(?:strona|str\.?|page)\s*\d+(?:\s*(?:z|/|of)\s*\d+)?|[-–]\s*\d+\s*[-–]|\d+\s*/\s*\d+", re.IGNORECASE
+)
+OPEN_QUOTES, CLOSE_QUOTES = '„"«', '”"»'
 
 
 def prepare_lines(text: str) -> list[str]:
@@ -100,26 +102,34 @@ def find_title(lines: list[str], labels: dict, reference: str | None) -> tuple[s
         title = re.split(f"[{CLOSE_QUOTES}]", title.lstrip(OPEN_QUOTES))[0]
     else:
         title = cut_at_label(title, labels["stop_inline"])
-    return (title.strip(), lines[i]) if title.strip() else None
+    # The source text is the lines of the title. A label alone on a line is not part of it.
+    used = len(parts) - bool(first)
+    source = lines[i : i + 1 + used] if first else lines[i + 1 : i + 1 + used]
+    return (title.strip(), " ".join(source)) if title.strip() else None
 
 
-def find_accounts(lines: list[str], labels: dict) -> dict[str, str]:
-    """Give the account of the sender and of the recipient by the nearest keyword before each account."""
+def find_accounts(lines: list[str], labels: dict) -> dict[str, tuple[str, str]]:
+    """Give the account of the sender and of the recipient, with the source text.
+
+    The keyword that stands nearest before the account gives the role.
+    """
     flat = " ".join(lines)
     patterns = {role: re.compile(labels[role][0], re.IGNORECASE) for role in ("z_rachunku", "na_rachunek")}
-    result: dict[str, str] = {}
+    result: dict[str, tuple[str, str]] = {}
     free = []
     for m in ACCOUNT.finditer(flat):
         number = common.digits(m.group(0))[-26:]
         context = flat[max(0, m.start() - 250) : m.start()]
-        nearest = {
-            role: max((k.end() for k in pattern.finditer(context)), default=-1) for role, pattern in patterns.items()
-        }
-        role = max(nearest, key=nearest.get) if max(nearest.values()) >= 0 else None
+        nearest = {role: list(pattern.finditer(context))[-1:] for role, pattern in patterns.items()}
+        hits = {role: k[0] for role, k in nearest.items() if k}
+        role = max(hits, key=lambda r: hits[r].end()) if hits else None
+        # The source text starts at the keyword when the role comes from a keyword.
+        start = m.start() - len(context) + hits[role].start() if role else m.start() - 40
+        found = (number, flat[max(start, m.end() - 150, 0) : m.end()])
         if role and role not in result:
-            result[role] = number
+            result[role] = found
         else:
-            free.append(number)
+            free.append(found)
     for role in ("z_rachunku", "na_rachunek"):
         if role not in result and free:
             result[role] = free.pop(0)
@@ -155,7 +165,6 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
         reference = (m.group(0), m.group(0)) if m else None
     put("numer_transakcji", reference)
     put("tytul", find_title(lines, labels, box["numer_transakcji"]))
-    for role, number in find_accounts(lines, labels).items():
-        box[role] = number
-        evidence[f"przelew_bankowy.{role}"] = number
+    for role, found in find_accounts(lines, labels).items():
+        put(role, found)
     return data

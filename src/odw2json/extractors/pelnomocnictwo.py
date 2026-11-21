@@ -22,82 +22,30 @@ def _alt(items: list[str]) -> str:
     return "|".join(f"(?:{i})" for i in items)
 
 
-def _snippet(text: str, start: int, end: int) -> str:
-    return common.normalize_spaces(text[max(start - 20, 0) : end + 20])
-
-
-ADJECTIVE_CASES = re.compile(r"(?:iego|iemu|im)$")
-MASC_SUFFIXES = ("iem", "owi", "em", "a", "u")
-FEM_SUFFIXES = (("ą", "a"), ("ę", "a"), ("y", "a"), ("i", "a"), ("dze", "ga"), ("dze", "da"), ("cie", "ta"),
-                ("ce", "ka"), ("rze", "ra"), ("ie", "a"), ("ze", "za"))  # fmt: skip
-
-
-def _masc_first_names(token: str, names: set[str]) -> str | None:
-    for suffix in MASC_SUFFIXES:
-        if token.endswith(suffix) and len(token) > len(suffix) + 2:
-            stem = token[: -len(suffix)]
-            # A stem can lose a vowel in the oblique case: Marek -> Marka, Paweł -> Pawła.
-            for candidate in (stem, stem[:-1] + "e" + stem[-1]):
-                if candidate in names:
-                    return candidate
-    return None
-
-
-def _fem_first_name(token: str, names: set[str]) -> str | None:
-    for suffix, nominative in FEM_SUFFIXES:
-        if token.endswith(suffix) and token[: -len(suffix)] + nominative in names:
-            return token[: -len(suffix)] + nominative
-    return None
-
-
-def nominative(name: str, cfg: dict) -> str:
-    """Change a name from another case to the nominative. A name that is already nominative does not change."""
-    parts = name.split()
-    if len(parts) != 2:
-        return name
-    first, last = parts
-    masc, fem = set(cfg.get("first_names_masc", [])), set(cfg.get("first_names_fem", []))
-    if first in masc or first in fem:
-        is_masc, oblique = first in masc, False
-    elif _masc_first_names(first, masc):
-        first, is_masc, oblique = _masc_first_names(first, masc), True, True
-    elif _fem_first_name(first, fem):
-        first, is_masc, oblique = _fem_first_name(first, fem), False, True
-    else:
-        return name
-    if is_masc and ADJECTIVE_CASES.search(last):
-        last = ADJECTIVE_CASES.sub("i", last)
-    elif is_masc and oblique:
-        last = re.sub(r"(?:kiem|owi|em|a|u)$", lambda m: "k" if m.group(0) == "kiem" else "", last)
-    elif not is_masc:
-        last = re.sub(r"(?:iej|ej|ą)$", "a", last)
-    return f"{first} {last}"
-
-
 def find_attorneys(text: str, cfg: dict, evidence: dict[str, str]) -> list[dict]:
     titles = _alt(cfg["titles"])
     pattern = re.compile(rf"(?<![{LOW}])(?:{titles})\s+({NAME})")
     matches = list(pattern.finditer(text))
     found: dict[str, dict] = {}
     for i, m in enumerate(matches):
-        name = nominative(common.strip_titles(m.group(1)), cfg)
+        name = common.to_nominative(common.strip_titles(m.group(1)))
         limit = matches[i + 1].start() if i + 1 < len(matches) else len(text)
         tail = text[m.end() : min(limit, m.end() + 90)]
         pesel = re.search(r"PESEL\s*:?\s*(\d{11})\b", tail)
         item = found.setdefault(name, {"imie_nazwisko": name, "pesel": None, "src": m.group(0)})
         if pesel and not item["pesel"]:
-            item["pesel"] = pesel.group(1)
+            item["pesel"], item["pesel_src"] = pesel.group(1), pesel.group(0)
     if not found:
         # No title: use a name after "Pan" or "Pani" or after the heading of the attorney.
         label = rf"(?:Pani?|Pana|Panu|Panią|Pełnomocnik\w*:?)\s+({NAME})"
         for m in re.finditer(label, text):
-            name = nominative(m.group(1), cfg)
+            name = common.to_nominative(m.group(1))
             found.setdefault(name, {"imie_nazwisko": name, "pesel": None, "src": m.group(0)})
     out = []
     for i, item in enumerate(found.values()):
         evidence[f"pelnomocnicy[{i}].imie_nazwisko"] = common.normalize_spaces(item.pop("src"))
         if item["pesel"]:
-            evidence[f"pelnomocnicy[{i}].pesel"] = "PESEL " + item["pesel"]
+            evidence[f"pelnomocnicy[{i}].pesel"] = item.pop("pesel_src")
         out.append(item)
     return out
 
@@ -112,9 +60,10 @@ def identifier_clusters(text: str) -> list[dict]:
         value = common.digits(m.group(2))
         gap = text[last_end : m.start()]
         if current is None or label in current["ids"] or ";" in gap or len(gap) > 150:
-            current = {"start": m.start(), "ids": {}}
+            current = {"start": m.start(), "ids": {}, "src": {}}
             clusters.append(current)
         current["ids"][label] = value
+        current["src"][label] = common.normalize_spaces(m.group(0))
         current["end"] = m.end()
         last_end = m.end()
     seen, unique = set(), []
@@ -148,19 +97,25 @@ def find_company_name(text: str, before: int, cfg: dict) -> tuple[str, int] | No
     return full, last.end()
 
 
-def find_person_principal(text: str, cfg: dict) -> dict | None:
+def find_person_principal(text: str) -> dict | None:
     """A natural person who runs a business: "Ja, niżej podpisany Jan Kowalski, ... pod firmą X, ul. ..."."""
     m = re.search(rf"niżej\s+podpisan\w*\s+({NAME})\s*,", text)
     if not m:
         return None
     firm = re.search(r"pod\s+firmą\s+(.+?),\s*(?:ul\.|al\.|pl\.|os\.|\d)", text[m.end() :], re.DOTALL)
-    ids = {i.group(1).upper(): common.digits(i.group(2)) for i in IDENT.finditer(text)}
+    ids, id_src = {}, {}
+    for i in IDENT.finditer(text):
+        label = i.group(1).upper()
+        ids[label] = common.digits(i.group(2))
+        id_src[label] = common.normalize_spaces(i.group(0))
     return {
-        "name": nominative(m.group(1), cfg),
+        "name": common.to_nominative(m.group(1)),
         "firm": common.normalize_spaces(firm.group(1)) if firm else None,
         "nip": ids.get("NIP"),
         "krs": ids.get("KRS"),
-        "src": _snippet(text, m.start(), m.end()),
+        "src": common.normalize_spaces(m.group(0)),
+        "firm_src": common.normalize_spaces("pod firmą " + firm.group(1)) if firm else None,
+        "id_src": id_src,
         "pos": m.start(),
     }
 
@@ -191,7 +146,7 @@ def find_signers(text: str, cfg: dict) -> list[tuple[int, str, str]]:
         m = same or split or alone
         if m and valid(m.group(1)):
             found.append(
-                (pos, nominative(m.group(1), cfg), common.normalize_spaces(line + " " + (nxt if split else "")))
+                (pos, common.to_nominative(m.group(1)), common.normalize_spaces(line + " " + (nxt if split else "")))
             )
         # Keep the flag over the line "Za <company>" that can stand between the dots and the name.
         dots_before = (has_dots and not line) or (has_dots and bool(re.match(r"(?:Za|W imieniu)\b", line)))
@@ -217,7 +172,7 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
     text = common.despace_caps(text)
 
     principals: list[dict] = []
-    person = find_person_principal(text, cfg)
+    person = find_person_principal(text)
     if person:
         principals.append(
             {
@@ -225,7 +180,8 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
                          "nip": person["nip"], "typ": "osoba_fizyczna"},
                 "podpisujacy": [{"imie_nazwisko": person["name"]}],
                 "pos": person["pos"],
-                "src": person["src"],
+                "ev": {"imie_nazwisko": person["src"], "nazwa": person["firm_src"] or person["src"],
+                       "krs": person["id_src"].get("KRS"), "nip": person["id_src"].get("NIP"), "typ": person["src"]},
             }
         )  # fmt: skip
     else:
@@ -240,7 +196,8 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
                              "typ": "osoba_prawna"},
                     "podpisujacy": [],
                     "pos": cluster["start"],
-                    "src": _snippet(text, cluster["start"], cluster["end"]),
+                    "ev": {"krs": cluster["src"].get("KRS"), "nip": cluster["src"].get("NIP"),
+                           "nazwa": company[0] if company else None, "typ": next(iter(cluster["src"].values()))},
                 }
             )  # fmt: skip
         assign_signers(text, principals, find_signers(text, cfg))
@@ -248,7 +205,7 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
     for i, p in enumerate(principals):
         for key, value in p["data"].items():
             if value is not None:
-                evidence[f"mocodawca[{i}].data.{key}"] = p["src"]
+                evidence[f"mocodawca[{i}].data.{key}"] = p["ev"][key]
         for j, s in enumerate(p["podpisujacy"]):
             evidence[f"mocodawca[{i}].podpisujacy[{j}].imie_nazwisko"] = s.pop("src", "")
         data["mocodawca"].append({"data": p["data"], "podpisujacy": p["podpisujacy"]})
