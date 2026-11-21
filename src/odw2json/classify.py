@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import os
 import re
 from dataclasses import dataclass, field
 from functools import cache
@@ -54,7 +55,9 @@ def _rules(items: list[dict]) -> list[Rule]:
 
 
 @cache
-def load_types(config_dir: Path = CONFIG_DIR) -> list[DocType]:
+def load_types(config_dir: Path | None = None) -> list[DocType]:
+    """Read all types. The environment variable ODW2JSON_CONFIG_DIR can give another folder."""
+    config_dir = Path(config_dir or os.environ.get("ODW2JSON_CONFIG_DIR") or CONFIG_DIR)
     types = []
     for path in sorted(config_dir.glob("*.yaml")):
         cfg = yaml.safe_load(path.read_text(encoding="utf-8"))
@@ -83,11 +86,11 @@ class Classification:
     hits: dict[str, list[str]]
 
 
-def classify(text: str) -> Classification:
+def classify(text: str, types: list[DocType] | None = None) -> Classification:
     """Give the type with the highest score. If no type has its minimum score, give None."""
     text = despace_caps(text)
     scores, hits, best = {}, {}, None
-    for t in load_types():
+    for t in types if types is not None else load_types():
         s, h = t.score(text[: t.head_chars], text)
         scores[t.name], hits[t.name] = s, h
         if s >= t.min_score and (best is None or s > scores[best.name]):
