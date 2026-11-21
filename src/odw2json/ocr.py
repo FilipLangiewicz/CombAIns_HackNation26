@@ -225,10 +225,32 @@ def repair(text: str) -> str:
         return same_case(known, token) if known else token
 
     text = re.sub(r"[^\W\d_]{3,}", fix, text)
+    text = re.sub(r"[^\W\d_]{4,}(?=\s*:)", fix_keyword, text)  # only a label: a word before a colon
+    # Words that the OCR joins: "zsiedzibą", "wBiałystok", "Serwisspółka".
+    text = re.sub(r"\b([zw])(siedzibą|[A-ZŁŚŻŹĆ][a-ząćęłńóśźż]+)", r"\1 \2", text)
+    text = re.sub(r"(?<=[a-ząćęłńóśźż])(spółk[aąi]|sp\.)(?=\s)", r" \1", text)
     # Typical letter errors of the OCR: a zero in "sp. z o.o.", a capital I for a small l inside a word.
     text = re.sub(r"\bsp\.\s?[zZ]\s?[oO0]\.\s?[oO0]\.", "sp. z o.o.", text)
     text = re.sub(r"(?<=[^\W\d_])I(?=[a-ząćęłńóśźż])", "l", text)
     return repair_emails(text)
+
+
+# Label words of the documents. A word with one wrong letter becomes the label word, for example "Tytut" becomes "Tytuł".
+KEYWORDS = [
+    "Tytuł", "Tytułem", "Kwota", "Kwoty", "Rachunek", "Rachunku", "Odbiorca", "Odbiorcy", "Nadawca", "Nadawcy",
+    "Odwołujący", "Odwołującego", "Zamawiający", "Zamawiającego", "Pełnomocnik", "Pełnomocnika", "Pełnomocnicy",
+    "Mocodawca", "Mocodawcy", "Pełnomocnictwo", "Odwołanie", "Operacji", "Transakcji", "Dotyczy", "Zarzut", "Opis",
+]  # fmt: skip
+
+
+def fix_keyword(m: re.Match) -> str:
+    token = m.group(0)
+    low = fold(token).lower()
+    for word in KEYWORDS:
+        target = fold(word).lower()
+        if low != target and len(low) == len(target) and sum(a != b for a, b in zip(low, target, strict=True)) == 1:
+            return same_case(word, token)
+    return token
 
 
 TOP_DOMAINS = {"pl", "com", "eu", "org", "net", "info", "biz", "gov", "edu", "example"}

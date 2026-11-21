@@ -14,7 +14,7 @@ from odw2json import common
 from odw2json.classify import DocType
 
 I = re.IGNORECASE
-STREET = r"(?:ul\.|ulica|al\.|aleja|aleje|pl\.|plac|os\.|osiedle)\s"
+STREET = r"(?:ul\.|ulica|al\.|aleja|aleje|pl\.|plac|os\.|osiedle)(?:\s|(?=[A-ZŁŚŻŹĆ]))"  # the OCR can lose the space after "ul."
 GAP = r"(?:\s*\([^()]{0,160}\)|[^:\d,;.()]{0,40}?)"
 SECTION_RE = re.compile(
     rf"(?<![\w(])(?<!ełnomocnik )(?:(?P<odw>Odwołując\w*|Wykonawc\w+\s*\(\s*Odwołując\w*\s*\)|Wykonawc\w+\s+wnosząc\w+\s+odwołanie"
@@ -129,6 +129,11 @@ def split_entities(section: str) -> list[dict]:
         mails = list(EMAIL_TOKEN_RE.finditer(raw))
         if mails:
             raw = raw[mails[-1].end() :]
+        # A number "2)" starts the next entity. A role line before it ("- prowadzący postępowanie")
+        # belongs to the entity above, so it is not a part of this name.
+        numbered = list(re.finditer(r"(?:^|\s)\d+\)\s*", raw))
+        if numbered and ":" not in raw[numbered[-1].end() :]:
+            raw = raw[numbered[-1].end() :]
         # A role before a colon ("1) Zamawiający – Lider:") belongs to this entity.
         label_role = " ".join(t.group(0) for t in ROLE_TAG_RE.finditer(raw.rpartition(":")[0]))
         raw = ROLE_TAG_RE.sub(" ", raw)
