@@ -22,12 +22,17 @@ class Result:
     text: str = ""
 
 
-def process_pdf(path: Path) -> Result:
-    doc = read_pdf(path)
-    found = classify(doc.text)
-    result = Result(Path(path), None, {}, scores=found.scores, ocr_pages=doc.ocr_pages, ocr_missing=doc.ocr_missing)
-    result.text = doc.text
+def process_text(text: str, path: Path = Path("text")) -> Result:
+    found = classify(text)
+    result = Result(Path(path), None, {}, scores=found.scores, text=text)
     if found.doc_type is not None:
         result.doc_type = found.doc_type.name
-        result.data, result.evidence = extract(doc.text, found.doc_type)
+        result.data, result.evidence = extract(text, found.doc_type)
+    return result
+
+
+def process_pdf(path: Path) -> Result:
+    doc = read_pdf(path)
+    result = process_text(doc.text, path)
+    result.ocr_pages, result.ocr_missing = doc.ocr_pages, doc.ocr_missing
     return result
