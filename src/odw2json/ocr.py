@@ -15,6 +15,7 @@ import unicodedata
 from functools import cache
 from pathlib import Path
 
+import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -22,6 +23,8 @@ CACHE_DIR = Path(os.environ.get("ODW2JSON_OCR_CACHE", ROOT / "data" / "cache" / 
 # On the 30 real scans, the default model (PP-OCRv6) found more values than the model for Latin scripts.
 LANG = os.environ.get("ODW2JSON_OCR_LANG", "default")
 DPI = 200
+# Change this number when the OCR steps change, so that the cache gives no old results.
+OCR_VERSION = 5
 
 
 def available() -> bool:
@@ -102,7 +105,6 @@ def skew_angle(image: Image.Image) -> float:
 
     The rows of text give the sharpest profile of dark pixels when the page is straight.
     """
-    import numpy as np
 
     small = image.convert("L")
     small = small.resize((small.width // 4, small.height // 4))
@@ -154,32 +156,38 @@ def ocr_boxes(image: Image.Image) -> list[list]:
     """The text boxes of an image as [x0, y0, x1, y1, text], with a cache on the disk."""
     buffer = io.BytesIO()
     image.convert("RGB").save(buffer, format="PNG")
-    key = hashlib.sha1(buffer.getvalue() + f"{LANG}{DESKEW}{MAX_PART_WIDTH}".encode()).hexdigest()
+    key = hashlib.sha1(buffer.getvalue() + f"{OCR_VERSION}{LANG}{DESKEW}{MAX_PART_WIDTH}".encode()).hexdigest()
     cached = CACHE_DIR / f"{key}.json"
     if cached.exists():
         return json.loads(cached.read_text(encoding="utf-8"))
-    import numpy as np
 
     if DESKEW:
         image = deskew(image)
     rgb = np.array(image.convert("RGB"))
     gray = np.array(image.convert("L"))
     detected = engine()(rgb, use_det=True, use_cls=False, use_rec=False)
-    boxes = []
+    regions = []
     for box in detected.boxes if detected.boxes is not None else []:
         xs, ys = [p[0] for p in box], [p[1] for p in box]
-        x0, y0, x1, y1 = max(0, round(min(xs))), max(0, round(min(ys))), round(max(xs)), round(max(ys))
-        cuts = split_points(gray[y0:y1, x0:x1])
-        parts = []
-        for a, b in itertools.pairwise(cuts):
-            result = engine()(rgb[y0:y1, x0 + a : x0 + b], use_det=False, use_cls=False, use_rec=True)
-            parts.append("".join(result.txts or []))
-        text = NOT_LATIN.sub("", " ".join(p for p in parts if p)).strip()
+        regions.append((max(0, round(min(xs))), max(0, round(min(ys))), round(max(xs)), round(max(ys))))
+    boxes = []
+    for region in regions:
+        text = recognize(rgb, gray, region)
         if text:
-            boxes.append([x0, y0, x1, y1, text])
+            boxes.append([*region, text])
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     cached.write_text(json.dumps(boxes, ensure_ascii=False), encoding="utf-8")
     return boxes
+
+
+def recognize(rgb, gray, box: tuple[int, int, int, int]) -> str:
+    x0, y0, x1, y1 = box
+    cuts = split_points(gray[y0:y1, x0:x1])
+    parts = []
+    for a, b in itertools.pairwise(cuts):
+        result = engine()(rgb[y0:y1, x0 + a : x0 + b], use_det=False, use_cls=False, use_rec=True)
+        parts.append("".join(result.txts or []))
+    return NOT_LATIN.sub("", " ".join(p for p in parts if p)).strip()
 
 
 def ocr_image(image: Image.Image) -> str:

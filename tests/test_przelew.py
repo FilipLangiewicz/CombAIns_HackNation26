@@ -14,8 +14,8 @@ def test_label_and_value_on_separate_lines():
         "PL68438223049992295262834736\nKwota operacji\n1 200,50 PLN\nData transakcji\n2026-03-21\n"
         "Opis\nopłata skarbowa dla Jan Nowak w\npostępowaniu CEN2604016344389\nNr ref.\nCEN2604016344389\nZREALIZOWANO"
     )
-    assert box["z_rachunku"] == "05470680287581539721455024"
-    assert box["na_rachunek"] == "68438223049992295262834736"
+    assert box["z_rachunku"] == "PL05470680287581539721455024"
+    assert box["na_rachunek"] == "PL68438223049992295262834736"
     assert box["kwota"] == 1200.5
     assert box["data_operacji"] == "2026-03-21"
     assert box["tytul"] == "opłata skarbowa dla Jan Nowak w postępowaniu CEN2604016344389"
@@ -32,7 +32,7 @@ def test_dotted_leaders_and_print_date():
     assert box["kwota"] == 34.0
     assert box["data_operacji"] == "2026-03-28"
     assert box["tytul"] == "opłata skarbowa CEN2604095639258"
-    assert box["z_rachunku"].startswith("93")
+    assert box["z_rachunku"].startswith("PL93")
 
 
 def test_letter_with_quoted_title():
@@ -45,7 +45,7 @@ def test_letter_with_quoted_title():
     )
     assert box["data_operacji"] == "2026-04-26"
     assert box["kwota"] == 100.0
-    assert box["na_rachunek"] == "98259602737060888831984936"
+    assert box["na_rachunek"] == "PL98259602737060888831984936"
     assert box["tytul"] == "opłata skarbowa dla X w przetargu DI.578.2026 CEN2605113961811"
     assert box["numer_transakcji"] == "CEN2605113961811"
 
@@ -66,7 +66,7 @@ def test_amount_forms_and_date_with_time():
 def test_account_labels_with_konto():
     box = run("Konto nadawcy: 05 4706 8028 7581 5397 2145 5024\nKonto odbiorcy: PL68438223049992295262834736")
     assert box["z_rachunku"] == "05470680287581539721455024"
-    assert box["na_rachunek"] == "68438223049992295262834736"
+    assert box["na_rachunek"] == "PL68438223049992295262834736"
 
 
 def test_title_wraps_onto_line_that_starts_with_a_label_word():
@@ -83,7 +83,7 @@ def test_joined_lines_and_page_marker():
         "Rachunek odbiorcy PL68 4382 2304 9992\n1/2\n2952 6283 4736"
     )
     assert box["tytul"] == "opłata skarbowa w przetargu ZP.1.2026 CEN2604016344389"
-    assert box["na_rachunek"] == "68438223049992295262834736"
+    assert box["na_rachunek"] == "PL68438223049992295262834736"
 
 
 def test_table_with_labels_first_and_english_labels():
@@ -91,8 +91,8 @@ def test_table_with_labels_first_and_english_labels():
         "Transfer details\nDebit account\nCredit account\nAmount\nExecution date\nPayment details\n"
         "PL50-9149-2777-3285-0564-7953-8535\nPL84-8710-6501-1666-0434-6461-5387\n50,00 PLN\n04/09/2026\nopłata skarbowa OI/11/2026"
     )
-    assert box["z_rachunku"] == "50914927773285056479538535"
-    assert box["na_rachunek"] == "84871065011666043464615387"
+    assert box["z_rachunku"] == "PL50914927773285056479538535"
+    assert box["na_rachunek"] == "PL84871065011666043464615387"
     assert box["kwota"] == 50.0 and box["data_operacji"] == "2026-09-04"
     assert box["tytul"] == "opłata skarbowa OI/11/2026"
 

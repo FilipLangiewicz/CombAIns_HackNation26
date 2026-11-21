@@ -169,7 +169,8 @@ def find_accounts(lines: list[str], labels: dict) -> dict[str, tuple[str, str]]:
     result: dict[str, tuple[str, str]] = {}
     free = []
     for m in ACCOUNT.finditer(flat):
-        number = common.digits(m.group(0))[-26:]
+        # The organizer wants the number as the document gives it: with "PL" if the document has it.
+        number = ("PL" if m.group(0).lstrip().upper().startswith("PL") else "") + common.digits(m.group(0))[-26:]
         context = flat[max(0, m.start() - 250) : m.start()]
         nearest = {role: list(pattern.finditer(context))[-1:] for role, pattern in patterns.items()}
         hits = {role: k[0] for role, k in nearest.items() if k}

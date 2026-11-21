@@ -58,7 +58,14 @@ def is_number(v) -> bool:
     return isinstance(v, (int, float)) and not isinstance(v, bool)
 
 
+ACCOUNT_FIELDS = {"przelew_bankowy.z_rachunku", "przelew_bankowy.na_rachunek"}
+
+
 def values_agree(ref, pred, path: str) -> bool:
+    # Some example files have an account without "PL" although the document has it. The organizer
+    # told that this is an error of the examples (Discord, 2026-11-21). Thus the prefix is not compared.
+    if path in ACCOUNT_FIELDS and isinstance(ref, str) and isinstance(pred, str):
+        return ref.removeprefix("PL") == pred.removeprefix("PL")
     if is_number(ref) and is_number(pred):
         return abs(ref - pred) < 1e-9
     if path in LONG_FIELDS and isinstance(ref, str) and isinstance(pred, str):

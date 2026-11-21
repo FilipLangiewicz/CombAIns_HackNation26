@@ -101,6 +101,16 @@ The LLM and the test machine:
 - The test machine is a usual laptop with internet. There is no time limit.
 - If the repository is private, give access to these GitHub accounts: `DominikOlczak`, `MateuSzSz-Sz`, `rkrol-dev`.
 
+## Answers of the organizer (Discord, 2026-11-21, evening)
+
+- A bank account must be written as the document gives it. An example JSON without "PL" for a document with "PL" is an error of the examples. The evaluation set does not have this error. The application writes "PL" and 26 digits without spaces if the document has "PL".
+- The name of a company must be written as the document gives it, also if it differs from CEIDG.
+- A document of an unknown type gives a JSON file with only `{}`. The JSON file has the name of the PDF file, for example `potwierdzenie_przelewu.json`.
+- The evaluation uses documents with a text layer and scans.
+- A new document type must be possible with a configuration file only.
+- A small NER model (not an LLM) that runs locally is allowed.
+- The number of documents and the time limit are not known yet. One team mentioned 150 documents in 45 minutes.
+
 ## FAQ of the organizer (version 1.0)
 
 These points of the FAQ add to the information above:
