@@ -33,6 +33,10 @@ def find_attorneys(text: str, cfg: dict, evidence: dict[str, str]) -> list[dict]
     # A form: the name on one line and the profession on the next line.
     for m in re.finditer(rf"({NAME})[ \t]*\n[ \t]*(?:Zawód|Tytuł zawodowy)\s*:", text):
         candidates.append((m.start(), m.end(), m.group(1), m.group(0)))
+    # Only an attorney has a number in the register of the bar. This rule helps when the OCR loses the title.
+    for m in re.finditer(rf"({NAME})\s*[(,]\s*(?:nr\s+wpisu|wpis\s+na\s+listę)", text):
+        if not any(s <= m.start(1) < e for s, e, _, _ in candidates):
+            candidates.append((m.start(), m.end(), m.group(1), m.group(0)))
     if not candidates:
         # No title: use a name after "Pan" or "Pani" or after the heading of the attorney.
         label = rf"(?:Pani?|Pana|Panu|Panią|Pełnomocnik\w*:?)\s+({NAME})"

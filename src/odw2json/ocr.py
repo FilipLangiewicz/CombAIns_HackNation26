@@ -58,19 +58,83 @@ def boxes_to_lines(boxes: list[list]) -> str:
                 last.append(item)
                 continue
         lines.append([item])
-    return "\n".join("  ".join(i[4] for i in sorted(line, key=lambda i: i[0])) for line in lines)
+    width = max((b[2] for b in boxes), default=1)
+    rows = [segments(sorted(line, key=lambda i: i[0]), width) for line in lines]
+    out: list[str] = []
+    i = 0
+    while i < len(rows):
+        # Two or more rows with two parts at the same place form two columns, for example two signature blocks.
+        # The text layer of a PDF gives the left column first. The OCR text does the same.
+        j = i
+        while j < len(rows) and len(rows[j]) == 2 and abs(rows[j][1][0][0] - rows[i][1][0][0]) < COLUMN_ALIGN * width:
+            j += 1
+        if COLUMNS and j - i >= 2:
+            out += [text_of(r[0]) for r in rows[i:j]] + [text_of(r[1]) for r in rows[i:j]]
+            i = j
+        else:
+            out.append("  ".join(text_of(s) for s in rows[i]))
+            i += 1
+    return "\n".join(out)
+
+
+COLUMNS = os.environ.get("ODW2JSON_OCR_COLUMNS", "1") == "1"
+COLUMN_GAP = 0.05  # a gap wider than this part of the page width splits a row into parts
+COLUMN_ALIGN = 0.06
+
+
+def segments(line: list[list], width: float) -> list[list[list]]:
+    parts = [[line[0]]]
+    for box in line[1:]:
+        if box[0] - parts[-1][-1][2] > COLUMN_GAP * width:
+            parts.append([box])
+        else:
+            parts[-1].append(box)
+    return parts
+
+
+def text_of(part: list[list]) -> str:
+    return "  ".join(b[4] for b in part)
+
+
+def skew_angle(image: Image.Image) -> float:
+    """Find the rotation of a scan in degrees with the projection profile.
+
+    The rows of text give the sharpest profile of dark pixels when the page is straight.
+    """
+    import numpy as np
+
+    small = image.convert("L")
+    small = small.resize((small.width // 4, small.height // 4))
+    best, best_score = 0.0, -1.0
+    for angle in np.arange(-3.0, 3.01, 0.25):
+        rotated = np.asarray(small.rotate(float(angle), fillcolor=255), dtype=np.float32)
+        profile = (rotated < 128).sum(axis=1).astype(np.float32)
+        score = float(np.square(np.diff(profile)).sum())
+        if score > best_score:
+            best, best_score = float(angle), score
+    return best
+
+
+def deskew(image: Image.Image) -> Image.Image:
+    angle = skew_angle(image)
+    return image if angle == 0 else image.rotate(angle, resample=Image.BICUBIC, fillcolor="white")
+
+
+DESKEW = os.environ.get("ODW2JSON_OCR_DESKEW", "1") == "1"
 
 
 def ocr_boxes(image: Image.Image) -> list[list]:
     """The text boxes of an image as [x0, y0, x1, y1, text], with a cache on the disk."""
     buffer = io.BytesIO()
     image.convert("RGB").save(buffer, format="PNG")
-    key = hashlib.sha1(buffer.getvalue() + LANG.encode()).hexdigest()
+    key = hashlib.sha1(buffer.getvalue() + f"{LANG}{DESKEW}".encode()).hexdigest()
     cached = CACHE_DIR / f"{key}.json"
     if cached.exists():
         return json.loads(cached.read_text(encoding="utf-8"))
     import numpy as np
 
+    if DESKEW:
+        image = deskew(image)
     result = engine()(np.array(image.convert("RGB")))
     boxes = []
     for box, text in zip(result.boxes if result.txts else [], result.txts or [], strict=True):
