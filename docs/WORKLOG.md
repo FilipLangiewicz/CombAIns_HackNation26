@@ -4,6 +4,10 @@ Add new entries at the top. Each entry has the date, the branch and the changes.
 
 ## 2026-11-21 (rule-pipeline)
 
+- Kaggle limits, measured: 5 CPU sessions at the same time for each account ("Maximum batch CPU session count of 5 reached"). With three accounts, 15 CPU sessions of 4 cores run at the same time.
+- The GPU gave no speed for RapidOCR: onnxruntime-gpu found no CUDA device, so the OCR ran on the CPU. The OCR jobs use the CPU only.
+- `jobs/new_ocr_jobs.py` makes the job folders for all accounts from `jobs/ocr_run_template.py`.
+
 - Make the rules of the three types more general with the errors of `odw2json.synth` (seeds 1 and 2).
 - Add `odw2json.synth2`: a second generator, written without knowledge of the rules and of the first generator. It is the final test. Do not tune the rules on it.
 - Result after the work (F1, 20 documents for each type, no LLM):
