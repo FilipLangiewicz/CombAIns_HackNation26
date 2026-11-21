@@ -4,6 +4,10 @@ Add new entries at the top. Each entry has the date, the branch and the changes.
 
 ## 2026-11-21 (rule-pipeline)
 
+- Add `odw2json.synth`: a generator of new layouts. It was written without knowledge of the rules, so it measures the fit to the examples.
+- First result on new layouts (20 documents for each type, seed 1, commit 62dd835): przelew 0.62, pelnomocnictwo 0.88, odwolanie 0.70. Three of 20 negative documents ("Odpowiedź na odwołanie") were classified as odwolanie.
+- Conclusion: the rules fit the layouts of the examples too closely. The next work makes the rules more general.
+
 - Add the pipeline: text from the PDF, the classifier from `config/types/*.yaml`, one extractor for each type.
 - Add the F1 evaluation with the rules of the organizer, and a fixed split in `config/split.json` (45 dev cases, 15 holdout cases).
 - Add the robustness test `odw2json.perturb`.
