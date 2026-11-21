@@ -17,6 +17,7 @@ from __future__ import annotations
 import io
 import random
 from dataclasses import dataclass, field
+from functools import cache
 from pathlib import Path
 
 import numpy as np
@@ -48,7 +49,7 @@ def real_scan_split(pdf: Path) -> str:
     return "val" if int(pdf.parent.name) <= 4 else "test"
 
 
-def manifest(train_variants: int = 2) -> list[Item]:
+def manifest(train_variants: int = 3) -> list[Item]:
     from odw2json import synth, synth2
 
     items: list[Item] = []
@@ -62,7 +63,7 @@ def manifest(train_variants: int = 2) -> list[Item]:
         split = {"dev": "train", "holdout": "test", "negatywne": "val"}[group]
         variants = train_variants if split == "train" else 1
         add(str(pdf.relative_to(DATA)), split, f"organizer-{group}", gold_for(pdf), variants, pdf=pdf)
-    for split, module, seed, n in (("train", synth, 1, 20), ("val", synth, 3, 10), ("test", synth2, 101, 20)):
+    for split, module, seed, n in (("train", synth, 1, 40), ("val", synth, 3, 20), ("test", synth2, 101, 30)):
         for name, text, gold in module.generate(n, seed):
             add(
                 f"{module.__name__.split('.')[-1]}-{seed}/{name}",
@@ -82,11 +83,16 @@ def manifest(train_variants: int = 2) -> list[Item]:
 # --- rendering -----------------------------------------------------------------
 
 
+# Fonts with the Polish letters. Other fonts can show empty boxes instead of letters.
+FONT_NAMES = ("DejaVuSans.ttf", "DejaVuSerif.ttf", "DejaVuSansMono.ttf", "LiberationSans-Regular.ttf",
+              "LiberationSerif-Regular.ttf", "LiberationMono-Regular.ttf", "Ubuntu-R.ttf", "FreeSans.ttf",
+              "FreeSerif.ttf", "NotoSans-Regular.ttf", "NotoSerif-Regular.ttf")  # fmt: skip
+
+
+@cache
 def fonts() -> list[Path]:
-    found = []
-    for folder in FONT_DIRS:
-        found += [p for p in folder.rglob("*.ttf") if "Bold" not in p.name and "Oblique" not in p.name]
-    return sorted(found)[:12] or [None]
+    found = {p.name: p for folder in FONT_DIRS if folder.exists() for p in folder.rglob("*.ttf")}
+    return [found[n] for n in FONT_NAMES if n in found] or [None]
 
 
 def render_pdf(pdf: Path) -> list[Image.Image]:
@@ -172,15 +178,16 @@ def ocr_shard(items: list[Item], out: Path) -> None:
     import json
     import time
 
-    from odw2json.ocr import ocr_image
+    from odw2json.ocr import boxes_to_lines, ocr_boxes
 
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("a", encoding="utf-8") as f:
         for n, item in enumerate(items, 1):
             start = time.time()
-            pages = [ocr_image(p) for p in page_images(item)]
+            boxes = [ocr_boxes(p) for p in page_images(item)]
             row = {"id": item.id, "split": item.split, "source": item.source, "level": item.level,
-                   "gold": item.gold, "pages": pages, "seconds": round(time.time() - start, 2)}  # fmt: skip
+                   "gold": item.gold, "pages": [boxes_to_lines(b) for b in boxes], "boxes": boxes,
+                   "seconds": round(time.time() - start, 2)}  # fmt: skip
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
             f.flush()
             print(f"{n}/{len(items)} {item.id} {row['seconds']} s", flush=True)
@@ -192,7 +199,7 @@ def report(paths: list[Path], split: str | None, errors: bool) -> None:
     from collections import defaultdict
 
     from odw2json.evaluate import Score, compare, doc_type
-    from odw2json.ocr import repair
+    from odw2json.ocr import boxes_to_lines, repair
     from odw2json.pdftext import clean
     from odw2json.pipeline import process_text
 
@@ -201,7 +208,9 @@ def report(paths: list[Path], split: str | None, errors: bool) -> None:
     groups: dict[str, Score] = defaultdict(Score)
     wrong_type, problems = [], []
     for r in rows:
-        pred = process_text(clean("\n".join(repair(page) for page in r["pages"]))).data
+        # With the boxes, the text follows the current rules for lines; older files have only the text.
+        pages = [boxes_to_lines(b) for b in r["boxes"]] if "boxes" in r else r["pages"]
+        pred = process_text(clean("\n".join(repair(page) for page in pages))).data
         leaves = compare(r["gold"], pred)
         for key in ("ALL", r["split"], f"{r['split']}/{r['source']}", f"{r['split']}/level={r['level']}",
                     f"{r['split']}/type={doc_type(r['gold'])}"):  # fmt: skip

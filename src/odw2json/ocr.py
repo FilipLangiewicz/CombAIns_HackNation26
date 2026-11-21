@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import json
 import os
 import re
 import unicodedata
@@ -37,48 +38,51 @@ def engine():
     params = {"Global.log_level": "error"}
     if LANG == "latin":
         params |= {"Rec.lang_type": LangRec.LATIN, "Rec.ocr_version": OCRVersion.PPOCRV5}
-    if os.environ.get("ODW2JSON_OCR_CUDA"):
-        params |= {"EngineConfig.onnxruntime.use_cuda": True}
+    if os.environ.get("ODW2JSON_OCR_THREADS"):
+        params |= {"EngineConfig.onnxruntime.intra_op_num_threads": int(os.environ["ODW2JSON_OCR_THREADS"])}
     return RapidOCR(params=params)
 
 
-def boxes_to_lines(boxes, texts) -> str:
-    """Join the text boxes into lines: boxes with a similar vertical center form one line, from left to right."""
-    items = []
-    for box, text in zip(boxes, texts, strict=True):
-        ys = [p[1] for p in box]
-        xs = [p[0] for p in box]
-        items.append((min(ys), max(ys), min(xs), text))
-    items.sort(key=lambda i: (i[0] + i[1]) / 2)
-    lines: list[list[tuple]] = []
+def boxes_to_lines(boxes: list[list]) -> str:
+    """Join the text boxes [x0, y0, x1, y1, text] into lines: boxes with a similar vertical center form one line."""
+    items = sorted(boxes, key=lambda b: (b[1] + b[3]) / 2)
+    lines: list[list[list]] = []
     for item in items:
-        center = (item[0] + item[1]) / 2
+        center = (item[1] + item[3]) / 2
         if lines:
             last = lines[-1]
-            top = sum(i[0] for i in last) / len(last)
-            bottom = sum(i[1] for i in last) / len(last)
+            top = sum(i[1] for i in last) / len(last)
+            bottom = sum(i[3] for i in last) / len(last)
             # A box belongs to the line if its center is in the middle part of the line height.
             if top + (bottom - top) * 0.25 <= center <= bottom - (bottom - top) * 0.25:
                 last.append(item)
                 continue
         lines.append([item])
-    return "\n".join("  ".join(i[3] for i in sorted(line, key=lambda i: i[2])) for line in lines)
+    return "\n".join("  ".join(i[4] for i in sorted(line, key=lambda i: i[0])) for line in lines)
 
 
-def ocr_image(image: Image.Image) -> str:
+def ocr_boxes(image: Image.Image) -> list[list]:
+    """The text boxes of an image as [x0, y0, x1, y1, text], with a cache on the disk."""
     buffer = io.BytesIO()
     image.convert("RGB").save(buffer, format="PNG")
     key = hashlib.sha1(buffer.getvalue() + LANG.encode()).hexdigest()
-    cached = CACHE_DIR / f"{key}.txt"
+    cached = CACHE_DIR / f"{key}.json"
     if cached.exists():
-        return cached.read_text(encoding="utf-8")
+        return json.loads(cached.read_text(encoding="utf-8"))
     import numpy as np
 
     result = engine()(np.array(image.convert("RGB")))
-    text = boxes_to_lines(result.boxes, result.txts) if result.txts else ""
+    boxes = []
+    for box, text in zip(result.boxes if result.txts else [], result.txts or [], strict=True):
+        xs, ys = [p[0] for p in box], [p[1] for p in box]
+        boxes.append([round(min(xs)), round(min(ys)), round(max(xs)), round(max(ys)), text])
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    cached.write_text(text, encoding="utf-8")
-    return text
+    cached.write_text(json.dumps(boxes, ensure_ascii=False), encoding="utf-8")
+    return boxes
+
+
+def ocr_image(image: Image.Image) -> str:
+    return boxes_to_lines(ocr_boxes(image))
 
 
 def fold(text: str) -> str:
