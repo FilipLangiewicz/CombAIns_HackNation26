@@ -82,3 +82,31 @@ def test_signer_on_one_line_and_without_role():
 def test_company_without_known_legal_form():
     text = "PEŁNOMOCNICTWO\nMocodawca: Przedsiębiorstwo Handlowe Gamma, ul. Długa 1, 00-001 Łódź, KRS 9999669444, NIP 9990678035\nudziela adw. Jan Nowak."
     assert run(text)["mocodawca"][0]["data"]["nazwa"] == "Przedsiębiorstwo Handlowe Gamma"
+
+
+DECLARANT = """PEŁNOMOCNICTWO
+Ja, niżej podpisana Justyna Walczak, działająca jako Dyrektor spółki Zenitel
+Medyczne sp. j. z siedzibą w Gliwicach, KRS 0009991806, NIP 8321217280,
+udzielam pełnomocnictwa Panu Grzegorzowi Jaworskiemu, adwokatowi, legitymującemu się numerem PESEL
+80021565391, do reprezentowania mnie przed KIO.
+............
+Justyna Walczak – Dyrektor
+"""
+
+
+def test_declarant_acting_for_a_company():
+    principal = run(DECLARANT)["mocodawca"][0]
+    assert principal["data"]["typ"] == "osoba_prawna"
+    assert principal["data"]["nazwa"] == "Zenitel Medyczne sp. j."
+    assert principal["podpisujacy"] == [{"imie_nazwisko": "Justyna Walczak"}]
+    assert run(DECLARANT)["pelnomocnicy"] == [{"imie_nazwisko": "Grzegorz Jaworski", "pesel": "80021565391"}]
+
+
+def test_sole_proprietor_without_krs():
+    text = (
+        "PEŁNOMOCNICTWO\nMocodawca: NORDIS-TRANS Grzegorz Kozłowski\nImię i nazwisko: Grzegorz Kozłowski\n"
+        "NIP 4039453214, REGON 422468394\nPełnomocnik: adw. Aleksandra Krawczyk\n"
+    )
+    data = run(text)["mocodawca"][0]["data"]
+    assert data["typ"] == "osoba_fizyczna"
+    assert data["imie_nazwisko"] == "Grzegorz Kozłowski"

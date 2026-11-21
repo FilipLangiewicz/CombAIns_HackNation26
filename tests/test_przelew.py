@@ -84,3 +84,22 @@ def test_joined_lines_and_page_marker():
     )
     assert box["tytul"] == "opłata skarbowa w przetargu ZP.1.2026 CEN2604016344389"
     assert box["na_rachunek"] == "68438223049992295262834736"
+
+
+def test_table_with_labels_first_and_english_labels():
+    box = run(
+        "Transfer details\nDebit account\nCredit account\nAmount\nExecution date\nPayment details\n"
+        "PL50-9149-2777-3285-0564-7953-8535\nPL84-8710-6501-1666-0434-6461-5387\n50,00 PLN\n04/09/2026\nopłata skarbowa OI/11/2026"
+    )
+    assert box["z_rachunku"] == "50914927773285056479538535"
+    assert box["na_rachunek"] == "84871065011666043464615387"
+    assert box["kwota"] == 50.0 and box["data_operacji"] == "2026-09-04"
+    assert box["tytul"] == "opłata skarbowa OI/11/2026"
+
+
+def test_amount_without_label_and_nr_in_title():
+    box = run(
+        "Przelew\n- 7 500,00 PLN\nZ konta: PL26 9453 8585 3400 9655 1641 3734\nOpis: ZESPÓŁ SZKÓŁ NR 10 W WROCŁAWIU\nSaldo po operacji: 10,00 PLN"
+    )
+    assert box["kwota"] == 7500.0
+    assert box["tytul"] == "ZESPÓŁ SZKÓŁ NR 10 W WROCŁAWIU"

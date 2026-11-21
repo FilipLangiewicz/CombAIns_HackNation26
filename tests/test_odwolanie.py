@@ -135,3 +135,43 @@ def test_appellant_without_attorney():
     row = _extract(text)["Odwolujacy"][0]
     assert row["przez-pelnomocnika"] == 0
     assert row["pelnomocnik"] is None
+
+
+GENERAL = """Od: Firma Zeta S.A. (odwołujący), ul. Polna 3, 00-001 Warszawa
+KRS: 9990000005, NIP: 9990000006
+Pełnomocnik: adw. Anna Nowak, Kancelaria Prawna Nowak sp. z o.o., e-mail anna@kancelaria.example
+Przeciwko: Gmina Eta, ul. Długa 1, 00-003 Warszawa, NIP: 9990000002 (Zamawiający prowadzący postępowanie); Gmina Theta, ul. Krótka 2, 00-004 Warszawa, NIP: 9990000003 (Zamawiający uczestniczący)
+Przedmiot odwołania: Budowa drogi Numer postępowania: ZP.1.2026
+Zaskarżone czynności polegają na:
+1) wyborze oferty w dniu 4 marca 2026 roku
+2) odrzuceniu oferty w dniu 1 marca 2026 roku
+"""
+
+
+def test_labels_od_przeciwko_and_roles_in_parentheses():
+    data = _extract(GENERAL)
+    assert data["Odwolujacy"][0]["nazwa"] == "Firma Zeta S.A."
+    assert [(r["nazwa"], r["prowadzacy_postepowanie"]) for r in data["Zamawiajacy"]] == [
+        ("Gmina Eta", 1),
+        ("Gmina Theta", 0),
+    ]
+    assert data["Odwolujacy"][0]["pelnomocnik"]["imie_nazwisko"] == "Anna Nowak"
+    assert data["Odwolujacy"][0]["pelnomocnik"]["nazwa"] == "Kancelaria Prawna Nowak sp. z o.o."
+    assert data["OdwolanieKIO"]["czynnosc_powod_id"] == 2
+    assert data["OdwolanieKIO"]["czynnosc_dzien"] == "2026-03-04"
+    assert data["ZamowieniePubliczne"]["tytul"] == "Budowa drogi"
+
+
+def test_attorney_in_accusative_with_firm_suffix():
+    text = INLINE.replace(
+        "reprezentowanego przez r. pr. Jana Kowalskiego",
+        "działa przez pełnomocnika – adw. Annę Piotrowską – Kancelaria Adwokacka, e-mail: a@b.example",
+    )
+    assert _extract(text)["Odwolujacy"][0]["pelnomocnik"]["imie_nazwisko"] == "Anna Piotrowska"
+
+
+def test_answer_to_appeal_is_not_an_appeal():
+    from odw2json.classify import classify
+
+    text = "ODPOWIEDŹ NA ODWOŁANIE\nZamawiający Gmina Eta wnosi o oddalenie odwołania. Zarzuty Odwołującego są bezzasadne.\nKrajowa Izba Odwoławcza"
+    assert classify(text).doc_type is None

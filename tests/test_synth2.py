@@ -67,7 +67,9 @@ def test_gold(name, text, gold):
         assert gold == {}
         return
     top = {"odwolanie": "OdwolanieKIO", "pelnomocnictwo": "mocodawca", "przelew": "przelew_bankowy"}[kind]
-    ref = schema({"odwolanie": "odwolanie.json", "pelnomocnictwo": "pelnomocnictwo.json", "przelew": "przelew.json"}[kind])
+    ref = schema(
+        {"odwolanie": "odwolanie.json", "pelnomocnictwo": "pelnomocnictwo.json", "przelew": "przelew.json"}[kind]
+    )
     assert set(gold) == set(ref)
     assert top in gold
     flat = squash(text)
@@ -80,7 +82,10 @@ def test_gold(name, text, gold):
             assert CODES[v] == gold["OdwolanieKIO"]["czynnosc_opis"]
         elif path in ("data", "czynnosc_dzien", "data_operacji") and re.fullmatch(r"\d{4}-\d\d-\d\d", str(v)):
             y, m, d = v.split("-")
-            assert any(s in text for s in (v, f"{d}.{m}.{y}", f"{int(d)}.{int(m)}.{y}", f"{d}-{m}-{y}")) or f"{int(d)} " in text
+            assert (
+                any(s in text for s in (v, f"{d}.{m}.{y}", f"{int(d)}.{int(m)}.{y}", f"{d}-{m}-{y}"))
+                or f"{int(d)} " in text
+            )
         elif path in ("prowadzacy_postepowanie", "przez-pelnomocnika", "typ"):
             continue
         elif path == "numer_bzp":

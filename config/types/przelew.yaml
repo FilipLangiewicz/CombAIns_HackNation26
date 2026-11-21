@@ -7,46 +7,68 @@ extractor: przelew
 classify:
   head_chars: 600
   min_score: 5
+  # The title is a strong signal, but not the only one. A bank confirmation without a known title
+  # passes with these signs together: two accounts, the roles of the parties, an amount and a word for the operation.
   rules:
-    - {pattern: '(potwierdzenie|dowód|polecenie|realizacji)[\s\S]{0,40}(przelewu|operacji|transakcji)', weight: 4, where: head}
+    - {pattern: '(potwierdzenie|dowód|polecenie|realizacji|zlecenie|dyspozycja|szczegóły|confirmation|details|advice)[\s\S]{0,40}(przelewu|operacji|transakcji|płatności|transfer|payment|transaction)', weight: 4, where: head}
     - {pattern: 'potwierdzenie\s+(transakcji|operacji)', weight: 4, where: head}
-    - {pattern: 'rachun|IBAN', weight: 1}
-    - {pattern: 'kwot', weight: 1}
+    - {pattern: 'przelew|transakcj|operacj|płatnoś|transfer|payment', weight: 1, where: head}
+    # Two bank account numbers (26 digits, with spaces or hyphens).
+    - {pattern: '(?<!\d)\d{2}(?:[\s-]?\d{4}){6}(?!\d)[\s\S]{1,2000}?(?<!\d)\d{2}(?:[\s-]?\d{4}){6}(?!\d)', weight: 2}
+    # A sender and a recipient (Polish or English).
+    - {pattern: '\A(?=[\s\S]*?(?:nadawc|zleceniodawc|zlecając|płatnik|obciążan|z\s+rachunku|z\s+konta|debit|payer|sender|ordering|from\s+account))(?=[\s\S]*?(?:odbiorc|beneficjent|odbierając|uznawan|na\s+rachunek|na\s+konto|do\s+rachunku|credit|beneficiary|recipient|payee|to\s+account))', weight: 1.5}
+    - {pattern: '(?<![\wąćęłńóśźż])(?:tytuł|tytułem|payment\s+details|remittance)(?![\wąćęłńóśźż])', weight: 1}
+    - {pattern: 'rachun|konto|IBAN|account', weight: 1}
+    - {pattern: 'kwot|amount', weight: 1}
     - {pattern: '\bPLN\b|\bzł\b', weight: 1}
     - {pattern: 'Sygn\.?\s*akt|^\s*Ogłoszenie o zamówieniu|See the notice on TED', weight: -10, where: start}
+    - {pattern: '^\s*(odwołanie|pełnomocnictwo|faktura|wyrok|postanowienie|wezwanie)', weight: -10, where: start}
+    - {pattern: '\bNIP\b[\s\S]*\bNIP\b|faktur[ay]\s+(vat|nr)', weight: -3}
 
 template:
   przelew_bankowy: {data_operacji: null, kwota: null, na_rachunek: null, numer_transakcji: null, tytul: null, z_rachunku: null}
 
 # Label aliases for the extractor. Each entry is a regular expression, tested on one line without case.
-# The value comes after the label on the same line, or on the next line.
+# The value comes after the label on the same line, on the next line, or in a column after all labels.
+# Polish and English labels are together.
 labels:
   data_operacji:
-    - '\bdata\s+(?:operacji|transakcji|realizacji|wykonania)\b'
+    - '\bdata\s+(?:operacji|transakcji|realizacji|wykonania)\b|\b(?:execution|transaction|operation)\s+date\b|\bdate\s+of\s+(?:transfer|operation|execution)\b'
     - '\bw\s+dniu\b'
-    - '\bdata\s+(?:zlecenia|księgowania|waluty)\b'
+    - '\bdata\s+(?:zlecenia|księgowania|waluty)\b|\b(?:booking|posting|value)\s+date\b'
   kwota:
-    - '(?<![\wąćęłńóśźż])(?:kwota(?:\s+(?:przelewu|operacji|transakcji))?|wartość|w\s+kwocie)(?![\wąćęłńóśźż])'
+    - '(?<![\wąćęłńóśźż])(?:kwota(?:\s+(?:przelewu|operacji|transakcji))?|wartość|w\s+kwocie|(?:transfer\s+)?amount)(?![\wąćęłńóśźż])'
   numer_transakcji:
     - '(?<![\wąćęłńóśźż])(?:numer|nr)\s+(?:referencyjny|ref\.?|transakcji|operacji)(?:\s+(?:operacji|transakcji))?(?![\wąćęłńóśźż])'
     - '(?<![\wąćęłńóśźż])(?:identyfikator|id)(?:\s+(?:operacji|transakcji|przelewu))?(?![\wąćęłńóśźż])'
+    - '(?<![\wąćęłńóśźż])(?:(?:transaction|operation|payment)\s+(?:id|reference|number|no\.?)|reference\s+(?:id|number|no\.?))(?![\wąćęłńóśźż])'
   tytul:
     - '(?<![\wąćęłńóśźż])tytuł(?:em|\s+przelewu|\s+operacji|\s+płatności)?(?![\wąćęłńóśźż])'
     - '(?<![\wąćęłńóśźż])opis(?:\s+przelewu|\s+operacji|\s+płatności)?(?![\wąćęłńóśźż])'
+    - '(?<![\wąćęłńóśźż])(?:payment\s+details|details\s+of\s+payment|remittance(?:\s+information)?|title|description)(?![\wąćęłńóśźż])'
   # A keyword before an account tells whose account it is. The nearest keyword wins.
   z_rachunku:
-    - 'nadawc|zleceniodawc|obciążan|obciążeni|płatnik|z\s+rachunku|ze\s+rachunku|z\s+konta|ze\s+konta'
+    - 'nadawc|zleceniodawc|zlecając|obciążan|obciążeni|płatnik|źródłow|z\s+rachunku|ze\s+rachunku|z\s+konta|ze\s+konta|debit|payer|sender|ordering|debtor|from\s+account'
   na_rachunek:
-    - 'odbiorc|beneficjent|uznawan|uznani|adresat|na\s+rachunek|na\s+konto'
+    - 'odbiorc|beneficjent|odbierając|uznawan|uznani|adresat|docelow|na\s+rachunek|do\s+rachunku|na\s+konto|do\s+konta|credit|beneficiary|recipient|receiver|payee|creditor|to\s+account'
+  # Other labels. They only help to find a table with labels in a column.
+  other:
+    - '^(?:status|typ|rodzaj|kanał|tryb|waluta|saldo|prowizja|nazwa|adres|data|currency|fee|balance|type)$'
   # A line that starts with one of these words ends the title. The word has a capital letter.
   stop: [status, typ, rodzaj, kanał, tryb, opłata, prowizja, waluta, godz, data, numer, nr, identyfikator, id,
          rachunek, konto, kwota, wartość, nazwa, adres, nadawca, nadawcy, odbiorca, płatnik, zleceniodawca,
          beneficjent, adresat, bank, dokument, potwierdzenie, z poważaniem, dział, w razie, dziękujemy,
-         zrealizowano, wykonano, wykonany]
+         zrealizowano, wykonano, wykonany, saldo, wydrukowano, wygenerowano, dla,
+         currency, fee, balance, execution, transaction, reference, debit, credit, sender, beneficiary, payer,
+         payee, amount, date, type, channel]
   # The same, but inside a line, when a PDF reader joins two lines.
   stop_inline: [status, typ, rodzaj, kanał, tryb, opłata, prowizja, waluta, godz, data, numer, nr, identyfikator,
                 rachunek, konto, kwota, wartość, nadawca, odbiorca, płatnik, zleceniodawca, beneficjent,
-                adresat, dokument, potwierdzenie, zrealizowano]
+                adresat, dokument, potwierdzenie, zrealizowano, saldo, wydrukowano, wygenerowano,
+                currency, fee, balance, execution, transaction, reference, debit, credit, sender, beneficiary,
+                amount, date]
+  # These words can be a part of a title. They end it only when a number does not follow.
+  stop_ambiguous: [nr, numer, id, typ, type, reference, transaction]
 
 fallback:
   numer_transakcji: '\bCEN\d{10,}\b'

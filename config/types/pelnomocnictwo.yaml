@@ -53,5 +53,6 @@ extract:
     - 'sp\.\s?k\.a\.'
     - 'S\.\s?A\.'
     - 'spółka\s+(?:akcyjna|cywilna)'
+    - 's\.\s?c\.'
   # Words that can stand before a company name but are not part of it.
   stop_words: [Mocodawca, Mocodawcą, Mocodawcy, Za, Wykonawca, Wykonawcy, Pełnomocnictwo, Pełnomocnik, Pełnomocnicy, Konsorcjum, Lider, Partner, Dane, Firma, Zamawiający, Postępowanie, Data, PEŁNOMOCNICTWO, PROCESOWE, MOCODAWCA, PEŁNOMOCNIK, Ja, Pan, Pani]

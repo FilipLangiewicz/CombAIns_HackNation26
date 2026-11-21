@@ -30,7 +30,11 @@ The minimum score is 5. Words alone are not sufficient: each type has 4 or fewer
 
 A title can match two title rules, for example `^\s*PEŁNOMOCNICTWO` and the same word in capitals. Then the title alone gives the minimum score. The second rule finds a title that a PDF reader joined to another line.
 
+A payment confirmation (`przelew`) has no single required title. A title gives +4. Without a title, these signs together pass the minimum score: two account numbers (+2), a sender and a recipient (+1.5), words for the operation, an account, an amount and "PLN" (+1 each). An invoice has one account and gets fewer points. Titles of an appeal, a power of attorney or an invoice at the start give -10.
+
 The negative rules are necessary. A decision of the KIO or a procurement notice contains many words of an appeal ("odwołanie", "Zamawiający", "Odwołujący").
+
+An appeal without a title in capitals (the header "Do: KIO", "Od:", "Przeciwko:") gets points from these labels and from "Zaskarżone czynności". The answer of the contracting authority ("Odpowiedź na odwołanie") and letters that start with "ODPOWIEDŹ", "ZAWIADOMIENIE" or "WEZWANIE" get -10. The title rule for `odwolanie` is case sensitive and needs a whole line, because a wrapped line that starts with "odwołanie" is not a title.
 
 ## Results
 

@@ -32,8 +32,20 @@ CODES = {
     12: "Projektowane postanowienia umowy",
 }
 TYPES = ("odwolanie", "pelnomocnictwo", "przelew", "negatyw")
-MONTHS = ["stycznia", "lutego", "marca", "kwietnia", "maja", "czerwca", "lipca", "sierpnia",
-          "września", "października", "listopada", "grudnia"]
+MONTHS = [
+    "stycznia",
+    "lutego",
+    "marca",
+    "kwietnia",
+    "maja",
+    "czerwca",
+    "lipca",
+    "sierpnia",
+    "września",
+    "października",
+    "listopada",
+    "grudnia",
+]
 
 # --- people ---------------------------------------------------------------
 
@@ -55,20 +67,51 @@ FIRST = {  # nominative: genitive, dative, accusative, instrumental, gender
     "Agnieszka": ("Agnieszki", "Agnieszce", "Agnieszkę", "Agnieszką", "f"),
     "Barbara": ("Barbary", "Barbarze", "Barbarę", "Barbarą", "f"),
 }
-SURNAMES = [("Kowalski", "adj"), ("Wiśniewski", "adj"), ("Zieliński", "adj"), ("Szymański", "adj"),
-            ("Wojciechowski", "adj"), ("Kamiński", "adj"), ("Lewandowski", "adj"), ("Dąbrowski", "adj"),
-            ("Jabłoński", "adj"), ("Sikorski", "adj"), ("Ostrowski", "adj"), ("Zawadzki", "adj"),
-            ("Nowak", "c"), ("Kowalczyk", "c"), ("Wójcik", "c"), ("Michalak", "c"), ("Walczak", "c"),
-            ("Lipowczyk", "c"), ("Mazur", "c"), ("Pawlak", "c")]
+SURNAMES = [
+    ("Kowalski", "adj"),
+    ("Wiśniewski", "adj"),
+    ("Zieliński", "adj"),
+    ("Szymański", "adj"),
+    ("Wojciechowski", "adj"),
+    ("Kamiński", "adj"),
+    ("Lewandowski", "adj"),
+    ("Dąbrowski", "adj"),
+    ("Jabłoński", "adj"),
+    ("Sikorski", "adj"),
+    ("Ostrowski", "adj"),
+    ("Zawadzki", "adj"),
+    ("Nowak", "c"),
+    ("Kowalczyk", "c"),
+    ("Wójcik", "c"),
+    ("Michalak", "c"),
+    ("Walczak", "c"),
+    ("Lipowczyk", "c"),
+    ("Mazur", "c"),
+    ("Pawlak", "c"),
+]
 CASES = ("gen", "dat", "acc", "ins")
 TITLES = {
-    "rp": {"abbr": "r. pr.", "nom": "radca prawny", "gen": "radcy prawnego", "dat": "radcy prawnemu",
-           "acc": "radcę prawnego", "ins": "radcą prawnym"},
-    "adw": {"abbr": "adw.", "nom": "adwokat", "gen": "adwokata", "dat": "adwokatowi",
-            "acc": "adwokata", "ins": "adwokatem"},
+    "rp": {
+        "abbr": "r. pr.",
+        "nom": "radca prawny",
+        "gen": "radcy prawnego",
+        "dat": "radcy prawnemu",
+        "acc": "radcę prawnego",
+        "ins": "radcą prawnym",
+    },
+    "adw": {
+        "abbr": "adw.",
+        "nom": "adwokat",
+        "gen": "adwokata",
+        "dat": "adwokatowi",
+        "acc": "adwokata",
+        "ins": "adwokatem",
+    },
 }
-HONOR = {"m": {"nom": "Pan", "gen": "Pana", "dat": "Panu", "acc": "Pana", "ins": "Panem"},
-         "f": {"nom": "Pani", "gen": "Pani", "dat": "Pani", "acc": "Panią", "ins": "Panią"}}
+HONOR = {
+    "m": {"nom": "Pan", "gen": "Pana", "dat": "Panu", "acc": "Pana", "ins": "Panem"},
+    "f": {"nom": "Pani", "gen": "Pani", "dat": "Pani", "acc": "Panią", "ins": "Panią"},
+}
 
 
 def make_person(rng: random.Random, gender: str | None = None) -> dict:
@@ -105,24 +148,92 @@ def make_pesel(rng: random.Random) -> str:
 
 # --- organizations --------------------------------------------------------
 
-BRANDS = ["Vistula", "Karpaty", "Baltic", "Mazovia", "Silesia", "Podlasie", "Warta", "Tatra", "Odra", "Nadmorska",
-          "Eko-Bud", "Elektro-Mont", "Pol-Tech", "Medi-Serwis", "Trans-Kom", "Inter-Bud", "Zielony Dom", "Alfa-Net",
-          "Mostostal Północ", "Instal-Pro", "Brukpol", "Kolmex", "Dromet", "Hydro-Sys"]
-SECTORS = ["Inżynieria", "Budownictwo", "Systemy Informatyczne", "Transport", "Usługi Komunalne", "Energetyka",
-           "Serwis", "Technologie", "Infrastruktura", "Logistyka", "Instalacje", "Dostawy Medyczne"]
+BRANDS = [
+    "Vistula",
+    "Karpaty",
+    "Baltic",
+    "Mazovia",
+    "Silesia",
+    "Podlasie",
+    "Warta",
+    "Tatra",
+    "Odra",
+    "Nadmorska",
+    "Eko-Bud",
+    "Elektro-Mont",
+    "Pol-Tech",
+    "Medi-Serwis",
+    "Trans-Kom",
+    "Inter-Bud",
+    "Zielony Dom",
+    "Alfa-Net",
+    "Mostostal Północ",
+    "Instal-Pro",
+    "Brukpol",
+    "Kolmex",
+    "Dromet",
+    "Hydro-Sys",
+]
+SECTORS = [
+    "Inżynieria",
+    "Budownictwo",
+    "Systemy Informatyczne",
+    "Transport",
+    "Usługi Komunalne",
+    "Energetyka",
+    "Serwis",
+    "Technologie",
+    "Infrastruktura",
+    "Logistyka",
+    "Instalacje",
+    "Dostawy Medyczne",
+]
 FORMS = ["S.A.", "sp. z o.o.", "Sp. z o.o.", "sp. j.", "sp. k.", "sp. z o.o. sp.k."]
-CITIES = ["Warszawa", "Kraków", "Wrocław", "Poznań", "Gdańsk", "Szczecin", "Lublin", "Katowice", "Białystok",
-          "Rzeszów", "Opole", "Kielce", "Olsztyn", "Toruń", "Radom", "Gliwice"]
-STREETS = ["Lipowa", "Kolejowa", "Szkolna", "Polna", "Ogrodowa", "Leśna", "Długa", "Krótka", "Słoneczna",
-           "Mickiewicza", "Piłsudskiego", "Sienkiewicza", "Kościuszki", "Przemysłowa", "Fabryczna"]
+CITIES = [
+    "Warszawa",
+    "Kraków",
+    "Wrocław",
+    "Poznań",
+    "Gdańsk",
+    "Szczecin",
+    "Lublin",
+    "Katowice",
+    "Białystok",
+    "Rzeszów",
+    "Opole",
+    "Kielce",
+    "Olsztyn",
+    "Toruń",
+    "Radom",
+    "Gliwice",
+]
+STREETS = [
+    "Lipowa",
+    "Kolejowa",
+    "Szkolna",
+    "Polna",
+    "Ogrodowa",
+    "Leśna",
+    "Długa",
+    "Krótka",
+    "Słoneczna",
+    "Mickiewicza",
+    "Piłsudskiego",
+    "Sienkiewicza",
+    "Kościuszki",
+    "Przemysłowa",
+    "Fabryczna",
+]
 AUTHORITIES = [  # nominative, genitive
     ("Gmina Miejska Kalwaria", "Gminy Miejskiej Kalwaria"),
     ("Powiat Sztumski", "Powiatu Sztumskiego"),
     ("Zarząd Dróg Wojewódzkich", "Zarządu Dróg Wojewódzkich"),
     ("Szpital Powiatowy im. Jana Pawła II", "Szpitala Powiatowego im. Jana Pawła II"),
     ("Uniwersytet Medyczny", "Uniwersytetu Medycznego"),
-    ("Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji sp. z o.o.",
-     "Miejskiego Przedsiębiorstwa Wodociągów i Kanalizacji sp. z o.o."),
+    (
+        "Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji sp. z o.o.",
+        "Miejskiego Przedsiębiorstwa Wodociągów i Kanalizacji sp. z o.o.",
+    ),
     ("Politechnika Rzeszowska im. Ignacego Łukasiewicza", "Politechniki Rzeszowskiej im. Ignacego Łukasiewicza"),
     ("Regionalny Zarząd Gospodarki Wodnej", "Regionalnego Zarządu Gospodarki Wodnej"),
     ("Wojewódzki Szpital Zespolony", "Wojewódzkiego Szpitala Zespolonego"),
@@ -148,8 +259,18 @@ TITLES_ZP = [
     "Zimowe utrzymanie dróg gminnych w sezonie 2026/2027",
     "Zakup licencji oraz wdrożenie systemu elektronicznego obiegu dokumentów",
 ]
-NUMBER_PATTERNS = ["ZP.{n}.{y}", "DZP.260.{m}.{y}", "V.ROZ.2710.{n}.{y}", "ZSCKR/{n}/{y}", "WZP-271-{m}/{yy}",
-                   "OR-IV.272.{m}.{y}", "{m}/PN/{y}", "BZP/ZP/{m}/{y}", "TP/{n}/{yy}/ZO", "ZZP.271.{m}.{y}.{n}"]
+NUMBER_PATTERNS = [
+    "ZP.{n}.{y}",
+    "DZP.260.{m}.{y}",
+    "V.ROZ.2710.{n}.{y}",
+    "ZSCKR/{n}/{y}",
+    "WZP-271-{m}/{yy}",
+    "OR-IV.272.{m}.{y}",
+    "{m}/PN/{y}",
+    "BZP/ZP/{m}/{y}",
+    "TP/{n}/{yy}/ZO",
+    "ZZP.271.{m}.{y}.{n}",
+]
 
 
 def make_company(rng: random.Random) -> str:
@@ -202,8 +323,19 @@ def iban(rng: random.Random, bank: str) -> str:
     return f"{check:02d}{bban}"
 
 
-BANK_CODES = ["10201026", "11402004", "10501012", "10901014", "12401037", "11601202", "24901044", "16001462",
-              "19401076", "81240001", "86190003"]
+BANK_CODES = [
+    "10201026",
+    "11402004",
+    "10501012",
+    "10901014",
+    "12401037",
+    "11601202",
+    "24901044",
+    "16001462",
+    "19401076",
+    "81240001",
+    "86190003",
+]
 
 
 def account_text(rng: random.Random, acc: str, style: str | None = None) -> str:
@@ -217,8 +349,12 @@ def money_text(rng: random.Random, v: float, style: str | None = None, cur: bool
     sp = " " if rng.random() < 0.3 else " "
     grouped = f"{int(whole):,}".replace(",", sp)
     style = style or rng.choice(["pl", "plain", "dot", "cur_first"])
-    body = {"pl": f"{grouped},{frac}", "plain": f"{whole},{frac}", "dot": f"{int(whole):,}.{frac}".replace(",", " "),
-            "cur_first": f"{grouped},{frac}"}[style]
+    body = {
+        "pl": f"{grouped},{frac}",
+        "plain": f"{whole},{frac}",
+        "dot": f"{int(whole):,}.{frac}".replace(",", " "),
+        "cur_first": f"{grouped},{frac}",
+    }[style]
     if not cur:
         return body
     if style == "cur_first":
@@ -227,11 +363,40 @@ def money_text(rng: random.Random, v: float, style: str | None = None, cur: bool
 
 
 def words_pl(n: int) -> str:
-    u = ["", "jeden", "dwa", "trzy", "cztery", "pięć", "sześć", "siedem", "osiem", "dziewięć", "dziesięć",
-         "jedenaście", "dwanaście", "trzynaście", "czternaście", "piętnaście", "szesnaście", "siedemnaście",
-         "osiemnaście", "dziewiętnaście"]
-    t = ["", "", "dwadzieścia", "trzydzieści", "czterdzieści", "pięćdziesiąt", "sześćdziesiąt", "siedemdziesiąt",
-         "osiemdziesiąt", "dziewięćdziesiąt"]
+    u = [
+        "",
+        "jeden",
+        "dwa",
+        "trzy",
+        "cztery",
+        "pięć",
+        "sześć",
+        "siedem",
+        "osiem",
+        "dziewięć",
+        "dziesięć",
+        "jedenaście",
+        "dwanaście",
+        "trzynaście",
+        "czternaście",
+        "piętnaście",
+        "szesnaście",
+        "siedemnaście",
+        "osiemnaście",
+        "dziewiętnaście",
+    ]
+    t = [
+        "",
+        "",
+        "dwadzieścia",
+        "trzydzieści",
+        "czterdzieści",
+        "pięćdziesiąt",
+        "sześćdziesiąt",
+        "siedemdziesiąt",
+        "osiemdziesiąt",
+        "dziewięćdziesiąt",
+    ]
     h = ["", "sto", "dwieście", "trzysta", "czterysta", "pięćset", "sześćset", "siedemset", "osiemset", "dziewięćset"]
 
     def below_1000(k: int) -> str:
@@ -243,7 +408,11 @@ def words_pl(n: int) -> str:
     th, rest = divmod(n, 1000)
     out = []
     if th:
-        form = "tysiąc" if th == 1 else ("tysiące" if th % 10 in (2, 3, 4) and th % 100 not in range(12, 15) else "tysięcy")
+        form = (
+            "tysiąc"
+            if th == 1
+            else ("tysiące" if th % 10 in (2, 3, 4) and th % 100 not in range(12, 15) else "tysięcy")
+        )
         out.append(("" if th == 1 else below_1000(th) + " ") + form)
     if rest:
         out.append(below_1000(rest))
@@ -253,85 +422,177 @@ def words_pl(n: int) -> str:
 # --- the common case of an appeal -------------------------------------------
 
 CH = {  # item of the list of charges, the fact sentence
-    1: [("odrzuceniu oferty Odwołującego na podstawie art. 226 ust. 1 pkt 5 Pzp, o czym Zamawiający zawiadomił w dniu {d}",
-         "Zamawiający w dniu {d} zawiadomił Odwołującego o odrzuceniu jego oferty."),
-        ("czynności odrzucenia oferty Odwołującego, wskazanej w zawiadomieniu z dnia {d}",
-         "Pismem z dnia {d} Zamawiający poinformował o odrzuceniu oferty złożonej przez Odwołującego."),
-        ("odrzuceniu oferty złożonej przez Odwołującego jako niezgodnej z warunkami zamówienia (informacja z {d})",
-         "Informację o odrzuceniu oferty Odwołujący otrzymał {d}.")],
-    2: [("wyborze jako najkorzystniejszej oferty wykonawcy {x}, o czym Zamawiający zawiadomił w dniu {d}",
-         "W dniu {d} Zamawiający zawiadomił o wyborze oferty wykonawcy {x} jako najkorzystniejszej."),
-        ("czynności wyboru najkorzystniejszej oferty złożonej przez {x}, dokonanej w dniu {d}",
-         "Zamawiający dokonał wyboru oferty {x} w dniu {d}."),
-        ("ogłoszeniu wyniku postępowania i wyborze oferty {x} (zawiadomienie z {d})",
-         "Wynik postępowania ogłoszono {d}.")],
-    3: [("wykluczeniu Odwołującego z postępowania na podstawie art. 108 ust. 1 pkt 5 Pzp (zawiadomienie z dnia {d})",
-         "Zamawiający w dniu {d} wykluczył Odwołującego z postępowania."),
-        ("czynności wykluczenia Odwołującego z postępowania, o której powiadomiono go w dniu {d}",
-         "Decyzję o wykluczeniu Odwołujący otrzymał {d}."),
-        ("podjęciu decyzji o wykluczeniu Odwołującego z udziału w postępowaniu w dniu {d}",
-         "W dniu {d} Odwołujący został wykluczony.")],
-    4: [("ustaleniu treści Specyfikacji Warunków Zamówienia, opublikowanej w dniu {d}",
-         "Zamawiający w dniu {d} opublikował Specyfikację Warunków Zamówienia."),
-        ("opublikowaniu w dniu {d} SWZ zawierającej wadliwe warunki udziału w postępowaniu",
-         "SWZ udostępniono na stronie prowadzonego postępowania {d}."),
-        ("sformułowaniu kryteriów oceny ofert w SWZ udostępnionej wykonawcom w dniu {d}",
-         "Dokumenty zamówienia, w tym SWZ, zostały zamieszczone w dniu {d}.")],
-    5: [("modyfikacji treści SWZ dokonanej w dniu {d}",
-         "Zamawiający w dniu {d} dokonał zmiany treści SWZ."),
-        ("zmianie SWZ ogłoszonej wykonawcom w dniu {d} bez przedłużenia terminu składania ofert",
-         "Zmiana SWZ została opublikowana {d}."),
-        ("wprowadzeniu w dniu {d} modyfikacji dokumentów zamówienia w zakresie warunków udziału",
-         "Modyfikację SWZ przekazano wykonawcom {d}.")],
-    6: [("udzieleniu w dniu {d} odpowiedzi na pytania wykonawców w sposób zmieniający treść SWZ",
-         "Zamawiający w dniu {d} udzielił odpowiedzi na pytania do SWZ."),
-        ("wyjaśnieniach treści SWZ opublikowanych w dniu {d}",
-         "Wyjaśnienia treści SWZ zamieszczono {d}."),
-        ("odpowiedziach na zapytania do SWZ udzielonych dnia {d}",
-         "Odpowiedzi na pytania opublikowano w dniu {d}.")],
-    7: [("zaniechaniu odrzucenia oferty wykonawcy {x}, mimo że oferta ta podlega odrzuceniu; Odwołujący dowiedział się o jej treści w dniu {d}",
-         "W dniu {d} Odwołujący zapoznał się z ofertą wykonawcy {x}."),
-        ("zaniechaniu odrzucenia oferty {x} pomimo jej niezgodności z SWZ (zawiadomienie o wyborze z dnia {d})",
-         "Zawiadomienie o wyborze oferty {x} datowane jest na {d}."),
-        ("niedokonaniu odrzucenia oferty złożonej przez {x}, o czym Odwołujący powziął wiedzę {d}",
-         "Wiedzę o ofercie {x} Odwołujący powziął {d}.")],
-    8: [("zaniechaniu wykluczenia wykonawcy {x} z postępowania, o czym Odwołujący dowiedział się w dniu {d}",
-         "W dniu {d} Zamawiający poinformował o wyborze oferty wykonawcy {x}, którego nie wykluczono."),
-        ("niewykluczeniu z postępowania {x} pomimo podstaw z art. 109 ust. 1 pkt 7 Pzp (informacja z dnia {d})",
-         "Informacja o wyniku postępowania pochodzi z dnia {d}."),
-        ("zaniechaniu wykluczenia {x} z udziału w postępowaniu, stwierdzonym dnia {d}",
-         "Zaniechanie wykluczenia {x} ujawniło się w dniu {d}.")],
-    9: [("unieważnieniu postępowania w dniu {d}",
-         "Zamawiający w dniu {d} unieważnił postępowanie."),
-        ("czynności unieważnienia postępowania na podstawie art. 255 pkt 3 Pzp, o której zawiadomiono wykonawców w dniu {d}",
-         "Zawiadomienie o unieważnieniu postępowania wysłano {d}."),
-        ("podjęciu decyzji o unieważnieniu postępowania o udzielenie zamówienia (zawiadomienie z {d})",
-         "Decyzja o unieważnieniu postępowania zapadła {d}.")],
-    10: [("zaniechaniu unieważnienia postępowania, mimo że jest ono obarczone wadą uniemożliwiającą zawarcie umowy; w dniu {d} Zamawiający zawiadomił o wyborze oferty",
-          "W dniu {d} Zamawiający wybrał ofertę i nie unieważnił postępowania."),
-         ("niedokonaniu unieważnienia postępowania na podstawie art. 255 pkt 6 Pzp (zawiadomienie z dnia {d})",
-          "Zamawiający pismem z {d} podtrzymał postępowanie."),
-         ("zaniechaniu unieważnienia postępowania pomimo istotnej zmiany okoliczności, o czym Odwołujący dowiedział się {d}",
-          "Odwołujący dowiedział się o kontynuacji postępowania {d}.")],
-    11: [("opisie przedmiotu zamówienia (OPZ) opublikowanym w dniu {d}, który ogranicza konkurencję",
-          "Opis przedmiotu zamówienia został opublikowany w dniu {d}."),
-         ("sformułowaniu Opisu Przedmiotu Zamówienia udostępnionego wykonawcom {d}",
-          "OPZ zamieszczono wraz z ogłoszeniem {d}."),
-         ("opisaniu przedmiotu zamówienia w sposób wskazujący na produkty jednego producenta (dokumentacja z dnia {d})",
-          "Dokumentację z opisem przedmiotu zamówienia udostępniono {d}.")],
-    12: [("ustaleniu projektowanych postanowień umowy opublikowanych w dniu {d}",
-          "Projektowane postanowienia umowy opublikowano {d}."),
-         ("wzorze umowy stanowiącym załącznik do SWZ, udostępnionym w dniu {d}, w zakresie kar umownych",
-          "Wzór umowy udostępniono wykonawcom w dniu {d}."),
-         ("kształcie projektowanych postanowień umowy w sprawie zamówienia publicznego (publikacja z {d})",
-          "Projekt umowy zamieszczono w dniu {d}.")],
+    1: [
+        (
+            "odrzuceniu oferty Odwołującego na podstawie art. 226 ust. 1 pkt 5 Pzp, o czym Zamawiający zawiadomił w dniu {d}",
+            "Zamawiający w dniu {d} zawiadomił Odwołującego o odrzuceniu jego oferty.",
+        ),
+        (
+            "czynności odrzucenia oferty Odwołującego, wskazanej w zawiadomieniu z dnia {d}",
+            "Pismem z dnia {d} Zamawiający poinformował o odrzuceniu oferty złożonej przez Odwołującego.",
+        ),
+        (
+            "odrzuceniu oferty złożonej przez Odwołującego jako niezgodnej z warunkami zamówienia (informacja z {d})",
+            "Informację o odrzuceniu oferty Odwołujący otrzymał {d}.",
+        ),
+    ],
+    2: [
+        (
+            "wyborze jako najkorzystniejszej oferty wykonawcy {x}, o czym Zamawiający zawiadomił w dniu {d}",
+            "W dniu {d} Zamawiający zawiadomił o wyborze oferty wykonawcy {x} jako najkorzystniejszej.",
+        ),
+        (
+            "czynności wyboru najkorzystniejszej oferty złożonej przez {x}, dokonanej w dniu {d}",
+            "Zamawiający dokonał wyboru oferty {x} w dniu {d}.",
+        ),
+        (
+            "ogłoszeniu wyniku postępowania i wyborze oferty {x} (zawiadomienie z {d})",
+            "Wynik postępowania ogłoszono {d}.",
+        ),
+    ],
+    3: [
+        (
+            "wykluczeniu Odwołującego z postępowania na podstawie art. 108 ust. 1 pkt 5 Pzp (zawiadomienie z dnia {d})",
+            "Zamawiający w dniu {d} wykluczył Odwołującego z postępowania.",
+        ),
+        (
+            "czynności wykluczenia Odwołującego z postępowania, o której powiadomiono go w dniu {d}",
+            "Decyzję o wykluczeniu Odwołujący otrzymał {d}.",
+        ),
+        (
+            "podjęciu decyzji o wykluczeniu Odwołującego z udziału w postępowaniu w dniu {d}",
+            "W dniu {d} Odwołujący został wykluczony.",
+        ),
+    ],
+    4: [
+        (
+            "ustaleniu treści Specyfikacji Warunków Zamówienia, opublikowanej w dniu {d}",
+            "Zamawiający w dniu {d} opublikował Specyfikację Warunków Zamówienia.",
+        ),
+        (
+            "opublikowaniu w dniu {d} SWZ zawierającej wadliwe warunki udziału w postępowaniu",
+            "SWZ udostępniono na stronie prowadzonego postępowania {d}.",
+        ),
+        (
+            "sformułowaniu kryteriów oceny ofert w SWZ udostępnionej wykonawcom w dniu {d}",
+            "Dokumenty zamówienia, w tym SWZ, zostały zamieszczone w dniu {d}.",
+        ),
+    ],
+    5: [
+        ("modyfikacji treści SWZ dokonanej w dniu {d}", "Zamawiający w dniu {d} dokonał zmiany treści SWZ."),
+        (
+            "zmianie SWZ ogłoszonej wykonawcom w dniu {d} bez przedłużenia terminu składania ofert",
+            "Zmiana SWZ została opublikowana {d}.",
+        ),
+        (
+            "wprowadzeniu w dniu {d} modyfikacji dokumentów zamówienia w zakresie warunków udziału",
+            "Modyfikację SWZ przekazano wykonawcom {d}.",
+        ),
+    ],
+    6: [
+        (
+            "udzieleniu w dniu {d} odpowiedzi na pytania wykonawców w sposób zmieniający treść SWZ",
+            "Zamawiający w dniu {d} udzielił odpowiedzi na pytania do SWZ.",
+        ),
+        ("wyjaśnieniach treści SWZ opublikowanych w dniu {d}", "Wyjaśnienia treści SWZ zamieszczono {d}."),
+        ("odpowiedziach na zapytania do SWZ udzielonych dnia {d}", "Odpowiedzi na pytania opublikowano w dniu {d}."),
+    ],
+    7: [
+        (
+            "zaniechaniu odrzucenia oferty wykonawcy {x}, mimo że oferta ta podlega odrzuceniu; Odwołujący dowiedział się o jej treści w dniu {d}",
+            "W dniu {d} Odwołujący zapoznał się z ofertą wykonawcy {x}.",
+        ),
+        (
+            "zaniechaniu odrzucenia oferty {x} pomimo jej niezgodności z SWZ (zawiadomienie o wyborze z dnia {d})",
+            "Zawiadomienie o wyborze oferty {x} datowane jest na {d}.",
+        ),
+        (
+            "niedokonaniu odrzucenia oferty złożonej przez {x}, o czym Odwołujący powziął wiedzę {d}",
+            "Wiedzę o ofercie {x} Odwołujący powziął {d}.",
+        ),
+    ],
+    8: [
+        (
+            "zaniechaniu wykluczenia wykonawcy {x} z postępowania, o czym Odwołujący dowiedział się w dniu {d}",
+            "W dniu {d} Zamawiający poinformował o wyborze oferty wykonawcy {x}, którego nie wykluczono.",
+        ),
+        (
+            "niewykluczeniu z postępowania {x} pomimo podstaw z art. 109 ust. 1 pkt 7 Pzp (informacja z dnia {d})",
+            "Informacja o wyniku postępowania pochodzi z dnia {d}.",
+        ),
+        (
+            "zaniechaniu wykluczenia {x} z udziału w postępowaniu, stwierdzonym dnia {d}",
+            "Zaniechanie wykluczenia {x} ujawniło się w dniu {d}.",
+        ),
+    ],
+    9: [
+        ("unieważnieniu postępowania w dniu {d}", "Zamawiający w dniu {d} unieważnił postępowanie."),
+        (
+            "czynności unieważnienia postępowania na podstawie art. 255 pkt 3 Pzp, o której zawiadomiono wykonawców w dniu {d}",
+            "Zawiadomienie o unieważnieniu postępowania wysłano {d}.",
+        ),
+        (
+            "podjęciu decyzji o unieważnieniu postępowania o udzielenie zamówienia (zawiadomienie z {d})",
+            "Decyzja o unieważnieniu postępowania zapadła {d}.",
+        ),
+    ],
+    10: [
+        (
+            "zaniechaniu unieważnienia postępowania, mimo że jest ono obarczone wadą uniemożliwiającą zawarcie umowy; w dniu {d} Zamawiający zawiadomił o wyborze oferty",
+            "W dniu {d} Zamawiający wybrał ofertę i nie unieważnił postępowania.",
+        ),
+        (
+            "niedokonaniu unieważnienia postępowania na podstawie art. 255 pkt 6 Pzp (zawiadomienie z dnia {d})",
+            "Zamawiający pismem z {d} podtrzymał postępowanie.",
+        ),
+        (
+            "zaniechaniu unieważnienia postępowania pomimo istotnej zmiany okoliczności, o czym Odwołujący dowiedział się {d}",
+            "Odwołujący dowiedział się o kontynuacji postępowania {d}.",
+        ),
+    ],
+    11: [
+        (
+            "opisie przedmiotu zamówienia (OPZ) opublikowanym w dniu {d}, który ogranicza konkurencję",
+            "Opis przedmiotu zamówienia został opublikowany w dniu {d}.",
+        ),
+        (
+            "sformułowaniu Opisu Przedmiotu Zamówienia udostępnionego wykonawcom {d}",
+            "OPZ zamieszczono wraz z ogłoszeniem {d}.",
+        ),
+        (
+            "opisaniu przedmiotu zamówienia w sposób wskazujący na produkty jednego producenta (dokumentacja z dnia {d})",
+            "Dokumentację z opisem przedmiotu zamówienia udostępniono {d}.",
+        ),
+    ],
+    12: [
+        (
+            "ustaleniu projektowanych postanowień umowy opublikowanych w dniu {d}",
+            "Projektowane postanowienia umowy opublikowano {d}.",
+        ),
+        (
+            "wzorze umowy stanowiącym załącznik do SWZ, udostępnionym w dniu {d}, w zakresie kar umownych",
+            "Wzór umowy udostępniono wykonawcom w dniu {d}.",
+        ),
+        (
+            "kształcie projektowanych postanowień umowy w sprawie zamówienia publicznego (publikacja z {d})",
+            "Projekt umowy zamieszczono w dniu {d}.",
+        ),
+    ],
 }
-SHORT = {1: "bezpodstawne odrzucenie oferty Odwołującego", 2: "wadliwy wybór oferty jako najkorzystniejszej",
-         3: "bezpodstawne wykluczenie Odwołującego", 4: "wadliwe ukształtowanie warunków w SWZ",
-         5: "wadliwą zmianę SWZ", 6: "udzielenie wyjaśnień zmieniających treść SWZ",
-         7: "zaniechanie odrzucenia oferty konkurenta", 8: "zaniechanie wykluczenia konkurenta",
-         9: "bezpodstawne unieważnienie postępowania", 10: "zaniechanie unieważnienia postępowania",
-         11: "nieprecyzyjny opis przedmiotu zamówienia", 12: "niedozwolone postanowienia wzoru umowy"}
+SHORT = {
+    1: "bezpodstawne odrzucenie oferty Odwołującego",
+    2: "wadliwy wybór oferty jako najkorzystniejszej",
+    3: "bezpodstawne wykluczenie Odwołującego",
+    4: "wadliwe ukształtowanie warunków w SWZ",
+    5: "wadliwą zmianę SWZ",
+    6: "udzielenie wyjaśnień zmieniających treść SWZ",
+    7: "zaniechanie odrzucenia oferty konkurenta",
+    8: "zaniechanie wykluczenia konkurenta",
+    9: "bezpodstawne unieważnienie postępowania",
+    10: "zaniechanie unieważnienia postępowania",
+    11: "nieprecyzyjny opis przedmiotu zamówienia",
+    12: "niedozwolone postanowienia wzoru umowy",
+}
 FILLER = [
     "Odwołujący posiada interes we wniesieniu odwołania, ponieważ może ponieść szkodę w postaci utraty możliwości uzyskania zamówienia.",
     "Zaskarżona czynność narusza zasadę uczciwej konkurencji oraz równego traktowania wykonawców, o której mowa w art. 16 pkt 1 Pzp.",
@@ -372,20 +633,33 @@ def make_case(rng: random.Random) -> dict:
         for a in atts:
             a["title"] = rng.choice(["rp", "adw"])
         surname = atts[0]["last"]
-        office = rng.choice([
-            f"Kancelaria Radców Prawnych {surname} i Wspólnicy sp.k.",
-            f"Kancelaria Adwokacka {atts[0]['nom']}",
-            f"{surname} & Partnerzy Kancelaria Prawna sp.p.",
-            f"Kancelaria Prawna {surname} Sp. z o.o.",
-            f"Kancelaria Radcy Prawnego {atts[0]['nom']}",
-            "Kancelaria Prawa Zamówień Publicznych " + surname + " sp.k.",
-        ])
+        office = rng.choice(
+            [
+                f"Kancelaria Radców Prawnych {surname} i Wspólnicy sp.k.",
+                f"Kancelaria Adwokacka {atts[0]['nom']}",
+                f"{surname} & Partnerzy Kancelaria Prawna sp.p.",
+                f"Kancelaria Prawna {surname} Sp. z o.o.",
+                f"Kancelaria Radcy Prawnego {atts[0]['nom']}",
+                "Kancelaria Prawa Zamówień Publicznych " + surname + " sp.k.",
+            ]
+        )
         slug = "".join(ch for ch in surname.lower() if ch.isascii() and ch.isalpha()) or "kancelaria"
-        mail = rng.choice([f"biuro@{slug}.pl", f"kancelaria@{slug}-legal.com.pl", f"sekretariat@{slug}.example",
-                           f"{slug}@adwokat.pl", f"zamowienia@{slug}.eu"])
-        c["att"] = {"people": atts, "office": office if rng.random() < 0.88 else None,
-                    "mail": mail if rng.random() < 0.88 else None, "addr": make_addr(rng),
-                    "phone": f"{rng.randint(22, 91)} {rng.randint(100, 999)} {rng.randint(10, 99)} {rng.randint(10, 99)}"}
+        mail = rng.choice(
+            [
+                f"biuro@{slug}.pl",
+                f"kancelaria@{slug}-legal.com.pl",
+                f"sekretariat@{slug}.example",
+                f"{slug}@adwokat.pl",
+                f"zamowienia@{slug}.eu",
+            ]
+        )
+        c["att"] = {
+            "people": atts,
+            "office": office if rng.random() < 0.88 else None,
+            "mail": mail if rng.random() < 0.88 else None,
+            "addr": make_addr(rng),
+            "phone": f"{rng.randint(22, 91)} {rng.randint(100, 999)} {rng.randint(10, 99)} {rng.randint(10, 99)}",
+        }
     else:
         c["att"] = None
     n_zam = 2 if rng.random() < 0.18 else 1
@@ -419,7 +693,9 @@ def make_case(rng: random.Random) -> dict:
     c["ted_style"] = rng.choice(["plain", "s"])
     c["ted_text"] = f"{ted_n}-{year}" if c["ted_style"] == "plain" else f"{year}/S {rng.randint(60, 240)}-{ted_n}"
     pat = rng.choice(NUMBER_PATTERNS)
-    c["nr"] = pat.format(n=rng.randint(10, 999), m=rng.randint(1, 60), y=year, yy=year % 100) if rng.random() < 0.92 else None
+    c["nr"] = (
+        pat.format(n=rng.randint(10, 999), m=rng.randint(1, 60), y=year, yy=year % 100) if rng.random() < 0.92 else None
+    )
     c["title"] = rng.choice(TITLES_ZP).format(c=rng.choice(CITIES), c2=rng.choice(CITIES), s=rng.choice(STREETS))
     n_ch = rng.choice([1, 1, 2, 3])
     codes = rng.sample(range(1, 13), n_ch)
@@ -448,14 +724,32 @@ def odw_gold(c: dict) -> dict:
             "czynnosc_opis": CODES[code],
             "miejscowosc": c["town"],
         },
-        "Odwolujacy": [{
-            "krs": lead["krs"], "nazwa": lead["name"], "nip": lead["nip"], "regon": lead["regon"],
-            "przez-pelnomocnika": 1 if att else 0, "pelnomocnik": pel,
-        }],
-        "Zamawiajacy": [{"krs": z["krs"], "nazwa": z["name"], "nip": z["nip"], "regon": z["regon"],
-                         "prowadzacy_postepowanie": z["lead"]} for z in c["zam"]],
-        "ZamowieniePubliczne": {"numer_bzp": c["bzp"], "numer_postepowania": c["nr"], "numer_ted": c["ted"],
-                                "tytul": c["title"]},
+        "Odwolujacy": [
+            {
+                "krs": lead["krs"],
+                "nazwa": lead["name"],
+                "nip": lead["nip"],
+                "regon": lead["regon"],
+                "przez-pelnomocnika": 1 if att else 0,
+                "pelnomocnik": pel,
+            }
+        ],
+        "Zamawiajacy": [
+            {
+                "krs": z["krs"],
+                "nazwa": z["name"],
+                "nip": z["nip"],
+                "regon": z["regon"],
+                "prowadzacy_postepowanie": z["lead"],
+            }
+            for z in c["zam"]
+        ],
+        "ZamowieniePubliczne": {
+            "numer_bzp": c["bzp"],
+            "numer_postepowania": c["nr"],
+            "numer_ted": c["ted"],
+            "tytul": c["title"],
+        },
     }
 
 
@@ -500,11 +794,13 @@ def odw_party_lines(c: dict, rng: random.Random, style: str) -> list[str]:
     """The lines about the Odwolujacy. The lead is always the first one."""
     lines = []
     if len(c["odw"]) > 1:
-        lines.append("Konsorcjum wykonawców w składzie:" if style != "pl" else "Wykonawcy wspólnie ubiegający się o zamówienie:")
+        lines.append(
+            "Konsorcjum wykonawców w składzie:" if style != "pl" else "Wykonawcy wspólnie ubiegający się o zamówienie:"
+        )
     for i, o in enumerate(c["odw"]):
         role = ""
         if len(c["odw"]) > 1:
-            role = ("Lider konsorcjum: " if i == 0 else "Partner konsorcjum: ")
+            role = "Lider konsorcjum: " if i == 0 else "Partner konsorcjum: "
             role = f"{i + 1}) {role}"
         lines.append(f"{role}{o['name']}")
         lines.append(o["addr"])
@@ -522,9 +818,13 @@ def zam_party_lines(c: dict, rng: random.Random) -> list[str]:
         z = zam[0]
         return [z["name"], z["addr"]] + ([ids_inline(rng, z)] if ids_inline(rng, z) else [])
     lines = ["(zamawiający wspólnie przeprowadzający postępowanie na podstawie art. 38 ust. 1 Pzp):"]
-    lead_words = rng.choice([("Lider, prowadzący postępowanie", "Partner"),
-                             ("zamawiający prowadzący postępowanie w imieniu pozostałych", "zamawiający uczestniczący"),
-                             ("Lider postępowania", "współzamawiający")])
+    lead_words = rng.choice(
+        [
+            ("Lider, prowadzący postępowanie", "Partner"),
+            ("zamawiający prowadzący postępowanie w imieniu pozostałych", "zamawiający uczestniczący"),
+            ("Lider postępowania", "współzamawiający"),
+        ]
+    )
     for i, z in enumerate(zam):
         if z["lead"] == 1:
             role = lead_words[0]
@@ -569,9 +869,13 @@ def body_lines(c: dict, rng: random.Random, bullets: str, sections: bool) -> lis
     names = ", ".join(o["name"] for o in c["odw"][:1])
     who = "Konsorcjum" if len(c["odw"]) > 1 else names
     if c["att"]:
-        lines.append(f"Działając w imieniu wykonawcy {who} (dalej: „Odwołujący”), na podstawie pełnomocnictwa załączonego do niniejszego pisma, na podstawie art. 505 ust. 1 i art. 513 ustawy z dnia 11 września 2019 r. – Prawo zamówień publicznych (dalej: „Pzp”), wnoszę odwołanie wobec czynności i zaniechań Zamawiającego, polegających na:")
+        lines.append(
+            f"Działając w imieniu wykonawcy {who} (dalej: „Odwołujący”), na podstawie pełnomocnictwa załączonego do niniejszego pisma, na podstawie art. 505 ust. 1 i art. 513 ustawy z dnia 11 września 2019 r. – Prawo zamówień publicznych (dalej: „Pzp”), wnoszę odwołanie wobec czynności i zaniechań Zamawiającego, polegających na:"
+        )
     else:
-        lines.append(f"Działając jako wykonawca {who} (dalej: „Odwołujący”), na podstawie art. 505 ust. 1 i art. 513 ustawy Prawo zamówień publicznych (dalej: „Pzp”), wnoszę odwołanie wobec czynności i zaniechań Zamawiającego, polegających na:")
+        lines.append(
+            f"Działając jako wykonawca {who} (dalej: „Odwołujący”), na podstawie art. 505 ust. 1 i art. 513 ustawy Prawo zamówień publicznych (dalej: „Pzp”), wnoszę odwołanie wobec czynności i zaniechań Zamawiającego, polegających na:"
+        )
     if sections:
         lines.insert(0, "II. CZYNNOŚCI ZASKARŻONE ODWOŁANIEM")
     lines += charges_lines(c, rng, bullets)
@@ -581,22 +885,34 @@ def body_lines(c: dict, rng: random.Random, bullets: str, sections: bool) -> lis
         lines.append(f"Zarzut nr {i} – {SHORT[code]}, tj. naruszenie art. {art} Pzp.")
     lines.append("IV. UZASADNIENIE" if sections else "Uzasadnienie")
     for _ in range(rng.randint(3, 6)):
-        lines.append(rng.choice(FILLER).format(dd=fmt_date(c["deadline"], c["dfmt"]), fee=c["fee"],
-                                                pd=fmt_date(c["paid"], c["dfmt"])))
+        lines.append(
+            rng.choice(FILLER).format(
+                dd=fmt_date(c["deadline"], c["dfmt"]), fee=c["fee"], pd=fmt_date(c["paid"], c["dfmt"])
+            )
+        )
     code, day = c["charges"][0]
     fact = rng.choice(CH[code])[1].format(d=fmt_date(day, c["dfmt"]), x=c["winner"])
     lines.insert(-2, "Stan faktyczny: " + fact)
     lines.append("V. WNIOSKI" if sections else "Wnoszę o:")
-    lines += ["1) uwzględnienie odwołania i nakazanie Zamawiającemu unieważnienia zaskarżonej czynności;",
-              "2) przeprowadzenie dowodów z dokumentów wskazanych w uzasadnieniu;",
-              "3) zasądzenie od Zamawiającego kosztów postępowania odwoławczego, w tym kosztów zastępstwa."]
-    lines += ["Załączniki:", "1. Dowód uiszczenia wpisu od odwołania.", "2. Pełnomocnictwo dla pełnomocnika Odwołującego." if c["att"] else "2. Odpis z rejestru.",
-              "3. Dowód przekazania kopii odwołania Zamawiającemu."]
+    lines += [
+        "1) uwzględnienie odwołania i nakazanie Zamawiającemu unieważnienia zaskarżonej czynności;",
+        "2) przeprowadzenie dowodów z dokumentów wskazanych w uzasadnieniu;",
+        "3) zasądzenie od Zamawiającego kosztów postępowania odwoławczego, w tym kosztów zastępstwa.",
+    ]
+    lines += [
+        "Załączniki:",
+        "1. Dowód uiszczenia wpisu od odwołania.",
+        "2. Pełnomocnictwo dla pełnomocnika Odwołującego." if c["att"] else "2. Odpis z rejestru.",
+        "3. Dowód przekazania kopii odwołania Zamawiającemu.",
+    ]
     lines.append("")
     if c["att"]:
         lines += ["Pełnomocnik Odwołującego", att_names(c, rng, "nom", rng.choice(["abbr", "nom"]))]
     else:
-        lines += ["Odwołujący", c["odw"][0]["person"]["nom"] if c["odw"][0]["person"] else "(podpis osoby uprawnionej do reprezentacji)"]
+        lines += [
+            "Odwołujący",
+            c["odw"][0]["person"]["nom"] if c["odw"][0]["person"] else "(podpis osoby uprawnionej do reprezentacji)",
+        ]
     return lines
 
 
@@ -604,7 +920,12 @@ def header_dateline(c: dict, rng: random.Random, kind: int) -> list[str]:
     if not c["town"]:
         return []
     d = fmt_date(c["date"], c["dstyle"])
-    forms = [f"{c['town']}, {d}", f"{c['town']}, dnia {d}", f"{c['town']} {fmt_date(c['date'], 'dot')}", f"{c['town']}, {d}"]
+    forms = [
+        f"{c['town']}, {d}",
+        f"{c['town']}, dnia {d}",
+        f"{c['town']} {fmt_date(c['date'], 'dot')}",
+        f"{c['town']}, {d}",
+    ]
     line = forms[kind % 4]
     return [line.rjust(70) if kind % 2 else line]
 
@@ -617,7 +938,7 @@ def wrap(lines: list[str], width: int) -> list[str]:
 
 
 def paginate(lines: list[str], rng: random.Random, head: str, per_page: int = 46) -> str:
-    pages = [lines[i:i + per_page] for i in range(0, len(lines), per_page)] or [[]]
+    pages = [lines[i : i + per_page] for i in range(0, len(lines), per_page)] or [[]]
     out = []
     for k, page in enumerate(pages, 1):
         if k > 1 and head:
@@ -642,13 +963,21 @@ def odw_A(c, rng):
 
 
 def odw_B(c, rng):
-    L = header_dateline(c, rng, 1) + ["", "Krajowa Izba Odwoławcza", "ul. Postępu 17A, 02-676 Warszawa", "(za pośrednictwem Prezesa KIO)", ""]
+    L = header_dateline(c, rng, 1) + [
+        "",
+        "Krajowa Izba Odwoławcza",
+        "ul. Postępu 17A, 02-676 Warszawa",
+        "(za pośrednictwem Prezesa KIO)",
+        "",
+    ]
     L += ["ODWOŁANIE", "wobec czynności Zamawiającego w postępowaniu " + procurement_phrase(c, rng, 1), ""]
     L += ["Zamawiający"] + zam_party_lines(c, rng) + [""]
     first = odw_party_lines(c, rng, "k")
     L += ["Odwołujący"] + first
     if c["att"]:
-        L += ["Pełnomocnik: " + att_names(c, rng, "nom", "abbr")] + att_office_lines(c, "Kancelaria: " if c["att"]["office"] else "adres: ")
+        L += ["Pełnomocnik: " + att_names(c, rng, "nom", "abbr")] + att_office_lines(
+            c, "Kancelaria: " if c["att"]["office"] else "adres: "
+        )
     return L + body_lines(c, rng, "dot", False), "Odwołanie - Krajowa Izba Odwoławcza"
 
 
@@ -666,10 +995,16 @@ def odw_C(c, rng):
         p = c["odw"][1]
         L += ["Partner konsorcjum (Lider: " + o["name"] + ")", p["name"], p["addr"], ids_inline(rng, p)]
     for z in c["zam"]:
-        lab = ["Zamawiający", "Nazwa", "Adres", "KRS", "NIP", "REGON"] + (["Rola w postępowaniu"] if len(c["zam"]) > 1 else [])
+        lab = ["Zamawiający", "Nazwa", "Adres", "KRS", "NIP", "REGON"] + (
+            ["Rola w postępowaniu"] if len(c["zam"]) > 1 else []
+        )
         val = [z["name"], z["addr"], z["krs"] or "-", z["nip"] or "-", z["regon"] or "-"]
         if len(c["zam"]) > 1:
-            val.append("prowadzący postępowanie (lider)" if z["lead"] == 1 else ("uczestnik" if any(x["lead"] == 1 for x in c["zam"]) else "zamawiający"))
+            val.append(
+                "prowadzący postępowanie (lider)"
+                if z["lead"] == 1
+                else ("uczestnik" if any(x["lead"] == 1 for x in c["zam"]) else "zamawiający")
+            )
         L += lab[:1] + lab[1:] + val
     L += ["Przedmiot postępowania", procurement_phrase(c, rng, 2)]
     return L + body_lines(c, rng, "paren", False), "Odwołanie do KIO"
@@ -679,7 +1014,11 @@ def odw_D(c, rng):
     """The parties are in a paragraph, as in a letter of a law office."""
     L = []
     if c["att"] and c["att"]["office"]:
-        L += [c["att"]["office"], c["att"]["addr"], f"tel. {c['att']['phone']}" + (f", {c['att']['mail']}" if c["att"]["mail"] else "")]
+        L += [
+            c["att"]["office"],
+            c["att"]["addr"],
+            f"tel. {c['att']['phone']}" + (f", {c['att']['mail']}" if c["att"]["mail"] else ""),
+        ]
     L += header_dateline(c, rng, 3)
     L += KIO_ADDR + ["", "ODWOŁANIE", ""]
     o = c["odw"][0]
@@ -693,12 +1032,20 @@ def odw_D(c, rng):
     txt += "."
     L.append(txt)
     if len(c["zam"]) == 1:
-        L.append(f"Zamawiający: {z['name']}, {z['addr']}" + (f" ({ids_inline(rng, z)})" if ids_inline(rng, z) else "") + ".")
+        L.append(
+            f"Zamawiający: {z['name']}, {z['addr']}" + (f" ({ids_inline(rng, z)})" if ids_inline(rng, z) else "") + "."
+        )
     else:
-        L.append("Zamawiający (wspólnie): " + "; ".join(
-            f"{x['name']}, {x['addr']}" + (f" ({ids_inline(rng, x)})" if ids_inline(rng, x) else "") +
-            (" – prowadzący postępowanie" if x["lead"] == 1 else "")
-            for x in c["zam"]) + ".")
+        L.append(
+            "Zamawiający (wspólnie): "
+            + "; ".join(
+                f"{x['name']}, {x['addr']}"
+                + (f" ({ids_inline(rng, x)})" if ids_inline(rng, x) else "")
+                + (" – prowadzący postępowanie" if x["lead"] == 1 else "")
+                for x in c["zam"]
+            )
+            + "."
+        )
     L.append("Postępowanie: " + procurement_phrase(c, rng, 3) + ".")
     return L + body_lines(c, rng, "alpha", False), "Odwołanie " + (c["nr"] or "")
 
@@ -706,7 +1053,9 @@ def odw_D(c, rng):
 def odw_E(c, rng):
     """A formal appeal with numbered sections."""
     L = header_dateline(c, rng, 0) + ["Do:"] + KIO_ADDR
-    L += ["ODWOŁANIE", "I. OZNACZENIE STRON I POSTĘPOWANIA", "1. Odwołujący (Wykonawca):"] + odw_party_lines(c, rng, "pl")
+    L += ["ODWOŁANIE", "I. OZNACZENIE STRON I POSTĘPOWANIA", "1. Odwołujący (Wykonawca):"] + odw_party_lines(
+        c, rng, "pl"
+    )
     if c["att"]:
         L += ["Pełnomocnik Odwołującego: " + att_names(c, rng, "nom", "full")]
         L += att_office_lines(c, "Siedziba kancelarii: ")
@@ -717,11 +1066,18 @@ def odw_E(c, rng):
 
 def odw_F(c, rng):
     """The Zamawiajacy is first. The attorney is in an oblique case."""
-    L = header_dateline(c, rng, 1) + ["Krajowa Izba Odwoławcza", "ul. Postępu 17A", "02-676 Warszawa", "",
-                                       "Zamawiający:"] + zam_party_lines(c, rng)
+    L = (
+        header_dateline(c, rng, 1)
+        + ["Krajowa Izba Odwoławcza", "ul. Postępu 17A", "02-676 Warszawa", "", "Zamawiający:"]
+        + zam_party_lines(c, rng)
+    )
     L += ["", "Odwołujący:"] + odw_party_lines(c, rng, "k")
     if c["att"]:
-        L.append("reprezentowany przez " + att_names(c, rng, "acc", "full") + (f" z {c['att']['office']}" if c["att"]["office"] else ""))
+        L.append(
+            "reprezentowany przez "
+            + att_names(c, rng, "acc", "full")
+            + (f" z {c['att']['office']}" if c["att"]["office"] else "")
+        )
         L += att_office_lines(c, "adres: ")
     L += ["", "ODWOŁANIE", "od czynności Zamawiającego w postępowaniu " + procurement_phrase(c, rng, 0)]
     return L + body_lines(c, rng, "paren", False), "Odwołanie"
@@ -732,12 +1088,22 @@ def odw_G(c, rng):
     L = ["Odwołanie", ""] + header_dateline(c, rng, 3)
     L += ["Wykonawca (Odwołujący): " + c["odw"][0]["name"], c["odw"][0]["addr"], ids_inline(rng, c["odw"][0], "; ")]
     if len(c["odw"]) > 1:
-        L += ["wspólnie z: " + c["odw"][1]["name"] + ", " + c["odw"][1]["addr"] + " (konsorcjum, lider: " + c["odw"][0]["name"] + ")"]
+        L += [
+            "wspólnie z: "
+            + c["odw"][1]["name"]
+            + ", "
+            + c["odw"][1]["addr"]
+            + " (konsorcjum, lider: "
+            + c["odw"][0]["name"]
+            + ")"
+        ]
     if c["att"]:
         L += ["Pełnomocnik: " + att_names(c, rng, "nom", "full")] + att_office_lines(c, "Kontakt: ")
     L += ["Zamawiający:"] + zam_party_lines(c, rng)
-    L += ["Organ odwoławczy: Krajowa Izba Odwoławcza, ul. Postępu 17A, 02-676 Warszawa",
-          "Przedmiot: " + procurement_phrase(c, rng, 3)]
+    L += [
+        "Organ odwoławczy: Krajowa Izba Odwoławcza, ul. Postępu 17A, 02-676 Warszawa",
+        "Przedmiot: " + procurement_phrase(c, rng, 3),
+    ]
     return L + body_lines(c, rng, "dash", False), "Odwołanie / " + c["odw"][0]["name"]
 
 
@@ -803,9 +1169,18 @@ def pel_gold(c: dict) -> dict:
     mocs = []
     for o in c["mocs"]:
         p = o["person"]
-        mocs.append({"data": {"imie_nazwisko": p["nom"] if p else None, "krs": o["krs"], "nazwa": o["name"],
-                              "nip": o["nip"], "typ": "osoba_fizyczna" if p else "osoba_prawna"},
-                     "podpisujacy": [{"imie_nazwisko": s["nom"]} for s in o["signers"]]})
+        mocs.append(
+            {
+                "data": {
+                    "imie_nazwisko": p["nom"] if p else None,
+                    "krs": o["krs"],
+                    "nazwa": o["name"],
+                    "nip": o["nip"],
+                    "typ": "osoba_fizyczna" if p else "osoba_prawna",
+                },
+                "podpisujacy": [{"imie_nazwisko": s["nom"]} for s in o["signers"]],
+            }
+        )
     return {"mocodawca": mocs, "pelnomocnicy": [{"imie_nazwisko": a["nom"], "pesel": a["pesel"]} for a in c["atts"]]}
 
 
@@ -835,20 +1210,29 @@ def pel_signers(c: dict, label: str = "Mocodawca:") -> list[str]:
 
 
 def pel_scope(rng: random.Random) -> list[str]:
-    items = ["wniesienia odwołania do Prezesa Krajowej Izby Odwoławczej oraz jego cofnięcia",
-             "zastępowania Mocodawcy na posiedzeniach i rozprawach przed Krajową Izbą Odwoławczą",
-             "składania i odbierania pism procesowych, wniosków i oświadczeń",
-             "wniesienia skargi na orzeczenie Krajowej Izby Odwoławczej",
-             "udzielania dalszych pełnomocnictw"]
+    items = [
+        "wniesienia odwołania do Prezesa Krajowej Izby Odwoławczej oraz jego cofnięcia",
+        "zastępowania Mocodawcy na posiedzeniach i rozprawach przed Krajową Izbą Odwoławczą",
+        "składania i odbierania pism procesowych, wniosków i oświadczeń",
+        "wniesienia skargi na orzeczenie Krajowej Izby Odwoławczej",
+        "udzielania dalszych pełnomocnictw",
+    ]
     return rng.sample(items, 4)
 
 
 def pel_A(c, rng):
     L = [f"{c['town']}, {fmt_date(c['date'], c['dstyle'])}", "PEŁNOMOCNICTWO", "§ 1. Mocodawca"]
     L += [f"Mocodawcą jest {pel_moc(o, rng)}." for o in c["mocs"]]
-    L += ["§ 2. Pełnomocnik", "Mocodawca ustanawia pełnomocnikiem: " + "; ".join(pel_att(a, rng, "acc", "abbr") for a in c["atts"]) + "."]
-    L += ["§ 3. Postępowanie", f"Pełnomocnictwo dotyczy postępowania „{c['title']}”, numer postępowania: {c['nr']}, prowadzonego przez {c['auth'][0]}.",
-          "§ 4. Zakres umocowania", "Pełnomocnik jest umocowany do:"] + [f"– {x}," for x in pel_scope(rng)]
+    L += [
+        "§ 2. Pełnomocnik",
+        "Mocodawca ustanawia pełnomocnikiem: " + "; ".join(pel_att(a, rng, "acc", "abbr") for a in c["atts"]) + ".",
+    ]
+    L += [
+        "§ 3. Postępowanie",
+        f"Pełnomocnictwo dotyczy postępowania „{c['title']}”, numer postępowania: {c['nr']}, prowadzonego przez {c['auth'][0]}.",
+        "§ 4. Zakres umocowania",
+        "Pełnomocnik jest umocowany do:",
+    ] + [f"– {x}," for x in pel_scope(rng)]
     L += ["Pełnomocnictwo obowiązuje do zakończenia postępowania odwoławczego.", ""] + pel_signers(c)
     L += ["Pełnomocnictwo przyjmuję:"] + [f"{TITLES[a['title']]['abbr']} {a['nom']}" for a in c["atts"]]
     return L
@@ -862,8 +1246,13 @@ def pel_B(c, rng):
         labels += ["Mocodawca", "Dane rejestrowe"]
         vals += [f"{o['name']}, {o['addr']}", ids_inline(rng, o) or "-"]
     labels += ["Pełnomocnicy", "Zamawiający", "Postępowanie", "Zakres", "Data"]
-    vals += ["; ".join(pel_att(a, rng, "nom", "abbr") for a in c["atts"]), c["auth"][0], f"{c['title']}, nr {c['nr']}",
-             "reprezentowanie w postępowaniu odwoławczym przed KIO, wniesienie odwołania", fmt_date(c["date"], "dot")]
+    vals += [
+        "; ".join(pel_att(a, rng, "nom", "abbr") for a in c["atts"]),
+        c["auth"][0],
+        f"{c['title']}, nr {c['nr']}",
+        "reprezentowanie w postępowaniu odwoławczym przed KIO, wniesienie odwołania",
+        fmt_date(c["date"], "dot"),
+    ]
     return L + labels + vals + pel_signers(c, "Podpisy:")
 
 
@@ -872,10 +1261,14 @@ def pel_C(c, rng):
     o = c["mocs"][0]
     who = "Ja, niżej podpisany" if o["person"] else f"{o['name']}"
     atts = " oraz ".join(f"{HONOR[a['g']]['dat']} {pel_att(a, rng, 'dat', 'full')}" for a in c["atts"])
-    L = ["Pełnomocnictwo", f"{who}, {o['addr']}" + (f", {ids_inline(rng, o)}" if ids_inline(rng, o) else "") +
-         f" udzielam pełnomocnictwa {atts} do reprezentowania w postępowaniu „{c['title']}”, nr {c['nr']}, "
-         f"prowadzonym przez {c['auth'][1]}, w tym do wniesienia odwołania do Krajowej Izby Odwoławczej i udziału w rozprawie.",
-         f"{c['town']}, {fmt_date(c['date'], 'long')}"] + pel_signers(c, "")
+    L = [
+        "Pełnomocnictwo",
+        f"{who}, {o['addr']}"
+        + (f", {ids_inline(rng, o)}" if ids_inline(rng, o) else "")
+        + f" udzielam pełnomocnictwa {atts} do reprezentowania w postępowaniu „{c['title']}”, nr {c['nr']}, "
+        f"prowadzonym przez {c['auth'][1]}, w tym do wniesienia odwołania do Krajowej Izby Odwoławczej i udziału w rozprawie.",
+        f"{c['town']}, {fmt_date(c['date'], 'long')}",
+    ] + pel_signers(c, "")
     return L
 
 
@@ -890,8 +1283,11 @@ def pel_D(c, rng):
             L.append(f"NIP: {nip_text(rng, o['nip'])}")
     for i, a in enumerate(c["atts"], 1):
         L.append(f"Pełnomocnik {i}: {pel_att(a, rng, 'nom', 'full')}")
-    L += ["Przedmiot: reprezentowanie przed Krajową Izbą Odwoławczą w sprawie wniesionego odwołania; postępowanie nr " + c["nr"],
-          "Opłata skarbowa w wysokości 17 zł została uiszczona."]
+    L += [
+        "Przedmiot: reprezentowanie przed Krajową Izbą Odwoławczą w sprawie wniesionego odwołania; postępowanie nr "
+        + c["nr"],
+        "Opłata skarbowa w wysokości 17 zł została uiszczona.",
+    ]
     return L + pel_signers(c, "Osoby podpisujące w imieniu mocodawcy:")
 
 
@@ -900,16 +1296,25 @@ def pel_E(c, rng):
     L = ["PEŁNOMOCNICTWO", "Wykonawcy wspólnie ubiegający się o udzielenie zamówienia:"]
     for i, o in enumerate(c["mocs"]):
         L.append(f"{i + 1}) {'Lider' if i == 0 else 'Partner'}: {pel_moc(o, rng)}")
-    L += ["ustanawiają pełnomocnikiem " + ", ".join(pel_att(a, rng, "acc", "full") for a in c["atts"]),
-          f"do reprezentowania w postępowaniu {c['nr']} „{c['title']}” przed Krajową Izbą Odwoławczą.", c["town"] + " " + fmt_date(c["date"], "dot")]
+    L += [
+        "ustanawiają pełnomocnikiem " + ", ".join(pel_att(a, rng, "acc", "full") for a in c["atts"]),
+        f"do reprezentowania w postępowaniu {c['nr']} „{c['title']}” przed Krajową Izbą Odwoławczą.",
+        c["town"] + " " + fmt_date(c["date"], "dot"),
+    ]
     return L + pel_signers(c)
 
 
 def pel_F(c, rng):
     o = c["mocs"][0]
-    L = ["Pełnomocnictwo", f"{o['name']} z siedzibą: {o['addr']}", ids_inline(rng, o, " ") if o["krs"] or o["nip"] else "",
-         "niniejszym ustanawia: " + ", ".join(pel_att(a, rng, "acc", "abbr") for a in c["atts"]) + " swoim pełnomocnikiem w postępowaniu odwoławczym.",
-         f"Postępowanie: {c['title']}, {c['nr']}."]
+    L = [
+        "Pełnomocnictwo",
+        f"{o['name']} z siedzibą: {o['addr']}",
+        ids_inline(rng, o, " ") if o["krs"] or o["nip"] else "",
+        "niniejszym ustanawia: "
+        + ", ".join(pel_att(a, rng, "acc", "abbr") for a in c["atts"])
+        + " swoim pełnomocnikiem w postępowaniu odwoławczym.",
+        f"Postępowanie: {c['title']}, {c['nr']}.",
+    ]
     return [x for x in L if x] + [f"dnia {fmt_date(c['date'], 'long')}"] + pel_signers(c, "podpis:")
 
 
@@ -929,27 +1334,123 @@ def gen_pelnomocnictwo(rng: random.Random, i: int):
 # --- bank confirmations ---------------------------------------------------
 
 BANKS = [  # name, mode, labels (key, text), footer
-    ("PKO Bank Polski", "inline", [("payer", "Nazwa nadawcy"), ("from", "Numer rachunku nadawcy"), ("recv", "Nazwa odbiorcy"),
-                                   ("to", "Numer rachunku odbiorcy"), ("title", "Tytuł"), ("amount", "Kwota"), ("date", "Data operacji"),
-                                   ("txid", "Numer referencyjny")], "Dokument wygenerowano elektronicznie {p}."),
-    ("mBank", "inline", [("date", "Data wykonania"), ("from", "Z rachunku"), ("to", "Na rachunek"), ("recv", "Odbiorca"),
-                         ("title", "Tytuł"), ("amount", "Kwota"), ("txid", "ID transakcji")], "mBank S.A. Potwierdzenie z dnia {p}"),
-    ("ING Bank Śląski", "labels_first", [("date", "Data transakcji"), ("booking", "Data księgowania"), ("payer", "Dane zleceniodawcy"),
-                                         ("from", "Rachunek zleceniodawcy"), ("recv", "Dane odbiorcy"), ("to", "Rachunek odbiorcy"),
-                                         ("title", "Tytuł"), ("amount", "Kwota"), ("txid", "Nr transakcji")], "ING Bank Śląski S.A. {p}"),
-    ("Santander Bank Polska", "inline", [("payer", "Nadawca"), ("from", "Rachunek nadawcy"), ("recv", "Odbiorca"), ("to", "Rachunek odbiorcy"),
-                                         ("amount", "Kwota przelewu"), ("title", "Tytuł przelewu"), ("date", "Data realizacji"),
-                                         ("txid", "Identyfikator")], "Wydruk z dnia {p}"),
-    ("Bank Pekao S.A.", "labels_first", [("payer", "Zleceniodawca"), ("from", "Z rachunku"), ("recv", "Beneficjent"), ("to", "Na rachunek"),
-                                         ("amount", "Kwota"), ("title", "Tytuł płatności"), ("date", "Data realizacji"),
-                                         ("txid", "Numer transakcji")], "Pekao24 – data wydruku {p}"),
-    ("Bank Millennium", "inline", [("date", "Data wykonania"), ("booking", "Data księgowania"), ("amount", "Kwota"), ("from", "Rachunek obciążany"),
-                                   ("to", "Rachunek beneficjenta"), ("recv", "Beneficjent"), ("title", "Tytuł płatności"),
-                                   ("txid", "Nr referencyjny")], "Wygenerowano: {p}"),
-    ("Alior Bank", "dotted", [("amount", "KWOTA"), ("date", "DATA REALIZACJI"), ("from", "RACHUNEK NADAWCY"), ("to", "RACHUNEK ODBIORCY"),
-                              ("title", "TYTUŁ"), ("txid", "NR REFERENCYJNY")], "*** {p} ***"),
-    ("Bank Spółdzielczy w Kolbuszowej", "slip", [("payer", "Wpłacający"), ("from", "Z rachunku"), ("recv", "Odbiorca"), ("to", "Na rachunek"),
-                                                 ("amount", "Kwota"), ("title", "Tytułem"), ("date", "Data operacji")], "Pieczęć banku, {p}"),
+    (
+        "PKO Bank Polski",
+        "inline",
+        [
+            ("payer", "Nazwa nadawcy"),
+            ("from", "Numer rachunku nadawcy"),
+            ("recv", "Nazwa odbiorcy"),
+            ("to", "Numer rachunku odbiorcy"),
+            ("title", "Tytuł"),
+            ("amount", "Kwota"),
+            ("date", "Data operacji"),
+            ("txid", "Numer referencyjny"),
+        ],
+        "Dokument wygenerowano elektronicznie {p}.",
+    ),
+    (
+        "mBank",
+        "inline",
+        [
+            ("date", "Data wykonania"),
+            ("from", "Z rachunku"),
+            ("to", "Na rachunek"),
+            ("recv", "Odbiorca"),
+            ("title", "Tytuł"),
+            ("amount", "Kwota"),
+            ("txid", "ID transakcji"),
+        ],
+        "mBank S.A. Potwierdzenie z dnia {p}",
+    ),
+    (
+        "ING Bank Śląski",
+        "labels_first",
+        [
+            ("date", "Data transakcji"),
+            ("booking", "Data księgowania"),
+            ("payer", "Dane zleceniodawcy"),
+            ("from", "Rachunek zleceniodawcy"),
+            ("recv", "Dane odbiorcy"),
+            ("to", "Rachunek odbiorcy"),
+            ("title", "Tytuł"),
+            ("amount", "Kwota"),
+            ("txid", "Nr transakcji"),
+        ],
+        "ING Bank Śląski S.A. {p}",
+    ),
+    (
+        "Santander Bank Polska",
+        "inline",
+        [
+            ("payer", "Nadawca"),
+            ("from", "Rachunek nadawcy"),
+            ("recv", "Odbiorca"),
+            ("to", "Rachunek odbiorcy"),
+            ("amount", "Kwota przelewu"),
+            ("title", "Tytuł przelewu"),
+            ("date", "Data realizacji"),
+            ("txid", "Identyfikator"),
+        ],
+        "Wydruk z dnia {p}",
+    ),
+    (
+        "Bank Pekao S.A.",
+        "labels_first",
+        [
+            ("payer", "Zleceniodawca"),
+            ("from", "Z rachunku"),
+            ("recv", "Beneficjent"),
+            ("to", "Na rachunek"),
+            ("amount", "Kwota"),
+            ("title", "Tytuł płatności"),
+            ("date", "Data realizacji"),
+            ("txid", "Numer transakcji"),
+        ],
+        "Pekao24 – data wydruku {p}",
+    ),
+    (
+        "Bank Millennium",
+        "inline",
+        [
+            ("date", "Data wykonania"),
+            ("booking", "Data księgowania"),
+            ("amount", "Kwota"),
+            ("from", "Rachunek obciążany"),
+            ("to", "Rachunek beneficjenta"),
+            ("recv", "Beneficjent"),
+            ("title", "Tytuł płatności"),
+            ("txid", "Nr referencyjny"),
+        ],
+        "Wygenerowano: {p}",
+    ),
+    (
+        "Alior Bank",
+        "dotted",
+        [
+            ("amount", "KWOTA"),
+            ("date", "DATA REALIZACJI"),
+            ("from", "RACHUNEK NADAWCY"),
+            ("to", "RACHUNEK ODBIORCY"),
+            ("title", "TYTUŁ"),
+            ("txid", "NR REFERENCYJNY"),
+        ],
+        "*** {p} ***",
+    ),
+    (
+        "Bank Spółdzielczy w Kolbuszowej",
+        "slip",
+        [
+            ("payer", "Wpłacający"),
+            ("from", "Z rachunku"),
+            ("recv", "Odbiorca"),
+            ("to", "Na rachunek"),
+            ("amount", "Kwota"),
+            ("title", "Tytułem"),
+            ("date", "Data operacji"),
+        ],
+        "Pieczęć banku, {p}",
+    ),
 ]
 
 
@@ -961,8 +1462,11 @@ def przelew_gold_and_text(rng: random.Random, i: int):
     amount = float(rng.choice([7500, 10000, 15000])) if wpis else float(rng.choice([17, 34, 51]))
     zam = rng.choice(AUTHORITIES)[0].upper()
     nr = rng.choice(NUMBER_PATTERNS).format(n=rng.randint(10, 999), m=rng.randint(1, 60), y=2026, yy=26)
-    title = (f"WPIS OD ODWOŁANIA, ZAM: {zam}, {nr}, {rng.choice(TITLES_ZP).split(' w ')[0].upper()}" if wpis else
-             f"opłata skarbowa od pełnomocnictwa - {make_company(rng)}, postępowanie {nr}")
+    title = (
+        f"WPIS OD ODWOŁANIA, ZAM: {zam}, {nr}, {rng.choice(TITLES_ZP).split(' w ')[0].upper()}"
+        if wpis
+        else f"opłata skarbowa od pełnomocnictwa - {make_company(rng)}, postępowanie {nr}"
+    )
     title = title.replace("{C}", "X").replace("{c}", "X")
     txid = f"{rng.choice(['CEN', 'TR', 'ZL'])}{rng.randint(10**9, 10**11)}" if rng.random() < 0.6 else None
     if "txid" not in {key for key, _ in labels}:
@@ -970,13 +1474,24 @@ def przelew_gold_and_text(rng: random.Random, i: int):
     frm = iban(rng, rng.choice(BANK_CODES))
     to = "60101010100081362231000000" if wpis else iban(rng, rng.choice(BANK_CODES))
     ts = rng.choice([35, 60, 200])
-    vals = {"payer": make_company(rng), "from": account_text(rng, frm), "recv": "Urząd Zamówień Publicznych" if wpis else "Urząd Miasta " + rng.choice(CITIES),
-            "to": account_text(rng, to), "title": title, "amount": money_text(rng, amount), "date": fmt_date(d, rng.choice(["dot", "iso", "dash"])),
-            "booking": fmt_date(d + timedelta(days=1), "dot"), "txid": txid}
+    vals = {
+        "payer": make_company(rng),
+        "from": account_text(rng, frm),
+        "recv": "Urząd Zamówień Publicznych" if wpis else "Urząd Miasta " + rng.choice(CITIES),
+        "to": account_text(rng, to),
+        "title": title,
+        "amount": money_text(rng, amount),
+        "date": fmt_date(d, rng.choice(["dot", "iso", "dash"])),
+        "booking": fmt_date(d + timedelta(days=1), "dot"),
+        "txid": txid,
+    }
     print_d = fmt_date(d + timedelta(days=rng.randint(0, 9)), "dot")
     if bank == "mBank":
         vals["amount"] = "-" + vals["amount"]
-    L = [bank.upper() if k % 2 else bank, "Potwierdzenie przelewu" if k % 3 else "POTWIERDZENIE REALIZACJI POLECENIA PRZELEWU"]
+    L = [
+        bank.upper() if k % 2 else bank,
+        "Potwierdzenie przelewu" if k % 3 else "POTWIERDZENIE REALIZACJI POLECENIA PRZELEWU",
+    ]
     use = [(key, lab) for key, lab in labels if vals.get(key) is not None]
     if mode == "inline":
         for key, lab in use:
@@ -990,15 +1505,27 @@ def przelew_gold_and_text(rng: random.Random, i: int):
             L += textwrap.wrap(vals[key], ts) if key == "title" else [vals[key]]
     elif mode == "dotted":
         for key, lab in use:
-            L += [f"{lab} " + "." * max(3, 50 - len(lab) - len(vals[key])) + " " + vals[key]] if key != "title" else [lab + ":"] + textwrap.wrap(title, 60)
+            L += (
+                [f"{lab} " + "." * max(3, 50 - len(lab) - len(vals[key])) + " " + vals[key]]
+                if key != "title"
+                else [lab + ":"] + textwrap.wrap(title, 60)
+            )
     else:
         L += ["Dowód wpłaty/polecenie przelewu"]
         for key, lab in use:
             L += [lab] + (textwrap.wrap(title, ts) if key == "title" else [vals[key]])
         L.append("Słownie: " + words_pl(int(amount)) + " złotych 00/100")
     L.append(foot.format(p=print_d))
-    gold = {"przelew_bankowy": {"data_operacji": d.isoformat(), "kwota": amount, "na_rachunek": to, "numer_transakcji": txid,
-                                "tytul": title, "z_rachunku": frm}}
+    gold = {
+        "przelew_bankowy": {
+            "data_operacji": d.isoformat(),
+            "kwota": amount,
+            "na_rachunek": to,
+            "numer_transakcji": txid,
+            "tytul": title,
+            "z_rachunku": frm,
+        }
+    }
     return f"przelew/L{k}/{i:03d}", "\n".join(L), gold
 
 
@@ -1012,40 +1539,98 @@ def gen_negative(rng: random.Random, i: int):
     acc = account_text(rng, iban(rng, rng.choice(BANK_CODES)))
     d = fmt_date(c["date"], "long")
     if k == 0:
-        t = [f"Sygn. akt KIO {rng.randint(100, 3999)}/26", "WYROK", "z dnia " + d, "Krajowa Izba Odwoławcza w składzie:", f"Przewodniczący: {make_person(rng)['nom']}",
-             f"po rozpoznaniu na rozprawie odwołania wniesionego przez {o['name']} w postępowaniu prowadzonym przez {z['name']}, nr {c['nr']},",
-             "orzeka: 1. Oddala odwołanie. 2. Kosztami postępowania obciąża Odwołującego w kwocie " + c["fee"] + ".", "Przewodniczący: ..........."]
+        t = [
+            f"Sygn. akt KIO {rng.randint(100, 3999)}/26",
+            "WYROK",
+            "z dnia " + d,
+            "Krajowa Izba Odwoławcza w składzie:",
+            f"Przewodniczący: {make_person(rng)['nom']}",
+            f"po rozpoznaniu na rozprawie odwołania wniesionego przez {o['name']} w postępowaniu prowadzonym przez {z['name']}, nr {c['nr']},",
+            "orzeka: 1. Oddala odwołanie. 2. Kosztami postępowania obciąża Odwołującego w kwocie " + c["fee"] + ".",
+            "Przewodniczący: ...........",
+        ]
     elif k == 1:
-        t = [f"{c['town'] or 'Warszawa'}, dnia {d}", "Krajowa Izba Odwoławcza", "ODPOWIEDŹ NA ODWOŁANIE", f"Zamawiający: {z['name']}, {z['addr']}",
-             f"Odwołujący: {o['name']}", f"w sprawie o sygn. akt KIO {rng.randint(100, 3999)}/26 dotyczącej postępowania {c['nr']}",
-             "Zamawiający wnosi o oddalenie odwołania w całości oraz zasądzenie kosztów. W uzasadnieniu wskazuje, co następuje.", rng.choice(FILLER).format(dd=d, fee=c["fee"], pd=d)]
+        t = [
+            f"{c['town'] or 'Warszawa'}, dnia {d}",
+            "Krajowa Izba Odwoławcza",
+            "ODPOWIEDŹ NA ODWOŁANIE",
+            f"Zamawiający: {z['name']}, {z['addr']}",
+            f"Odwołujący: {o['name']}",
+            f"w sprawie o sygn. akt KIO {rng.randint(100, 3999)}/26 dotyczącej postępowania {c['nr']}",
+            "Zamawiający wnosi o oddalenie odwołania w całości oraz zasądzenie kosztów. W uzasadnieniu wskazuje, co następuje.",
+            rng.choice(FILLER).format(dd=d, fee=c["fee"], pd=d),
+        ]
     elif k == 2:
-        t = [f"FAKTURA VAT nr FV/{rng.randint(1, 999)}/2026", f"Data wystawienia: {fmt_date(c['date'], 'dot')}", f"Sprzedawca: {o['name']}, NIP {o['nip'] or '5213456789'}",
-             f"Nabywca: {z['name']}", "Lp. Nazwa towaru lub usługi  Ilość  Cena  Wartość", "1. Usługi serwisowe  1  8 000,00  8 000,00",
-             "Razem do zapłaty: 9 840,00 PLN", f"Numer rachunku: {acc}", f"Termin płatności: {fmt_date(c['deadline'], 'dot')}", "Tytuł przelewu: FV/2026"]
+        t = [
+            f"FAKTURA VAT nr FV/{rng.randint(1, 999)}/2026",
+            f"Data wystawienia: {fmt_date(c['date'], 'dot')}",
+            f"Sprzedawca: {o['name']}, NIP {o['nip'] or '5213456789'}",
+            f"Nabywca: {z['name']}",
+            "Lp. Nazwa towaru lub usługi  Ilość  Cena  Wartość",
+            "1. Usługi serwisowe  1  8 000,00  8 000,00",
+            "Razem do zapłaty: 9 840,00 PLN",
+            f"Numer rachunku: {acc}",
+            f"Termin płatności: {fmt_date(c['deadline'], 'dot')}",
+            "Tytuł przelewu: FV/2026",
+        ]
     elif k == 3:
-        t = [f"WYCIĄG Z RACHUNKU {acc}", f"Okres: {fmt_date(c['date'], 'dot')} - {fmt_date(c['date'] + timedelta(days=30), 'dot')}", f"Właściciel: {o['name']}"]
+        t = [
+            f"WYCIĄG Z RACHUNKU {acc}",
+            f"Okres: {fmt_date(c['date'], 'dot')} - {fmt_date(c['date'] + timedelta(days=30), 'dot')}",
+            f"Właściciel: {o['name']}",
+        ]
         for j in range(12):
-            t.append(f"{fmt_date(c['date'] + timedelta(days=j), 'dot')}  {rng.choice(['Przelew przychodzący', 'Opłata', 'Przelew wychodzący', 'WPIS OD ODWOŁANIA KIO'])}  {money_text(rng, rng.randint(100, 20000) + 0.5)}  saldo {money_text(rng, rng.randint(5000, 90000))}")
+            t.append(
+                f"{fmt_date(c['date'] + timedelta(days=j), 'dot')}  {rng.choice(['Przelew przychodzący', 'Opłata', 'Przelew wychodzący', 'WPIS OD ODWOŁANIA KIO'])}  {money_text(rng, rng.randint(100, 20000) + 0.5)}  saldo {money_text(rng, rng.randint(5000, 90000))}"
+            )
     elif k == 4:
-        t = [f"{z['name']}", z["addr"], f"{c['town'] or 'Kraków'}, {d}", "ZAWIADOMIENIE O WYBORZE NAJKORZYSTNIEJSZEJ OFERTY", f"Postępowanie: {c['title']}, nr {c['nr']}",
-             f"Zamawiający informuje, że wybrano ofertę wykonawcy {c['winner']}. Oferta {o['name']} otrzymała 82,5 pkt.",
-             "Od czynności Zamawiającego przysługuje odwołanie do Krajowej Izby Odwoławczej w terminie 10 dni."]
+        t = [
+            f"{z['name']}",
+            z["addr"],
+            f"{c['town'] or 'Kraków'}, {d}",
+            "ZAWIADOMIENIE O WYBORZE NAJKORZYSTNIEJSZEJ OFERTY",
+            f"Postępowanie: {c['title']}, nr {c['nr']}",
+            f"Zamawiający informuje, że wybrano ofertę wykonawcy {c['winner']}. Oferta {o['name']} otrzymała 82,5 pkt.",
+            "Od czynności Zamawiającego przysługuje odwołanie do Krajowej Izby Odwoławczej w terminie 10 dni.",
+        ]
     elif k == 5:
         p = make_person(rng)
-        t = ["UPOWAŻNIENIE", f"{c['town'] or 'Opole'}, {d}", f"{o['name']}, {o['addr']}, NIP {o['nip'] or '7771234567'} upoważnia {HONOR[p['g']]['acc']} {p['forms']['acc']}",
-             "do odbioru korespondencji i dokumentów w siedzibie urzędu skarbowego oraz do składania podpisu na potwierdzeniach odbioru.", "............................", "Prezes Zarządu"]
+        t = [
+            "UPOWAŻNIENIE",
+            f"{c['town'] or 'Opole'}, {d}",
+            f"{o['name']}, {o['addr']}, NIP {o['nip'] or '7771234567'} upoważnia {HONOR[p['g']]['acc']} {p['forms']['acc']}",
+            "do odbioru korespondencji i dokumentów w siedzibie urzędu skarbowego oraz do składania podpisu na potwierdzeniach odbioru.",
+            "............................",
+            "Prezes Zarządu",
+        ]
     elif k == 6:
-        t = [f"{c['town'] or 'Łódź'}, {d}", "Prezes Krajowej Izby Odwoławczej", "PRZYSTĄPIENIE DO POSTĘPOWANIA ODWOŁAWCZEGO", f"sygn. akt KIO {rng.randint(100, 3999)}/26",
-             f"Wykonawca {c['winner']}, {make_addr(rng)}, zgłasza przystąpienie do postępowania odwoławczego po stronie Zamawiającego {z['name']} i wnosi o oddalenie odwołania wniesionego przez {o['name']}.",
-             "Pełnomocnik Przystępującego: ........."]
+        t = [
+            f"{c['town'] or 'Łódź'}, {d}",
+            "Prezes Krajowej Izby Odwoławczej",
+            "PRZYSTĄPIENIE DO POSTĘPOWANIA ODWOŁAWCZEGO",
+            f"sygn. akt KIO {rng.randint(100, 3999)}/26",
+            f"Wykonawca {c['winner']}, {make_addr(rng)}, zgłasza przystąpienie do postępowania odwoławczego po stronie Zamawiającego {z['name']} i wnosi o oddalenie odwołania wniesionego przez {o['name']}.",
+            "Pełnomocnik Przystępującego: .........",
+        ]
     else:
-        t = ["INFORMACJA Z OTWARCIA OFERT", f"Zamawiający: {z['name']}", f"Postępowanie nr {c['nr']}", f"Kwota przeznaczona na sfinansowanie zamówienia: {money_text(rng, 1250000.0)}",
-             f"1. {c['winner']} – cena {money_text(rng, 1180000.0)}", f"2. {o['name']} – cena {money_text(rng, 1210000.5)}", f"Rachunek bankowy Zamawiającego: {acc}"]
+        t = [
+            "INFORMACJA Z OTWARCIA OFERT",
+            f"Zamawiający: {z['name']}",
+            f"Postępowanie nr {c['nr']}",
+            f"Kwota przeznaczona na sfinansowanie zamówienia: {money_text(rng, 1250000.0)}",
+            f"1. {c['winner']} – cena {money_text(rng, 1180000.0)}",
+            f"2. {o['name']} – cena {money_text(rng, 1210000.5)}",
+            f"Rachunek bankowy Zamawiającego: {acc}",
+        ]
     return f"negatyw/N{k}/{i:03d}", "\n".join(wrap(t, 90)), {}
 
 
-GENERATORS = {"odwolanie": gen_odwolanie, "pelnomocnictwo": gen_pelnomocnictwo, "przelew": przelew_gold_and_text, "negatyw": gen_negative}
+GENERATORS = {
+    "odwolanie": gen_odwolanie,
+    "pelnomocnictwo": gen_pelnomocnictwo,
+    "przelew": przelew_gold_and_text,
+    "negatyw": gen_negative,
+}
 
 
 def generate(n_per_type: int, seed: int, types: tuple = TYPES) -> list[tuple[str, str, dict]]:

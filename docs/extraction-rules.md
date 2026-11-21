@@ -25,53 +25,49 @@ This file tells how the application extracts the data from a document after the 
 
 The code is in `extractors/przelew.py`. The labels are in the key `labels` of `przelew.yaml`.
 
-1. **Preparation:** the text is split into lines. Page markers ("Strona 1 z 2", "1/2") and lines of only "-", "=" or "_" are removed. A row of dots between a label and a value becomes a colon.
-2. **Label and value:** for each field, the extractor tests the labels of its list in their order. The value is the rest of the line, the rest joined with the next line, or the next line. The first text that gives a correct value wins.
+1. **Preparation:** the text is split into lines. Page markers ("Strona 1 z 2", "1/2") and lines of only "-", "=" or "_" are removed. A row of dots between a label and a value becomes a colon. If a run of lines has only labels, the next lines of the same number are their values (a table with columns). The extractor joins each label with its value.
+2. **Label and value:** the labels are Polish and English. For each field, the extractor tests the labels of its list in their order. A second label after a slash ("Tytuł / Title:") is skipped. The value is the rest of the line, the rest joined with the next line, or the next line. The first text that gives a correct value wins.
 3. **`data_operacji`:** the labels have three priority levels: "data operacji/transakcji/realizacji/wykonania", then "w dniu", then "data zlecenia/księgowania/waluty". If no label gives a date, the first date on a line without "wydruk", "wygenerowano" or "sporządzono" wins.
-4. **`kwota`:** a number with a decimal part or with "PLN" or "zł". A number without these signs is not an amount, because it can be a part of a date.
+4. **`kwota`:** a number with a decimal part or with "PLN" or "zł" after "Kwota" or "Amount". A number without these signs is not an amount, because it can be a part of a date. Lines with "saldo", "balance", "fee" or "opłata za przelew" are skipped. If no label gives an amount, the first line with "PLN" or "zł" wins.
 5. **`numer_transakcji`:** a word with a digit after "Nr ref.", "numer transakcji", "identyfikator" and similar labels. If no label gives a value, the first text "CEN" with 10 or more digits (key `fallback`).
 6. **Accounts:** the extractor finds each account number (26 digits, with or without "PL" and spaces) in the full text. The role comes from the nearest keyword in the 250 characters before the account: `z_rachunku` ("nadawca", "obciążany", "płatnik", "z rachunku") or `na_rachunek` ("odbiorca", "beneficjent", "adresat", "na rachunek"). An account without a keyword gets the free role, in the order of the text.
 7. **`tytul`:** the text after "Tytuł" or "Opis". The title ends at one of these places:
    - at the end quote, if the title starts with a quote,
    - after the reference number (`numer_transakcji`),
    - before a line that starts with a capital word from `stop` ("Status", "Kwota", "Data", …),
-   - before a capital word from `stop_inline` inside the line, because a PDF reader can join two lines.
+   - before a capital word from `stop_inline` inside the line, because a PDF reader can join two lines. A word from `stop_ambiguous` ("NR", "DATA") ends the title only when no number follows it.
 
 ## Power of attorney (`pelnomocnictwo`)
 
 The code is in `extractors/pelnomocnictwo.py`. The words are in the key `extract` of `pelnomocnictwo.yaml`: `titles`, `roles`, `legal_forms`, `stop_words`.
 
-1. **Natural person:** if the text has "niżej podpisany <Name Surname>,", the principal is a natural person (`typ: osoba_fizyczna`). `nazwa` is the text after "pod firmą" up to the address. If there is no such text, `nazwa` is the name of the person. The person is also the signer.
-2. **Companies:** if there is no natural person, each group of labelled identifiers (KRS, NIP, REGON) is one company (`typ: osoba_prawna`). A new group starts when a label repeats, after a ";", or after a gap of more than 150 characters. Groups with the same NIP (or KRS) are kept once. Thus a consortium gives more than one principal.
+1. **Natural person:** if the text has "niżej podpisany <Name Surname>," and the next 400 characters name no company (no KRS and no legal form before "pod firmą"), the principal is a natural person (`typ: osoba_fizyczna`). If a company follows ("działająca jako Prezes spółki Y"), the company is the principal and the declarant is a signer. `nazwa` is the text after "pod firmą" up to the address. If there is no such text, `nazwa` is the name of the person. The person is also the signer.
+2. **Companies:** if there is no natural person, each group of labelled identifiers (KRS, NIP, REGON) is one company (`typ: osoba_prawna`). If a group has no KRS and its name ends with a person name that occurs again in the text, the principal is a natural person with that name. A civil partnership ("s.c.") is also `osoba_fizyczna`. The prefix "Wspólnicy spółki cywilnej" is not part of the name. A new group starts when a label repeats, after a ";", or after a gap of more than 150 characters. Groups with the same NIP (or KRS) are kept once. Thus a consortium gives more than one principal.
 3. **Company name:** the extractor finds the last legal form (`legal_forms`, for example "sp. z o.o.", "S.A.") in the 220 characters before the group. The name is the words before the legal form that start with a capital letter or a digit. The search stops at a word in `stop_words` or at a word that ends with a punctuation mark. If there is no legal form, the name is the text after an anchor ("Mocodawca", "w imieniu", "Za", "1)") up to a comma, "KRS", "NIP" or "z siedzibą".
 4. **Signers:** a name of two words with a role from `roles` ("Prezes Zarządu", "Prokurent", …) on the same line or on the next line. A name without a role is also a signer if it stands under a signature line (dots) and before the block "Pełnomocnictwo przyjmuję".
 5. **Signers in a consortium:** a signer belongs to the company whose name occurs last in the text before the signature.
-6. **Attorneys:** a professional title from `titles` ("adw.", "r. pr.", "radca prawny", "apl. adw.", …) and a name of two words after it. A name that occurs two times is kept once. `pesel` is the PESEL in the 90 characters after the name. If no title occurs, the extractor uses the name after "Pan", "Pani", "Panu", "Panią" or "Pełnomocnik".
+6. **Attorneys:** a professional title from `titles` ("adw.", "r. pr.", "radca prawny", "apl. adw.", …) and a name of two words after it. A name that occurs two times is kept once. A name on a form line before "Zawód:" is also an attorney. `pesel` is the first PESEL in the 140 characters after the name, with any label ("PESEL:", "numerem PESEL", "(PESEL ...)"), also on the next line. If no title occurs, the extractor uses the name after "Pan", "Pani", "Panu", "Panią" or "Pełnomocnik".
 
 ## Appeal (`odwolanie`)
 
 The code is in `extractors/odwolanie.py`. The action codes and their rules are in the keys `actions` and `action_rules` of `odwolanie.yaml`.
 
 1. **Preparation:** the extractor joins titles with spaces between the letters, removes page markers ("Strona 1 z 2", "- 1 -", "1/2"), and joins the text into one line. Thus line breaks do not change the result.
-2. **Head:** the head is the text before "Działając w imieniu", "wnoszę odwołanie" or "wnoszę o:". If there is no such text, the head is the first 4000 characters.
-3. **Sections:** the labels "Odwołujący…:", "Zamawiający…:" and "Wykonawca wybrany…:" start the sections of the parties. The text after "dotyczy:" is the section of the procurement.
+2. **Head:** the head is the text before the first charge: "polegających na:", "wnoszę o:", "Stan faktyczny", "Zarzuty", "zarzucam Zamawiającemu", "Zaskarżone czynności" or "następujących czynności". If there is no such text, the head is the first 4000 characters.
+3. **Sections:** a label starts a section of a party. The labels are "Odwołujący", "Wykonawca wnoszący odwołanie", "Od:", "W imieniu" (appellant) and "Zamawiający", "Przeciwko:" (authority). "Do:" ends a section. A label can have a short qualifier in parentheses. A label with a colon that follows words with digits or commas is not a label. The text after "dotyczy:" is the section of the procurement.
 4. **Parties:** each group of identifiers (KRS, NIP, REGON) in a section is one party. The name is the text before the street ("ul.", "al.", "pl.", "os.") or before the postal code. The text before the last e-mail and before the last colon is not part of the name.
 5. **Appellant:** if more than one party is in the section, the party with "lider" in its role wins. Else the first party wins.
-6. **Attorney:** the first person after "reprezentowany/-a/-ego przez", without titles. If the word is "reprezentowanego", "reprezentowanej" or "reprezentowanych", the name goes to the nominative. The firm of the attorney (`nazwa`) is the text after "adres do korespondencji:" up to the street or the postal code. `mail` is the first e-mail after the attorney. If the text has no "reprezentowany przez", `przez-pelnomocnika` is 0 and `pelnomocnik` is `null`.
-7. **Contracting authorities:** each party in the sections "Zamawiający". If there is more than one, `prowadzacy_postepowanie` is 1 for a party with "lider" or "prowadzący" in its role, and 0 for the others. If there is only one, the value is `null`.
+6. **Attorney:** the first person after "reprezentowany przez", "działa przez pełnomocnika", "działając jako pełnomocnik" or "Pełnomocnik" (not "bez pełnomocnika"). If no such word occurs, the first person after a title ("adw.", "r. pr.") in the section of the appellant. The extractor removes titles and changes the name to the nominative with `common.to_nominative`. The firm (`nazwa`) is the text after "adres do korespondencji:", else the text after the name that a dash, a comma, "z" or a parenthesis starts, else the first "Kancelaria …". `mail` is the first e-mail after the attorney. If there is no attorney, `przez-pelnomocnika` is 0 and `pelnomocnik` is `null`.
+7. **Contracting authorities:** each party in the sections "Zamawiający". If there is more than one, `prowadzacy_postepowanie` is 1 for a party with "lider" or "prowadzący" in its role (a role word in parentheses, after a dash, after the identifiers or after "Rola:"), and 0 for the others. If there is only one, the value is `null`.
 8. **Town and date:** the first text "<Town>, (dnia) <date> (r.)" in the head. If a postal code stands before the town, the town is part of an address, and the extractor removes the first word. If no such text occurs, both fields are `null`.
-9. **Text of the first charge:** the extractor collects these texts, from the most exact to the least exact:
-   1. the text after "polegających na:" up to the item "2)",
-   2. the sentence "Zamawiający w dniu … ." after "wnoszę o:",
-   3. the first sentence "Zamawiający w dniu … .",
-   4. the text after "Zarzut nr 1" up to "Zarzut nr 2".
-10. **Action code (`czynnosc_powod_id`):** the extractor tests the rules of `action_rules` in their order on each text. The first rule that matches gives the code. The order is important: "zaniechanie unieważnienia" (10) comes before "unieważnienie" (9). `czynnosc_opis` is the text of the code in `actions`, without a change.
-11. **Action date (`czynnosc_dzien`):** the date after "w dniu" or "z dnia" in the texts of step 9. If there is no such date, the first date in these texts.
+9. **First charge:** the extractor reads the text after the first start of the charges (see step 2). It splits the text into items ("1)", "I.", "§", "Zarzut 1") and the items into sentences. The first sentence that matches a rule of `action_rules` is the first charge. If there is none, the old texts are used: the text after "polegających na:", the sentence "Zamawiający w dniu … .", the text after "Zarzut nr 1".
+10. **Action code (`czynnosc_powod_id`):** in the sentence of step 9 the match that starts first wins. For the same start, the first rule wins. A rule with `fallback: true` (the general SWZ rule, code 4) counts only if no other rule matches. `czynnosc_opis` is the text of the code in `actions`, without a change.
+11. **Action date (`czynnosc_dzien`):** the date after "w dniu" or "dnia" in the sentence of step 9. If there is none, the first date in the sentence, then in the item.
 12. **Procurement:** these rules apply to the section "dotyczy", or to the head if there is no such section:
     - `numer_bzp`: "YYYY/BZP ########" (with an optional "/NN"), written without spaces.
     - `numer_ted`: "YYYY/S ###-NNNNNN" or "NNNNNN-YYYY" after "TED" or "Dzienniku Urzędowym", written as "NNNNNN-YYYY".
     - `numer_postepowania`: the word after "nr referencyjny", "numer sprawy", "znak postępowania" and similar labels.
-    - `tytul`: the text in quotes after "pn.". If there is none, the first text in quotes.
+    - `tytul`: the text in quotes after "pn.". Else the value after "Przedmiot zamówienia:", "Tytuł:" or "Postępowanie:". Else the first text in quotes outside the names of the parties.
 
 ## Evidence
 

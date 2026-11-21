@@ -8,13 +8,21 @@ classify:
   head_chars: 4000
   min_score: 5
   rules:
-    - {pattern: '^\s*ODWOŁANIE\b', weight: 4, where: head}
+    # The title is a whole line. A wrapped line that starts with "odwołanie" is not a title.
+    - {pattern: '(?-i:^\s*(?:ODWOŁANIE\b|Odwołanie\s*$))', weight: 4, where: head}
     # The title in capitals can follow other text when the PDF joins lines.
     - {pattern: '(?-i:\bODWOŁANIE\b)', weight: 3, where: head}
     - {pattern: 'Odwołując\w*', weight: 1}
     - {pattern: 'Zamawiając\w*', weight: 1}
     - {pattern: 'Krajow\w+ Izb\w+ Odwoławcz\w+', weight: 1}
     - {pattern: 'zarzut|zarzuc', weight: 1}
+    # An appeal without a title in capitals: "Do: KIO", "Od:", "Przeciwko:".
+    - {pattern: '^\s*Do\s*:\s*(?:Prezes\w*\s+)?Krajow\w+\s+Izb', weight: 2, where: head}
+    - {pattern: '^\s*Przeciwko\s*:', weight: 2, where: head}
+    - {pattern: 'Zaskarżon\w+\s+czynnoś|Przedmiot\s+odwołania', weight: 1, where: head}
+    # The answer of the contracting authority and other letters also contain these words.
+    - {pattern: 'odpowiedź\s+na\s+odwołanie', weight: -10, where: head}
+    - {pattern: '^\s*(?:ODPOWIEDŹ|ZAWIADOMIENIE|WEZWANIE|PRZYSTĄPIENIE|STANOWISKO)\b', weight: -10, where: start}
     # The rulings of the KIO, notices and other documents also contain these words.
     - {pattern: 'Sygn\.?\s*akt', weight: -10, where: start}
     - {pattern: '^\s*(WYROK|POSTANOWIENIE|UCHWAŁA|DECYZJA)\b', weight: -10, where: start}
@@ -56,4 +64,5 @@ action_rules:
   - {code: 5, patterns: ['zmodyfik', 'modyfikac']}
   - {code: 11, patterns: ['opis\w*\s+przedmiotu', '\bOPZ\b']}
   - {code: 12, patterns: ['projektowan\w+\s+postanowie', 'postanowie\w+\s+umow']}
-  - {code: 4, patterns: ['publik', 'opublik', 'specyfikacj', '\bSWZ\b', 'warunków zamówienia']}
+  # The general rule is a fallback: a more specific object wins, also when it stands later in the text.
+  - {code: 4, fallback: true, patterns: ['publik', 'opublik', 'specyfikacj', '\bSWZ\b', 'warunków zamówienia']}

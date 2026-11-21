@@ -12,7 +12,12 @@ from odw2json.classify import DocType
 
 LEADER = re.compile(r"\s*\.{3,}\s*")
 PRINT_LINE = re.compile(r"wydruk|wygenerowan|sporządzon|^\s*\w+,\s+\d", re.IGNORECASE)
-ACCOUNT = re.compile(r"(?<![\w])(?:PL\s*)?(?:\d{2}(?:\s?\d{4}){6}|\d{26})(?!\d)")
+ACCOUNT = re.compile(r"(?<![\w])(?:PL[\s-]*)?(?:\d{2}(?:[\s-]?\d{4}){6}|\d{26})(?!\d)")
+# A fee or a balance is not the amount of the transfer.
+NOT_AMOUNT = re.compile(r"saldo|balance|\bfee\b|commission|prowizj|opłat[aęy]\s+(?:za|bankow|przelew)", re.IGNORECASE)
+CURRENCY = re.compile(r"\bPLN\b|(?<![\wąćęłńóśźż])zł(?![\wąćęłńóśźż])")
+# A second label for the same field after a slash, for example "Tytuł / Title:".
+ALTERNATIVE = re.compile(r"^/\s*[^:/\d]{1,40}:\s*")
 PAGE_MARKER = re.compile(
     r"(?:strona|str\.?|page)\s*\d+(?:\s*(?:z|/|of)\s*\d+)?|[-–]\s*\d+\s*[-–]|\d+\s*/\s*\d+", re.IGNORECASE
 )
@@ -29,6 +34,31 @@ def prepare_lines(text: str) -> list[str]:
     return lines
 
 
+def is_label_only(line: str, patterns: list[str]) -> bool:
+    """A short line with a label and without a value."""
+    text = line.rstrip(": ")
+    if len(text.split()) > 5 or re.search(r"\d|:", text):
+        return False
+    return any(re.search(p, text, re.IGNORECASE) for p in patterns)
+
+
+def merge_columns(lines: list[str], patterns: list[str]) -> list[str]:
+    """Join a table where all labels come first and then all values: label i gets value i."""
+    result, i = [], 0
+    while i < len(lines):
+        k = 0
+        while i + k < len(lines) and is_label_only(lines[i + k], patterns):
+            k += 1
+        values = lines[i + k : i + 2 * k]
+        if k >= 2 and len(values) == k and not any(is_label_only(v, patterns) for v in values):
+            result += [f"{lines[i + j].rstrip(': ')}: {values[j]}" for j in range(k)]
+            i += 2 * k
+        else:
+            result += lines[i : i + max(k, 1)]
+            i += max(k, 1)
+    return result
+
+
 def find_label(lines: list[str], patterns: list[str], start: int = 0) -> tuple[int, re.Match] | None:
     for pattern in patterns:
         for i in range(start, len(lines)):
@@ -40,7 +70,7 @@ def find_label(lines: list[str], patterns: list[str], start: int = 0) -> tuple[i
 
 def value_texts(lines: list[str], i: int, m: re.Match) -> list[str]:
     """Give the text after the label, the text joined with the next line, and the next line."""
-    rest = lines[i][m.end() :].lstrip(" :-")
+    rest = ALTERNATIVE.sub("", lines[i][m.end() :].lstrip(" :-")).lstrip(" :-")
     nxt = lines[i + 1] if i + 1 < len(lines) else ""
     return [t for t in (rest, f"{rest} {nxt}" if rest else "", nxt) if t.strip()]
 
@@ -66,16 +96,37 @@ def parse_amount(part: str) -> float | None:
     return common.parse_amount(re.sub(r"(?<=\d)\s*(?:PLN|zł)", "", part))
 
 
+def find_amount(lines: list[str], labels: dict) -> tuple[float, str] | None:
+    """Use the label. Else use the first line with a currency, for example "- 7 500,00 PLN"."""
+    lines = ["" if NOT_AMOUNT.search(line) else line for line in lines]
+    found = find_by_label(lines, labels["kwota"], parse_amount)
+    if found:
+        return found
+    for line in lines:
+        if CURRENCY.search(line):
+            value = parse_amount(ACCOUNT.sub("", line))
+            if value is not None:
+                return value, line
+    return None
+
+
 def parse_reference(part: str) -> str | None:
     m = re.match(r"[A-Z0-9][\w/\-]{4,}", part.strip(), re.IGNORECASE)
     return m.group(0) if m and re.search(r"\d", m.group(0)) else None
 
 
-def cut_at_label(text: str, words: list[str]) -> str:
-    """Cut the text before a label word with a capital letter. A PDF reader can join a title with the next line."""
+def cut_at_label(text: str, words: list[str], ambiguous: list[str]) -> str:
+    """Cut the text before a label word with a capital letter. A PDF reader can join a title with the next line.
+
+    A word such as "NR" can also be a part of the title. It is a label only when a number does not follow it.
+    """
     for m in re.finditer(rf"\s(?=({'|'.join(words)})(?![\wąćęłńóśźż]))", text, re.IGNORECASE):
-        if m.group(1)[0].isupper():
-            return text[: m.start()]
+        word = m.group(1)
+        if not word[0].isupper():
+            continue
+        if word.lower() in ambiguous and re.match(r"[\s.]*\d", text[m.end() + len(word) :]):
+            continue
+        return text[: m.start()]
     return text
 
 
@@ -101,7 +152,7 @@ def find_title(lines: list[str], labels: dict, reference: str | None) -> tuple[s
     if quoted:
         title = re.split(f"[{CLOSE_QUOTES}]", title.lstrip(OPEN_QUOTES))[0]
     else:
-        title = cut_at_label(title, labels["stop_inline"])
+        title = cut_at_label(title, labels["stop_inline"], labels["stop_ambiguous"])
     # The source text is the lines of the title. A label alone on a line is not part of it.
     used = len(parts) - bool(first)
     source = lines[i : i + 1 + used] if first else lines[i + 1 : i + 1 + used]
@@ -151,14 +202,19 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
     data = doc_type.empty()
     box = data["przelew_bankowy"]
     labels = doc_type.raw.get("labels", {})
-    lines = prepare_lines(text)
+    label_patterns = [
+        p
+        for key in ("data_operacji", "kwota", "numer_transakcji", "tytul", "z_rachunku", "na_rachunek", "other")
+        for p in (labels.get(key, []))
+    ]
+    lines = merge_columns(prepare_lines(text), label_patterns)
 
     def put(name: str, found) -> None:
         if found:
             box[name], evidence[f"przelew_bankowy.{name}"] = found
 
     put("data_operacji", find_date(lines, labels))
-    put("kwota", find_by_label(lines, labels["kwota"], parse_amount))
+    put("kwota", find_amount(lines, labels))
     reference = find_by_label(lines, labels["numer_transakcji"], parse_reference)
     if not reference:
         m = re.search(doc_type.raw.get("fallback", {}).get("numer_transakcji", r"(?!)"), text)

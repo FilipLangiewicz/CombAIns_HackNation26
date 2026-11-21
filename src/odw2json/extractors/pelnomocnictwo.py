@@ -22,25 +22,31 @@ def _alt(items: list[str]) -> str:
     return "|".join(f"(?:{i})" for i in items)
 
 
+PESEL_AFTER = re.compile(r"PESEL[^\d]{0,30}?(\d{11})\b")
+
+
 def find_attorneys(text: str, cfg: dict, evidence: dict[str, str]) -> list[dict]:
     titles = _alt(cfg["titles"])
-    pattern = re.compile(rf"(?<![{LOW}])(?:{titles})\s+({NAME})")
-    matches = list(pattern.finditer(text))
-    found: dict[str, dict] = {}
-    for i, m in enumerate(matches):
-        name = common.to_nominative(common.strip_titles(m.group(1)))
-        limit = matches[i + 1].start() if i + 1 < len(matches) else len(text)
-        tail = text[m.end() : min(limit, m.end() + 90)]
-        pesel = re.search(r"PESEL\s*:?\s*(\d{11})\b", tail)
-        item = found.setdefault(name, {"imie_nazwisko": name, "pesel": None, "src": m.group(0)})
-        if pesel and not item["pesel"]:
-            item["pesel"], item["pesel_src"] = pesel.group(1), pesel.group(0)
-    if not found:
+    candidates: list[tuple[int, int, str, str]] = []  # (start, end, name, source)
+    for m in re.finditer(rf"(?<![{LOW}])(?:{titles})\s+({NAME})", text):
+        candidates.append((m.start(), m.end(), m.group(1), m.group(0)))
+    # A form: the name on one line and the profession on the next line.
+    for m in re.finditer(rf"({NAME})[ \t]*\n[ \t]*(?:Zawód|Tytuł zawodowy)\s*:", text):
+        candidates.append((m.start(), m.end(), m.group(1), m.group(0)))
+    if not candidates:
         # No title: use a name after "Pan" or "Pani" or after the heading of the attorney.
         label = rf"(?:Pani?|Pana|Panu|Panią|Pełnomocnik\w*:?)\s+({NAME})"
         for m in re.finditer(label, text):
-            name = common.to_nominative(m.group(1))
-            found.setdefault(name, {"imie_nazwisko": name, "pesel": None, "src": m.group(0)})
+            candidates.append((m.start(), m.end(), m.group(1), m.group(0)))
+    candidates.sort()
+    found: dict[str, dict] = {}
+    for i, (_, end, raw, src) in enumerate(candidates):
+        name = common.to_nominative(common.strip_titles(raw))
+        limit = candidates[i + 1][0] if i + 1 < len(candidates) else len(text)
+        pesel = PESEL_AFTER.search(text[end : min(limit, end + 140)])
+        item = found.setdefault(name, {"imie_nazwisko": name, "pesel": None, "src": src})
+        if pesel and not item["pesel"]:
+            item["pesel"], item["pesel_src"] = pesel.group(1), common.normalize_spaces(pesel.group(0))
     out = []
     for i, item in enumerate(found.values()):
         evidence[f"pelnomocnicy[{i}].imie_nazwisko"] = common.normalize_spaces(item.pop("src"))
@@ -75,6 +81,11 @@ def identifier_clusters(text: str) -> list[dict]:
     return unique
 
 
+def clean_name(name: str) -> str:
+    """Remove a descriptive prefix that is not part of the name."""
+    return re.sub(r"^(?:Wspólnicy\s+)?spółki\s+cywilnej\s+|^Spółka\s+cywilna\s+", "", name, flags=re.IGNORECASE)
+
+
 def find_company_name(text: str, before: int, cfg: dict) -> tuple[str, int] | None:
     """Find the last company name that ends before the position. A name ends with a legal form."""
     forms = re.compile(rf"(?<![{LOW}{UP}])(?:{_alt(cfg['legal_forms'])})")
@@ -87,22 +98,35 @@ def find_company_name(text: str, before: int, cfg: dict) -> tuple[str, int] | No
     stop = set(cfg["stop_words"])
     words = re.findall(r"\S+", text[window_start : last.start()])
     name: list[str] = []
-    for word in reversed(words):
+    for k, word in enumerate(reversed(words)):
+        if word == "i" and name and k + 1 < len(words) and re.match(rf"^[{UP}]", words[-k - 2]):
+            name.append(word)  # "Kowalski i Nowak s.c."
+            continue
         if word in stop or not re.match(rf"^[{UP}\d]", word) or re.search(r"[,:;)(.]$", word):
             break
         name.append(word)
     if not name:
         return None
     full = " ".join(reversed(name)) + " " + common.normalize_spaces(last.group(0))
-    return full, last.end()
+    return clean_name(full), last.end()
 
 
-def find_person_principal(text: str) -> dict | None:
+def find_declarant(text: str) -> re.Match | None:
+    return re.search(rf"niżej\s+podpisan\w*\s+({NAME})\s*,", text)
+
+
+def declarant_is_legal(text: str, m: re.Match, cfg: dict) -> bool:
+    """The declarant acts for a company ("działająca jako Prezes spółki Y"), not for himself."""
+    tail = text[m.end() : m.end() + 400]
+    own_firm = re.search(r"pod\s+(?:firmą|nazwą)\s", tail)
+    cut = tail[: own_firm.start()] if own_firm else tail
+    forms = re.search(rf"(?<![{LOW}{UP}])(?:{_alt(cfg.get('legal_forms', []))})", cut)
+    return bool(re.search(r"\bKRS\b", cut) or (forms and not re.match(r"s\.\s?c\.", forms.group(0))))
+
+
+def find_person_principal(text: str, m: re.Match) -> dict:
     """A natural person who runs a business: "Ja, niżej podpisany Jan Kowalski, ... pod firmą X, ul. ..."."""
-    m = re.search(rf"niżej\s+podpisan\w*\s+({NAME})\s*,", text)
-    if not m:
-        return None
-    firm = re.search(r"pod\s+firmą\s+(.+?),\s*(?:ul\.|al\.|pl\.|os\.|\d)", text[m.end() :], re.DOTALL)
+    firm = re.search(r"pod\s+(?:firmą|nazwą)\s+(.+?),\s*(?:ul\.|al\.|pl\.|os\.|\d)", text[m.end() :], re.DOTALL)
     ids, id_src = {}, {}
     for i in IDENT.finditer(text):
         label = i.group(1).upper()
@@ -122,12 +146,14 @@ def find_person_principal(text: str) -> dict | None:
 
 def find_signers(text: str, cfg: dict) -> list[tuple[int, str, str]]:
     """Find the persons who sign: a name with a role, or a name under a signature line."""
-    role = rf"(?i:{_alt(cfg['roles'])})\b"
+    role = rf"(?i:(?:(?:Funkcja|Stanowisko)\s*:\s*)?(?:{_alt(cfg['roles'])}))\b"
     name_end = rf"(?:^|.*\s)({NAME})"
     lines = []  # (position, text) of each line without the leading signature dots
     pos = 0
     for raw in text.split("\n"):
-        lines.append((pos, raw.lstrip(" \t._…-")))
+        # A page footer can stand between the name and the role.
+        if not re.fullmatch(r"\s*(?:Strona\s+\d+\s*(?:z|/)\s*\d+|\(?podpis\)?)\s*", raw, re.IGNORECASE):
+            lines.append((pos, raw.lstrip(" \t._…-")))
         pos += len(raw) + 1
     accepted = re.search(r"przyjmuj", text)
     limit = accepted.start() if accepted else len(text)
@@ -143,11 +169,22 @@ def find_signers(text: str, cfg: dict) -> list[tuple[int, str, str]]:
         same = re.fullmatch(rf"{name_end}[ \t]*(?:[,–—-][ \t]*)?{role}.*", line)
         split = re.fullmatch(rf"{name_end}[ \t]*", line) if re.match(role, nxt) else None
         alone = has_dots and pos < limit and re.fullmatch(rf"({NAME})", line)
-        m = same or split or alone
-        if m and valid(m.group(1)):
-            found.append(
-                (pos, common.to_nominative(m.group(1)), common.normalize_spaces(line + " " + (nxt if split else "")))
-            )
+        if same:
+            # A line can have more than one signer: "A B – Prezes oraz C D – Członek Zarządu".
+            each = list(re.finditer(rf"({NAME})[ \t]*[,–—-][ \t]*{role}", line)) or [same]
+            for m in each:
+                if valid(m.group(1)):
+                    found.append((pos, common.to_nominative(m.group(1)), common.normalize_spaces(line)))
+        else:
+            m = split or alone
+            if m and valid(m.group(1)):
+                found.append(
+                    (
+                        pos,
+                        common.to_nominative(m.group(1)),
+                        common.normalize_spaces(line + " " + (nxt if split else "")),
+                    )
+                )
         # Keep the flag over the line "Za <company>" that can stand between the dots and the name.
         dots_before = (has_dots and not line) or (has_dots and bool(re.match(r"(?:Za|W imieniu)\b", line)))
     return found
@@ -156,14 +193,14 @@ def find_signers(text: str, cfg: dict) -> list[tuple[int, str, str]]:
 def find_name_without_legal_form(text: str, before: int) -> tuple[str, int] | None:
     """Find a company name that has no known legal form. The name stands before the address or the KRS."""
     window_start = max(before - 250, 0)
-    anchor = r"(?:Mocodawc\w*:?\s+(?:jest\s+)?|imieniu\s+|reprezentacji\s+|Za\s+|\d\)\s+|^)"
+    anchor = r"(?:Mocodawc\w*:?\s+(?:jest\s+)?|Nazwa(?:\s+\w+)?:\s*|imieniu\s+|reprezentacji\s+|Za\s+|\d\)\s+|^)"
     pattern = re.compile(rf"{anchor}([{UP}\d][^\n,;:()]*?)(?=\s*(?:,|\(|z\s+siedzibą|KRS\b|NIP\b|\n))", re.MULTILINE)
     last = None
     for m in pattern.finditer(text, window_start, before):
         last = m
     if last is None:
         return None
-    return common.normalize_spaces(last.group(1)), last.end()
+    return clean_name(common.normalize_spaces(last.group(1))), last.end()
 
 
 def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
@@ -172,8 +209,9 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
     text = common.despace_caps(text)
 
     principals: list[dict] = []
-    person = find_person_principal(text)
-    if person:
+    declarant = find_declarant(text)
+    if declarant and not declarant_is_legal(text, declarant, cfg):
+        person = find_person_principal(text, declarant)
         principals.append(
             {
                 "data": {"imie_nazwisko": person["name"], "krs": person["krs"], "nazwa": person["firm"] or person["name"],
@@ -189,18 +227,30 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
             company = find_company_name(text, cluster["start"], cfg) or find_name_without_legal_form(
                 text, cluster["start"]
             )
+            nazwa = company[0] if company else None
             principals.append(
                 {
                     "data": {"imie_nazwisko": None, "krs": cluster["ids"].get("KRS"),
-                             "nazwa": company[0] if company else None, "nip": cluster["ids"].get("NIP"),
+                             "nazwa": nazwa, "nip": cluster["ids"].get("NIP"),
                              "typ": "osoba_prawna"},
                     "podpisujacy": [],
                     "pos": cluster["start"],
                     "ev": {"krs": cluster["src"].get("KRS"), "nip": cluster["src"].get("NIP"),
-                           "nazwa": company[0] if company else None, "typ": next(iter(cluster["src"].values()))},
+                           "nazwa": nazwa, "typ": next(iter(cluster["src"].values()))},
                 }
             )  # fmt: skip
-        assign_signers(text, principals, find_signers(text, cfg))
+            mark_natural_person(text, principals[-1])
+        signers = find_signers(text, cfg)
+        if declarant:  # the declarant signs for the company
+            signers.insert(
+                0,
+                (
+                    declarant.start(),
+                    common.to_nominative(declarant.group(1)),
+                    common.normalize_spaces(declarant.group(0)),
+                ),
+            )
+        assign_signers(text, [p for p in principals if not p["podpisujacy"]], signers)
 
     for i, p in enumerate(principals):
         for key, value in p["data"].items():
@@ -212,6 +262,23 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
 
     data["pelnomocnicy"] = find_attorneys(text, cfg, evidence)
     return data
+
+
+def mark_natural_person(text: str, principal: dict) -> None:
+    """A business without a KRS can be a natural person. Its name ends with the name of the owner."""
+    data = principal["data"]
+    nazwa = data["nazwa"]
+    if data["krs"] or not nazwa:
+        return
+    if re.search(r"\bs\.\s?c\.$", nazwa) or re.search(r"spółk\w*\s+cywiln", nazwa, re.IGNORECASE):
+        data["typ"] = "osoba_fizyczna"  # the partners are the signers
+        return
+    tail = re.search(rf"({NAME})$", nazwa)
+    if tail and len(re.findall(re.escape(tail.group(1)).replace(r"\ ", r"\s+"), text)) >= 2:
+        data["typ"] = "osoba_fizyczna"
+        data["imie_nazwisko"] = common.to_nominative(tail.group(1))
+        principal["podpisujacy"] = [{"imie_nazwisko": data["imie_nazwisko"], "src": nazwa}]
+        principal["ev"]["imie_nazwisko"] = nazwa
 
 
 def assign_signers(text: str, principals: list[dict], signers: list[tuple[int, str, str]]) -> None:
