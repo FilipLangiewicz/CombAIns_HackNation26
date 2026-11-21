@@ -34,6 +34,14 @@ Final measurement on the test split (no rule was tuned on it), commit ffc53cb:
 
 The real scans give 0.916 in val and 0.845 in test. Thus a part of the repairs fits the 12 real scans of val. The weakest type is the appeal with a new layout.
 
+Run of the complete application (`python main.py`) on 226 files, commit c588dcb:
+
+- The files are the 60 example cases, the 30 real scans and the 12 negative documents.
+- 226 files took 630 s with 4 processes. No file gave an error.
+- Organizer PDF files with a text layer: F1 1.000. Negative documents: all `{}`.
+- All 30 real scans: F1 0.874.
+- A clean installation with `pip install -r requirements.txt` and the Docker image both run the OCR.
+
 - Time: 12 real scans took 250 s before the page limit and 135 s after it (about 11 s for each document, 8 cores).
 - The organizer confirmed: a bank account as in the document, with the country code and without spaces.
 
