@@ -203,7 +203,8 @@ def fold(text: str) -> str:
 @cache
 def diacritic_words() -> dict[str, str]:
     path = ROOT / "config" / "ocr_words.txt"
-    words = [w for w in path.read_text(encoding="utf-8").split() if not w.startswith("#")] if path.exists() else []
+    lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
+    words = [line.strip() for line in lines if line.strip() and not line.startswith("#")]
     return {fold(w): w for w in words}
 
 
