@@ -54,3 +54,33 @@ def test_missing_values_stay_null():
     box = run("Potwierdzenie przelewu\nKwota 10,00 PLN")
     assert box["kwota"] == 10.0
     assert box["tytul"] is None and box["z_rachunku"] is None
+
+
+def test_amount_forms_and_date_with_time():
+    assert run("Kwota: PLN 1 234,56\nData księgowania 22.03.2026\nData realizacji 21.03.2026 12:34")["kwota"] == 1234.56
+    box = run("Kwota przelewu 1.234,56 zł\nData księgowania 22.03.2026\nData realizacji 21.03.2026 12:34")
+    assert box["kwota"] == 1234.56
+    assert box["data_operacji"] == "2026-03-21"
+
+
+def test_account_labels_with_konto():
+    box = run("Konto nadawcy: 05 4706 8028 7581 5397 2145 5024\nKonto odbiorcy: PL68438223049992295262834736")
+    assert box["z_rachunku"] == "05470680287581539721455024"
+    assert box["na_rachunek"] == "68438223049992295262834736"
+
+
+def test_title_wraps_onto_line_that_starts_with_a_label_word():
+    box = run(
+        "Tytuł przelewu opłata od pełnomocnictwa w przetargu\nnr 5/2026 CEN2604016344389\n"
+        "Numer referencyjny CEN2604016344389\nStatus Wykonany"
+    )
+    assert box["tytul"] == "opłata od pełnomocnictwa w przetargu nr 5/2026 CEN2604016344389"
+
+
+def test_joined_lines_and_page_marker():
+    box = run(
+        "Tytuł przelewu opłata skarbowa w przetargu ZP.1.2026 CEN2604016344389 Kwota 17,00 PLN Data transakcji 2026-08-12\n"
+        "Rachunek odbiorcy PL68 4382 2304 9992\n1/2\n2952 6283 4736"
+    )
+    assert box["tytul"] == "opłata skarbowa w przetargu ZP.1.2026 CEN2604016344389"
+    assert box["na_rachunek"] == "68438223049992295262834736"
