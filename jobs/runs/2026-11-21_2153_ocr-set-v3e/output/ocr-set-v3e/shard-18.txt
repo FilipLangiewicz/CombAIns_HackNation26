@@ -1,0 +1,15 @@
+1/15 przyklad_03/odwolanie.pdf#0 52.67 s
+2/15 przyklad_11/odwolanie.pdf#0 40.64 s
+3/15 przyklad_18/potwierdzenie_przelewu.pdf#0 19.1 s
+4/15 przyklad_26/odwolanie.pdf#0 40.15 s
+5/15 przyklad_35/potwierdzenie_przelewu.pdf#0 17.04 s
+6/15 przyklad_48/pelnomocnictwo.pdf#0 37.06 s
+7/15 przyklad_56/odwolanie.pdf#0 116.19 s
+8/15 przyklad_37/2025_BZP 00143067_01.pdf#0 74.39 s
+9/15 synth-1/przelew/pz_7/26#0 12.27 s
+10/15 synth-1/odwolanie/od_7/6#0 13.69 s
+11/15 synth-1/negative/neg_faktura/26#0 11.5 s
+12/15 synth-3/odwolanie/od_7/6#0 15.05 s
+13/15 synth2-101/odwolanie/L2/026#0 31.85 s
+14/15 synth2-101/przelew/L2/026#0 12.63 s
+15/15 skany/potwierdzenia/0007/0007.pdf 11.89 s

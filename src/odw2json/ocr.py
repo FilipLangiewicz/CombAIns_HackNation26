@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import itertools
 import json
 import os
 import re
@@ -123,11 +124,31 @@ def deskew(image: Image.Image) -> Image.Image:
 DESKEW = os.environ.get("ODW2JSON_OCR_DESKEW", "1") == "1"
 
 
+# The recognition model gives wrong text for some long lines. A long box is split at the gaps between words.
+MAX_PART_WIDTH = 500
+NOT_LATIN = re.compile(r"[^\x00-\u024f\u2010-\u203a\u20ac]")
+
+
+def split_points(gray, max_width: int = MAX_PART_WIDTH) -> list[int]:
+    """Cut points of a text box: in the widest gap without ink in each part of the allowed width."""
+    ink = (gray < 128).sum(axis=0)
+    width, cuts = len(ink), [0]
+    while width - cuts[-1] > max_width:
+        low, high = cuts[-1] + max_width // 2, min(cuts[-1] + max_width, width - 1)
+        best, best_len, run = None, 0, 0
+        for k, value in enumerate(ink[low:high]):
+            run = run + 1 if value == 0 else 0
+            if run > best_len:
+                best, best_len = k - run // 2, run
+        cuts.append(low + (best if best is not None else high - low))
+    return [*cuts, width]
+
+
 def ocr_boxes(image: Image.Image) -> list[list]:
     """The text boxes of an image as [x0, y0, x1, y1, text], with a cache on the disk."""
     buffer = io.BytesIO()
     image.convert("RGB").save(buffer, format="PNG")
-    key = hashlib.sha1(buffer.getvalue() + f"{LANG}{DESKEW}".encode()).hexdigest()
+    key = hashlib.sha1(buffer.getvalue() + f"{LANG}{DESKEW}{MAX_PART_WIDTH}".encode()).hexdigest()
     cached = CACHE_DIR / f"{key}.json"
     if cached.exists():
         return json.loads(cached.read_text(encoding="utf-8"))
@@ -135,11 +156,21 @@ def ocr_boxes(image: Image.Image) -> list[list]:
 
     if DESKEW:
         image = deskew(image)
-    result = engine()(np.array(image.convert("RGB")))
+    rgb = np.array(image.convert("RGB"))
+    gray = np.array(image.convert("L"))
+    detected = engine()(rgb, use_det=True, use_cls=False, use_rec=False)
     boxes = []
-    for box, text in zip(result.boxes if result.txts else [], result.txts or [], strict=True):
+    for box in detected.boxes if detected.boxes is not None else []:
         xs, ys = [p[0] for p in box], [p[1] for p in box]
-        boxes.append([round(min(xs)), round(min(ys)), round(max(xs)), round(max(ys)), text])
+        x0, y0, x1, y1 = max(0, round(min(xs))), max(0, round(min(ys))), round(max(xs)), round(max(ys))
+        cuts = split_points(gray[y0:y1, x0:x1])
+        parts = []
+        for a, b in itertools.pairwise(cuts):
+            result = engine()(rgb[y0:y1, x0 + a : x0 + b], use_det=False, use_cls=False, use_rec=True)
+            parts.append("".join(result.txts or []))
+        text = NOT_LATIN.sub("", " ".join(p for p in parts if p)).strip()
+        if text:
+            boxes.append([x0, y0, x1, y1, text])
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     cached.write_text(json.dumps(boxes, ensure_ascii=False), encoding="utf-8")
     return boxes
