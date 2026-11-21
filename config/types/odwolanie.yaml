@@ -31,6 +31,12 @@ classify:
     - {pattern: '^\s*(WYROK|POSTANOWIENIE|UCHWAŁA|DECYZJA)\b', weight: -10, where: start}
     - {pattern: '^\s*Ogłoszenie o zamówieniu|See the notice on TED', weight: -10, where: start}
 
+# The OCR reads the first 3 scanned pages. If one of these fields is empty, it reads all pages.
+ocr_more_pages_if_empty:
+  - OdwolanieKIO.czynnosc_powod_id
+  - OdwolanieKIO.czynnosc_dzien
+  - ZamowieniePubliczne.tytul
+
 template:
   OdwolanieKIO: {data: null, czynnosc_dzien: null, czynnosc_powod_id: null, czynnosc_opis: null, miejscowosc: null}
   Odwolujacy: []

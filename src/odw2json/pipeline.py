@@ -31,8 +31,37 @@ def process_text(text: str, path: Path = Path("text")) -> Result:
     return result
 
 
+def key_field_empty(data: dict, paths: list[str]) -> bool:
+    from odw2json.extractors.generic import get_path
+
+    return any(get_path(data, path) is None for path in paths)
+
+
+def fill_empty(first, second):
+    """Keep each value of the first result. Take a value of the second result only for an empty field."""
+    if isinstance(first, dict) and isinstance(second, dict):
+        return {k: fill_empty(first.get(k), second.get(k)) if k in first else second[k] for k in {**first, **second}}
+    if isinstance(first, list):
+        return first if first else second
+    return second if first is None else first
+
+
+def found_type(result: Result):
+    from odw2json.classify import load_types
+
+    return next(t for t in load_types() if t.name == result.doc_type)
+
+
 def process_pdf(path: Path) -> Result:
     doc = read_pdf(path)
     result = process_text(doc.text, path)
+    paths = found_type(result).raw.get("ocr_more_pages_if_empty", []) if result.doc_type else []
+    if doc.skipped_pages and key_field_empty(result.data, paths):
+        # Some fields are empty and some scanned pages had no OCR: read all pages and fill only the empty fields.
+        full = process_text(read_pdf(path, max_ocr_pages=None).text, path)
+        if full.doc_type == result.doc_type:
+            result.data = fill_empty(result.data, full.data)
+            result.evidence = full.evidence | result.evidence
+            doc.ocr_pages = sorted(set(doc.ocr_pages + doc.skipped_pages))
     result.ocr_pages, result.ocr_missing = doc.ocr_pages, doc.ocr_missing
     return result

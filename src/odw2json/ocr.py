@@ -181,10 +181,10 @@ def ocr_boxes(image: Image.Image) -> list[list]:
 
 
 def recognize(rgb, gray, box: tuple[int, int, int, int]) -> str:
+    # One call for each part. A batch of all parts of a page was slower on the CPU.
     x0, y0, x1, y1 = box
-    cuts = split_points(gray[y0:y1, x0:x1])
     parts = []
-    for a, b in itertools.pairwise(cuts):
+    for a, b in itertools.pairwise(split_points(gray[y0:y1, x0:x1])):
         result = engine()(rgb[y0:y1, x0 + a : x0 + b], use_det=False, use_cls=False, use_rec=True)
         parts.append("".join(result.txts or []))
     return NOT_LATIN.sub("", " ".join(p for p in parts if p)).strip()

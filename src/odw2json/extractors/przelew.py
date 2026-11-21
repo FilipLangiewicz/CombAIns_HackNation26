@@ -12,7 +12,11 @@ from odw2json.classify import DocType
 
 LEADER = re.compile(r"\s*\.{3,}\s*")
 PRINT_LINE = re.compile(r"wydruk|wygenerowan|sporządzon|^\s*\w+,\s+\d", re.IGNORECASE)
-ACCOUNT = re.compile(r"(?<![\w])(?:PL[\s-]*)?(?:\d{2}(?:[\s-]?\d{4}){6}|\d{26})(?!\d)")
+# A Polish account (26 digits, with or without "PL") or an IBAN of another country (two letters, two digits).
+ACCOUNT = re.compile(
+    r"(?<![\w])(?:(?:PL[\s-]*)?(?:\d{2}(?:[\s-]?\d{4}){6}|\d{26})(?!\d)"
+    r"|(?!PL)[A-Z]{2}\d{2}(?:[\s-]?[A-Z0-9]{4}){2,7}(?:[\s-]?[A-Z0-9]{1,3})?(?![\w]))"
+)
 # A fee or a balance is not the amount of the transfer.
 NOT_AMOUNT = re.compile(r"saldo|balance|\bfee\b|commission|prowizj|opłat[aęy]\s+(?:za|bankow|przelew)", re.IGNORECASE)
 CURRENCY = re.compile(r"\bPLN\b|(?<![\wąćęłńóśźż])zł(?![\wąćęłńóśźż])")
@@ -159,6 +163,14 @@ def find_title(lines: list[str], labels: dict, reference: str | None) -> tuple[s
     return (title.strip(), " ".join(source)) if title.strip() else None
 
 
+def account_number(text: str) -> str:
+    """The account as the document gives it, without spaces: with the country code if the document has one."""
+    compact = re.sub(r"[\s-]", "", text).upper()
+    if compact[:2].isalpha() and compact[:2] != "PL":
+        return compact
+    return ("PL" if compact.startswith("PL") else "") + common.digits(compact)[-26:]
+
+
 def find_accounts(lines: list[str], labels: dict) -> dict[str, tuple[str, str]]:
     """Give the account of the sender and of the recipient, with the source text.
 
@@ -170,7 +182,7 @@ def find_accounts(lines: list[str], labels: dict) -> dict[str, tuple[str, str]]:
     free = []
     for m in ACCOUNT.finditer(flat):
         # The organizer wants the number as the document gives it: with "PL" if the document has it.
-        number = ("PL" if m.group(0).lstrip().upper().startswith("PL") else "") + common.digits(m.group(0))[-26:]
+        number = account_number(m.group(0))
         context = flat[max(0, m.start() - 250) : m.start()]
         nearest = {role: list(pattern.finditer(context))[-1:] for role, pattern in patterns.items()}
         hits = {role: k[0] for role, k in nearest.items() if k}

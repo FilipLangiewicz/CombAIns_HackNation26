@@ -103,3 +103,12 @@ def test_amount_without_label_and_nr_in_title():
     )
     assert box["kwota"] == 7500.0
     assert box["tytul"] == "ZESPÓŁ SZKÓŁ NR 10 W WROCŁAWIU"
+
+
+def test_foreign_iban_and_polish_account():
+    box = run(
+        "Potwierdzenie przelewu\nRachunek nadawcy: DE89 3704 0044 0532 0130 00\n"
+        "Rachunek odbiorcy: 68 4382 2304 9992 2952 6283 4736\nKwota: 100,00 PLN\nData operacji: 2026-03-21"
+    )
+    assert box["z_rachunku"] == "DE89370400440532013000"
+    assert box["na_rachunek"] == "68438223049992295262834736"
