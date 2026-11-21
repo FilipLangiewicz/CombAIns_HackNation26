@@ -1,0 +1,14 @@
+# Start the web interface: docker compose up
+# Process the input/ folder: docker compose run --rm cli
+services:
+  gui:
+    build: .
+    ports:
+      - "8000:8000"
+  cli:
+    build: .
+    command: ["python", "main.py"]
+    volumes:
+      - ./input:/app/input
+      - ./output:/app/output
+    profiles: ["cli"]
