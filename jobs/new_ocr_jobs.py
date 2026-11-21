@@ -2,7 +2,7 @@
 
 Each account runs at most 5 CPU sessions at the same time. Each session has 4 cores, so it runs 4 shards.
 Usage: python jobs/new_ocr_jobs.py <job name prefix> [--kernels-per-account 5]
-Then push each folder with the account in the "account" file of the folder (see jobs/JOBS.md).
+The file "account" in each folder gives the account flag for jobs/kaggle.sh.
 """
 
 import argparse
