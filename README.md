@@ -4,6 +4,8 @@ A solution for the challenge "Odwołania2json" of HackNation 2026. The applicati
 
 The application uses rules, not an LLM. It finds the type of each document and extracts the data with rules from the configuration in `config/types/`. A document of an unknown type gives `{}`.
 
+A page without a text layer (a scan) goes to OCR with RapidOCR. RapidOCR installs with `pip`, so no other program is necessary. At the first OCR, RapidOCR can download its model files, so the computer needs the internet.
+
 ## Install
 
 To install the application, do these steps:
@@ -32,7 +34,7 @@ To process the documents, do these steps:
 
 3. Read the JSON files in `output/<case>/`. Each JSON file has the name of its PDF file.
 
-Use `--input` and `--output` to select other folders.
+Use `--input` and `--output` to select other folders. Use `--workers` to set the number of processes.
 
 ## Web interface
 

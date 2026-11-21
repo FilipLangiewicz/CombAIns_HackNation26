@@ -2,6 +2,28 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-21, evening (rule-pipeline): the OCR path
+
+- OCR with RapidOCR (PP-OCRv6, pip only). Details in `docs/ocr-decision.md`.
+- A data set of 862 documents for the OCR path (`odw2json.scans`): synthetic scans of the organizer documents and of both generators, and the 30 real scans. The split has no leakage: train, val and test come from different cases and sources.
+- The OCR runs on Kaggle: 15 CPU sessions on three accounts (`jobs/new_ocr_jobs.py`). The outputs are the OCR boxes, so the rules for lines change without a new OCR.
+- New validation of fields in the type configuration (`validate`), and the OCR reads all pages only when the type needs them.
+
+F1 of the OCR path, no LLM (the text path stays at 1.0 on the organizer examples):
+
+| Step | Commit | train | val | real scans in val |
+|---|---|---|---|---|
+| OCR without repairs (v1) | 6cd94d5 | 0.74 | - | - |
+| diacritics, folded classification | a4576ff | 0.91 | - | - |
+| fonts, boxes, columns (v2) | 1ddbfd4 | 0.94 | - | - |
+| split of long boxes before the recognition (v4) | 90c8979 | 0.959 | - | - |
+| fuzzy titles, e-mails, letter errors (v5) | 94ab339 | 0.978 | 0.944 | 0.838 |
+| first action after "wnoszę odwołanie wobec" | ce790c2 | 0.978 | 0.952 | 0.891 |
+| more repairs for the real scans | 27a2c25 | 0.979 | 0.953 | 0.916 |
+
+- Time: 12 real scans took 250 s before the page limit and 135 s after it (about 11 s for each document, 8 cores).
+- The organizer confirmed: a bank account as in the document, with the country code and without spaces.
+
 ## 2026-11-21 (rule-pipeline)
 
 - Kaggle limits, measured: 5 CPU sessions at the same time for each account ("Maximum batch CPU session count of 5 reached"). With three accounts, 15 CPU sessions of 4 cores run at the same time.
