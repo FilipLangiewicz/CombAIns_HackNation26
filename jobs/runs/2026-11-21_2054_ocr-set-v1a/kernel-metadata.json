@@ -1,0 +1,14 @@
+{
+  "id": "nataliachoszczyk/odw2json-ocr-set-v1a",
+  "title": "odw2json-ocr-set-v1a",
+  "code_file": "run.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "machine_shape": "NvidiaTeslaT4",
+  "dataset_sources": ["nataliachoszczyk/odw2json-code"],
+  "competition_sources": [],
+  "kernel_sources": []
+}

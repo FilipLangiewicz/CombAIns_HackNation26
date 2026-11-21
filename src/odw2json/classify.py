@@ -12,6 +12,7 @@ from pathlib import Path
 import yaml
 
 from odw2json.common import despace_caps
+from odw2json.ocr import fold
 
 CONFIG_DIR = Path(__file__).resolve().parents[2] / "config" / "types"
 
@@ -19,6 +20,7 @@ CONFIG_DIR = Path(__file__).resolve().parents[2] / "config" / "types"
 @dataclass
 class Rule:
     pattern: re.Pattern
+    folded: re.Pattern
     weight: float
     where: str  # "start" (the first 300 characters), "head" (the first head_chars) or "all"
 
@@ -41,9 +43,12 @@ class DocType:
 
     def score(self, head: str, text: str) -> tuple[float, list[str]]:
         total, hits = 0.0, []
+        # The OCR can lose the Polish diacritics, so a rule also matches the text without them.
+        folded = fold(text)
         for rule in self.rules:
             scope = {"start": text[:300], "head": head}.get(rule.where, text)
-            if rule.pattern.search(scope):
+            folded_scope = {"start": folded[:300], "head": folded[: len(head)]}.get(rule.where, folded)
+            if rule.pattern.search(scope) or rule.folded.search(folded_scope):
                 total += rule.weight
                 hits.append(f"{rule.weight:+g} {rule.pattern.pattern}")
         return total, hits
@@ -51,7 +56,11 @@ class DocType:
 
 def _rules(items: list[dict]) -> list[Rule]:
     flags = re.IGNORECASE | re.MULTILINE
-    return [Rule(re.compile(r["pattern"], flags), float(r.get("weight", 1)), r.get("where", "all")) for r in items]
+    return [
+        Rule(re.compile(r["pattern"], flags), re.compile(fold(r["pattern"]), flags), float(r.get("weight", 1)),
+             r.get("where", "all"))
+        for r in items
+    ]  # fmt: skip
 
 
 @cache

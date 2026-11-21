@@ -398,7 +398,8 @@ def parse_procurement(block: str, evidence: dict[str, str]) -> dict:
     sources["numer_postepowania"] = m.group(0) if m else ""
     quotes = '„"“«'
     closing = '”"»'
-    m = re.search(rf"pn\.?\s*[{quotes}](.+?)[{closing}]\s*(?:,|\.|$|\s+(?:nr|numer|znak))", block)
+    # The OCR can lose the first quote mark, so it is optional.
+    m = re.search(rf"pn\.?\s*[{quotes}]?(.+?)[{closing}]\s*(?:,|\.|$|\s+(?:nr|numer|znak))", block)
     if m:
         out["tytul"], sources["tytul"] = m.group(1).strip(), m.group(0).rstrip(" ,.")
     else:

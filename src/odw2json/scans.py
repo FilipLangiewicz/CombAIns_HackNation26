@@ -186,6 +186,42 @@ def ocr_shard(items: list[Item], out: Path) -> None:
             print(f"{n}/{len(items)} {item.id} {row['seconds']} s", flush=True)
 
 
+def report(paths: list[Path], split: str | None, errors: bool) -> None:
+    """F1 of the OCR path for each split, source and level, from the JSON Lines files of ocr_shard."""
+    import json
+    from collections import defaultdict
+
+    from odw2json.evaluate import Score, compare, doc_type
+    from odw2json.ocr import repair
+    from odw2json.pdftext import clean
+    from odw2json.pipeline import process_text
+
+    rows = [json.loads(line) for path in paths for line in path.read_text(encoding="utf-8").splitlines()]
+    rows = [r for r in rows if split is None or r["split"] == split]
+    groups: dict[str, Score] = defaultdict(Score)
+    wrong_type, problems = [], []
+    for r in rows:
+        pred = process_text(clean("\n".join(repair(page) for page in r["pages"]))).data
+        leaves = compare(r["gold"], pred)
+        for key in ("ALL", r["split"], f"{r['split']}/{r['source']}", f"{r['split']}/level={r['level']}",
+                    f"{r['split']}/type={doc_type(r['gold'])}"):  # fmt: skip
+            groups[key].add(leaves)
+        if doc_type(r["gold"]) != doc_type(pred):
+            wrong_type.append(f"{r['id']}: {doc_type(r['gold'])} -> {doc_type(pred)}")
+        problems += [(r["id"], leaf) for leaf in leaves if leaf.outcome in ("FP", "FN", "WRONG")]
+    print(
+        f"documents: {len(rows)}, seconds of OCR per document: {sum(r['seconds'] for r in rows) / max(len(rows), 1):.1f}"
+    )
+    for key in sorted(groups):
+        print(f"{key:40s} {groups[key].line()}")
+    print(f"wrong type: {len(wrong_type)}")
+    for line in wrong_type[:20]:
+        print("  " + line)
+    if errors:
+        for doc_id, leaf in problems:
+            print(f"  {leaf.outcome:5s} {doc_id} {leaf.path}: gold={leaf.ref!r} pred={leaf.pred!r}")
+
+
 def main() -> None:
     import argparse
     from collections import Counter
@@ -196,7 +232,12 @@ def main() -> None:
     parser.add_argument("--shards", type=int, default=1)
     parser.add_argument("--split", help="only the items of this split")
     parser.add_argument("--out", type=Path, help="the JSON Lines file for --shard")
+    parser.add_argument("--report", type=Path, nargs="+", help="give the F1 of these JSON Lines files")
+    parser.add_argument("--errors", action="store_true", help="with --report: show each wrong field")
     args = parser.parse_args()
+    if args.report:
+        report(args.report, args.split, args.errors)
+        return
     items = manifest()
     if args.split:
         items = [i for i in items if i.split == args.split]

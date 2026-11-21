@@ -8,6 +8,8 @@ from __future__ import annotations
 import hashlib
 import io
 import os
+import re
+import unicodedata
 from functools import cache
 from pathlib import Path
 
@@ -79,6 +81,39 @@ def ocr_image(image: Image.Image) -> str:
     return text
 
 
+def fold(text: str) -> str:
+    """Remove the Polish diacritics, for example "Odwołujący" becomes "Odwolujacy"."""
+    text = text.replace("ł", "l").replace("Ł", "L")
+    return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
+
+
+@cache
+def diacritic_words() -> dict[str, str]:
+    path = ROOT / "config" / "ocr_words.txt"
+    words = [w for w in path.read_text(encoding="utf-8").split() if not w.startswith("#")] if path.exists() else []
+    return {fold(w): w for w in words}
+
+
+def same_case(word: str, model: str) -> str:
+    if model.isupper():
+        return word.upper()
+    if model[:1].isupper():
+        return word[:1].upper() + word[1:]
+    return word
+
+
+def repair(text: str) -> str:
+    """Restore the diacritics that the OCR lost. A word changes only if the vocabulary has one form for it."""
+    words = diacritic_words()
+
+    def fix(m: re.Match) -> str:
+        token = m.group(0)
+        known = words.get(fold(token).lower())
+        return same_case(known, token) if known else token
+
+    return re.sub(r"[^\W\d_]{3,}", fix, text)
+
+
 def ocr_page(page) -> str:
-    """OCR of a pypdfium2 page."""
-    return ocr_image(page.render(scale=DPI / 72).to_pil())
+    """OCR of a pypdfium2 page, with the repair of the diacritics."""
+    return repair(ocr_image(page.render(scale=DPI / 72).to_pil()))
