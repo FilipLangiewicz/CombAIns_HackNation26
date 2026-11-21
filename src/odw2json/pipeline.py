@@ -55,6 +55,10 @@ def found_type(result: Result):
 def process_pdf(path: Path) -> Result:
     doc = read_pdf(path)
     result = process_text(doc.text, path)
+    if doc.skipped_pages and result.doc_type and not found_type(result).raw.get("ocr_first_pages_only", False):
+        # The type can have data on the last pages, for example the signatures: read all pages.
+        doc = read_pdf(path, max_ocr_pages=None)
+        result = process_text(doc.text, path)
     paths = found_type(result).raw.get("ocr_more_pages_if_empty", []) if result.doc_type else []
     if doc.skipped_pages and key_field_empty(result.data, paths):
         # Some fields are empty and some scanned pages had no OCR: read all pages and fill only the empty fields.

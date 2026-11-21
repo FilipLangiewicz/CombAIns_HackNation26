@@ -10,6 +10,10 @@ The code is in `src/odw2json/pdftext.py`.
 2. If a page has fewer than 30 characters without the spaces at its start and end (`MIN_PAGE_CHARS`), the page has no usable text layer.
 3. Such a page goes to OCR (`ocr.ocr_page`). If RapidOCR is not installed, the page text stays empty, and the result marks the document with `ocr_missing`.
 
+4. The OCR reads the first 3 scanned pages (`ODW2JSON_OCR_MAX_PAGES`). Then the application finds the type:
+   - If the type has `ocr_first_pages_only: true` (the appeal), the OCR stops. If a field in `ocr_more_pages_if_empty` is empty, the OCR reads all pages and fills only the empty fields.
+   - For the other types, the OCR reads all pages, because a power of attorney has the signatures on its last page.
+
 The decision is for each page, not for each document. In the example data, each page with a text layer has hundreds of characters, and each page of a scan has 0 to 3 characters.
 
 ## The OCR path

@@ -31,7 +31,9 @@ classify:
     - {pattern: '^\s*(WYROK|POSTANOWIENIE|UCHWAŁA|DECYZJA)\b', weight: -10, where: start}
     - {pattern: '^\s*Ogłoszenie o zamówieniu|See the notice on TED', weight: -10, where: start}
 
-# The OCR reads the first 3 scanned pages. If one of these fields is empty, it reads all pages.
+# The OCR reads the first 3 scanned pages of each document. The data of an appeal is in its first pages,
+# so the OCR stops there. If one of these fields is empty, it reads all pages. Other types: all pages.
+ocr_first_pages_only: true
 ocr_more_pages_if_empty:
   - OdwolanieKIO.czynnosc_powod_id
   - OdwolanieKIO.czynnosc_dzien
