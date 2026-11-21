@@ -9,6 +9,8 @@ classify:
   min_score: 5
   rules:
     - {pattern: '^\s*ODWOŁANIE\b', weight: 4, where: head}
+    # The title in capitals can follow other text when the PDF joins lines.
+    - {pattern: '(?-i:\bODWOŁANIE\b)', weight: 3, where: head}
     - {pattern: 'Odwołując\w*', weight: 1}
     - {pattern: 'Zamawiając\w*', weight: 1}
     - {pattern: 'Krajow\w+ Izb\w+ Odwoławcz\w+', weight: 1}

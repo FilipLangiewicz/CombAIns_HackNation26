@@ -101,3 +101,50 @@ def test_action_codes(sentence, code):
     doc_type = next(t for t in load_types() if t.name == "odwolanie")
     found, _ = odwolanie.classify_action([sentence], doc_type.raw["action_rules"])
     assert found == code
+
+
+def _extract(text):
+    doc_type = next(t for t in load_types() if t.name == "odwolanie")
+    return odwolanie.extract(text, doc_type, {})
+
+
+INLINE = (
+    "Warszawa, 12.03.2026 r.\nODWOŁUJĄCY: Firma Zeta S.A., ul. Polna 3, 00-001 Warszawa, "
+    "KRS: 9990000005, NIP: 9990000006\nreprezentowanego przez r. pr. Jana Kowalskiego\n"
+    "adres do korespondencji: Kancelaria Prawna Kowalski, ul. Cicha 5, 00-002 Warszawa\n"
+    "ZAMAWIAJĄCY: Gmina Eta ul. Długa 1, 00-003 Warszawa NIP: 9990000002\n"
+    'dotyczy: postępowania pn. "Budowa drogi", nr referencyjny: ZP.1.2026\n'
+    "Działając w imieniu Odwołującego wnoszę o:\n"
+)
+
+
+def test_inline_labels_and_genitive_name():
+    data = _extract(INLINE)
+    row = data["Odwolujacy"][0]
+    assert row["nazwa"] == "Firma Zeta S.A."
+    assert row["pelnomocnik"]["imie_nazwisko"] == "Jan Kowalski"
+    assert data["Zamawiajacy"][0]["nazwa"] == "Gmina Eta"
+    assert data["ZamowieniePubliczne"]["tytul"] == "Budowa drogi"
+    assert data["OdwolanieKIO"]["miejscowosc"] == "Warszawa"
+
+
+def test_appellant_without_attorney():
+    text = INLINE.replace("reprezentowanego przez r. pr. Jana Kowalskiego\n", "").replace(
+        "adres do korespondencji: Kancelaria Prawna Kowalski, ul. Cicha 5, 00-002 Warszawa\n", ""
+    )
+    row = _extract(text)["Odwolujacy"][0]
+    assert row["przez-pelnomocnika"] == 0
+    assert row["pelnomocnik"] is None
+
+
+@pytest.mark.parametrize(
+    "genitive, nominative",
+    [
+        ("Jana Kowalskiego", "Jan Kowalski"),
+        ("Annę Nowicką", "Anna Nowicka"),
+        ("Anny Nowickiej", "Anna Nowicka"),
+        ("Marka Wiśniewskiego", "Marek Wiśniewski"),
+    ],
+)
+def test_to_nominative(genitive, nominative):
+    assert odwolanie.to_nominative(genitive) == nominative
