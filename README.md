@@ -4,7 +4,7 @@ A solution for the challenge "Odwołania2json" of HackNation 2026. The applicati
 
 The application uses rules, not an LLM. It finds the type of each document and extracts the data with rules from the configuration in `config/types/`. A document of an unknown type gives `{}`.
 
-A page without a text layer (a scan) goes to OCR with RapidOCR. RapidOCR installs with `pip`, so no other program is necessary. At the first OCR, RapidOCR can download its model files, so the computer needs the internet.
+A page without a text layer (a scan) goes to OCR with RapidOCR. RapidOCR installs with `pip` and has its model files in the package, so no other program and no internet connection are necessary.
 
 ## Install
 
