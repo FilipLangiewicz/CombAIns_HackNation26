@@ -12,7 +12,7 @@ Add new entries at the top. Each entry has the date, the branch and the changes.
 | Run | Commit | LLM | F1 dev | F1 holdout | Time for one document |
 |---|---|---|---|---|---|
 | Rules only, no OCR | 3c28e57 | none | 1.0000 | 1.0000 | 0.01 s |
-| Rules after the robustness work | HEAD | none | 1.0000 | 1.0000 | 0.01 s |
+| Rules after the robustness work | e97baf5 | none | 1.0000 | 1.0000 | 0.01 s |
 
 The robustness test (all transforms together) gave 0.87 on dev before the robustness work. After it, the test gives 1.00 on dev and on holdout.
 
