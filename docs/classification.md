@@ -1,0 +1,57 @@
+# Classification of documents
+
+This file tells how the application finds the type of a document: `odwolanie`, `pelnomocnictwo`, `przelew`, or an unknown type. A document of an unknown type gives `{}`.
+
+The application does not use the file name. The challenge forbids it.
+
+## The rule
+
+The code is in `src/odw2json/classify.py`. The rules are in the key `classify` of each file in `config/types/`.
+
+1. The application joins titles with spaces between the letters, for example "P E Ł N O M O C N I C T W O" becomes "PEŁNOMOCNICTWO".
+2. Each type has a list of rules. Each rule is a regular expression with a weight.
+3. A rule applies to one of these parts of the text (`where`):
+   - `start`: the first 300 characters,
+   - `head`: the first `head_chars` characters of the type,
+   - `all`: the full text.
+4. The score of a type is the sum of the weights of the rules that match.
+5. The type with the highest score wins, if its score is equal to or more than its `min_score`.
+6. If no type has its `min_score`, the document is of an unknown type.
+
+## The kinds of rules
+
+| Kind | Weight | Example |
+|---|---|---|
+| Title of the document | +3 or +4 | `ODWOŁANIE`, `PEŁNOMOCNICTWO`, "Potwierdzenie wykonania przelewu" |
+| Words for the type | +1 | "Zamawiający", "mocodawca", "rachunek", "PLN" |
+| Signs of another kind of document | -10 | "Sygn. akt", "WYROK", "Ogłoszenie o zamówieniu", "See the notice on TED" |
+
+The minimum score is 5. Thus a title alone is not sufficient: the document must also have one or more words for the type. Words alone are also not sufficient, because a title gives most of the score.
+
+The negative rules are necessary. A decision of the KIO or a procurement notice contains many words of an appeal ("odwołanie", "Zamawiający", "Odwołujący").
+
+## Results
+
+On the 196 example documents with a text layer, the classification is correct for all documents:
+
+- 60 appeals, 60 powers of attorney, 60 payment confirmations,
+- 16 negative documents (decisions of the KIO, notices from BZP and TED, other letters).
+
+## Limits and what we do about them
+
+| Limit | What we do |
+|---|---|
+| A new kind of title, for example "Wniosek" or "Skarga" | A document without a known title gets a low score and gives `{}`. This is the safe result: an empty JSON loses fewer points than a wrong type. |
+| A negative document that looks like an appeal | The negative rules cover the kinds in `dane/negatywne/`. A new kind needs a new rule in the YAML file. |
+| A scan without OCR | The text is empty, so the result is `{}`. |
+
+## Add a new type
+
+To add a new type, do these steps:
+
+1. Copy a file in `config/types/` to a new file.
+2. Change `name`, `label` and `template`.
+3. Write the `classify` rules for the title and for the other words of the type.
+4. Write field rules in the key `fields`. Set `extractor: generic` (see `docs/extraction-rules.md`).
+
+No change of the code is necessary.
