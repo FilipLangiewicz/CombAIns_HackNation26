@@ -173,7 +173,13 @@ def find_signers(text: str, cfg: dict) -> list[tuple[int, str, str]]:
         same = re.fullmatch(rf"{name_end}[ \t]*(?:[,–—-][ \t]*)?{role}.*", line)
         split = re.fullmatch(rf"{name_end}[ \t]*", line) if re.match(role, nxt) else None
         alone = has_dots and pos < limit and re.fullmatch(rf"({NAME})", line)
-        if same:
+        pair = re.fullmatch(rf"({NAME})\s+({NAME})\s*", line)
+        roles_below = [ln for _, ln in lines[i + 1 : i + 3] if len(re.findall(role, ln)) >= 2]
+        if pair and roles_below and valid(pair.group(1)) and valid(pair.group(2)):
+            # Two signature blocks side by side: two names on one line, two roles on a line below.
+            for name in pair.group(1, 2):
+                found.append((pos, common.to_nominative(name), common.normalize_spaces(line + " " + roles_below[0])))
+        elif same:
             # A line can have more than one signer: "A B – Prezes oraz C D – Członek Zarządu".
             each = list(re.finditer(rf"({NAME})[ \t]*[,–—-][ \t]*{role}", line)) or [same]
             for m in each:

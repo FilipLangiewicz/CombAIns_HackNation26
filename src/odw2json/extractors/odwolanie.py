@@ -278,6 +278,15 @@ def find_place_and_date(head: str) -> tuple[str | None, str | None, str | None]:
 # --- the contested action ----------------------------------------------------------
 
 
+LISTED_ACTION_RE = re.compile(r"wnoszę\s+odwołanie\s+(?:wobec|od)\s*:?\s*1\s*[.)]\s*(.*?)(?=;|\s2\s*[.)]\s)", I)
+
+
+def listed_first_action(text: str) -> str | None:
+    """A usual form: "wnoszę odwołanie wobec: 1. czynności ...; 2. ...". The first item is the first action."""
+    m = LISTED_ACTION_RE.search(text)
+    return common.normalize_spaces(m.group(1)) if m else None
+
+
 def first_charge_texts(text: str) -> list[str]:
     """Give the texts that describe the first charge, from the most to the least exact."""
     texts = []
@@ -449,7 +458,13 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
         evidence["OdwolanieKIO.data"] = evidence["OdwolanieKIO.miejscowosc"] = line
 
     rules = doc_type.raw.get("action_rules", [])
-    code, source, action_day, day_source = locate_first_charge(text, rules)
+    code, source, action_day, day_source = None, "", None, ""
+    listed = listed_first_action(text)
+    if listed:
+        code, source = classify_action([listed], rules)
+        action_day, day_source = action_date([listed])
+    if not code:
+        code, source, action_day, day_source = locate_first_charge(text, rules)
     if not code:
         texts = first_charge_texts(text)
         code, source = classify_action(texts, rules)

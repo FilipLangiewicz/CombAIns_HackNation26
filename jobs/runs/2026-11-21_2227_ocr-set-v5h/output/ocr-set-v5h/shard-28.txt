@@ -1,0 +1,14 @@
+1/14 przyklad_04/2025_S 112-383751.pdf#1 106.76 s
+2/14 przyklad_12/odwolanie.pdf#1 31.57 s
+3/14 przyklad_19/potwierdzenie_przelewu.pdf#1 13.54 s
+4/14 przyklad_28/odwolanie.pdf#1 32.11 s
+5/14 przyklad_38/potwierdzenie_przelewu.pdf#1 14.33 s
+6/14 przyklad_49/pelnomocnictwo.pdf#1 18.42 s
+7/14 przyklad_57/odwolanie.pdf#1 78.68 s
+8/14 przyklad_42/odwolanie.pdf#0 72.35 s
+9/14 synth-1/przelew/pz_7/36#0 10.21 s
+10/14 synth-1/odwolanie/od_7/16#0 11.21 s
+11/14 synth-1/negative/neg_wyrok/36#0 10.23 s
+12/14 synth-3/odwolanie/od_7/16#0 10.13 s
+13/14 synth2-101/pelnomocnictwo/L0/006#0 10.3 s
+14/14 synth2-101/negatyw/N6/006#0 9.43 s
