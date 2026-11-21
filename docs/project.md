@@ -118,7 +118,7 @@ These points of the FAQ add to the information above:
 
 ## Open questions
 
-- Which LLM and which API provider in the EU do we use?
+- Do we need an LLM? The rules give F1 = 1.0 on the 60 example cases. An LLM is only a fallback.
 - How do we give the API key to the organizer? Somebody asked this on Discord. There is no answer yet.
 - Which OCR engine gives good results on the scans on a CPU?
 
@@ -131,4 +131,24 @@ These points of the FAQ add to the information above:
 
 ## Plan
 
-The team writes the plan here when it decides the architecture.
+The branch `rule-pipeline` has the first version. The team merges it into `main` at the end.
+
+### Architecture
+
+The application uses rules, not an LLM. A solution without an LLM gets the maximum points for the size of the model.
+
+1. `pdftext.py` reads the text layer with pypdfium2. A page with fewer than 30 characters goes to OCR.
+2. `classify.py` gives a score to each type with weighted regular expressions from `config/types/*.yaml`. If no type has its minimum score, the output is `{}`.
+3. An extractor for each type finds the values. Each extractor also records the source text of each value (evidence).
+4. `extractors/generic.py` reads field rules from the configuration. Thus a new type or a new field needs only a YAML file.
+5. `cli.py` writes `output/<case>/<file>.json`. `gui.py` shows the PDF and the fields side by side.
+
+### Measurement
+
+- `python -m odw2json.evaluate --split dev` gives the F1 score with the rules of the organizer. The tests in `tests/test_evaluate.py` check the score on cases with known results.
+- `python -m odw2json.perturb --split dev` changes the form of the text and keeps the expected values. It shows the rules that fail on other layouts.
+
+### Next steps
+
+- OCR for the scans. Tesseract needs a system installation. RapidOCR installs with pip only.
+- Optional: a small LLM from an EU provider for the fields that the rules do not find.
