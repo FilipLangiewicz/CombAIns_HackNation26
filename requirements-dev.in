@@ -1,3 +1,5 @@
 # The tools for development only.
 pytest
 ruff
+kaggle==2.2.5
+six  # the Kaggle CLI imports it, but does not declare it

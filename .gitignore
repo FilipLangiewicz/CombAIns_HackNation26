@@ -21,6 +21,7 @@ CLAUDE.local.md
 
 # The data of the organizer (clone it, see CLAUDE.md)
 data/uzp/
+data/cache/
 
 # Kaggle job outputs: keep only small files in git
 **/jobs/runs/*/output/**/*.npy

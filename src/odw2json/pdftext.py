@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import re
-import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import pypdfium2 as pdfium
+
+from odw2json import ocr
 
 # A page with fewer characters than this has no usable text layer.
 MIN_PAGE_CHARS = 30
@@ -33,21 +34,6 @@ def clean(text: str) -> str:
     return "\n".join(line.strip() for line in text.split("\n"))
 
 
-def ocr_available() -> bool:
-    try:
-        import pytesseract  # noqa: F401
-    except ImportError:
-        return False
-    return shutil.which("tesseract") is not None
-
-
-def ocr_page(page: pdfium.PdfPage) -> str:
-    import pytesseract
-
-    image = page.render(scale=300 / 72).to_pil()
-    return pytesseract.image_to_string(image, lang="pol")
-
-
 def read_pdf(path: Path) -> Document:
     pdf = pdfium.PdfDocument(str(path))
     doc = Document(Path(path), [])
@@ -56,8 +42,8 @@ def read_pdf(path: Path) -> Document:
             page = pdf[i]
             text = page.get_textpage().get_text_range()
             if len(text.strip()) < MIN_PAGE_CHARS:
-                if ocr_available():
-                    text = ocr_page(page)
+                if ocr.available():
+                    text = ocr.ocr_page(page)
                     doc.ocr_pages.append(i)
                 else:
                     doc.ocr_missing = True

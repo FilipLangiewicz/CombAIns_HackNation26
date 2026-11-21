@@ -2,3 +2,6 @@
 pdfplumber
 pypdfium2
 pyyaml
+rapidocr
+onnxruntime
+numpy
