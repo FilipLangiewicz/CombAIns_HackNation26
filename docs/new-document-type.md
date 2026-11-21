@@ -61,6 +61,29 @@ fields:
   - {path: faktura.rachunek, kind: account, labels: ['rachunek', 'konto']}
 ```
 
+## Validation of the fields
+
+The key `validate` of a type gives the rules that check the values after the extraction. The code is in `src/odw2json/validate.py`.
+
+| Key | Content |
+|---|---|
+| `path` | The field. `[]` means each item of a list, for example `Odwolujacy[].nip`. |
+| `kind` | `digits`, `date`, `email`, `amount` or `regex`. |
+| `lengths` | For `digits`: the allowed numbers of digits, for example `[9, 14]`. |
+| `pattern` | For `regex`: the value must match it completely. |
+| `checksum` | For `digits`: `nip`, `regon` or `pesel`. It is optional, because the example data is synthetic. |
+
+- For `digits`, the typical OCR errors are repaired first, for example "O" becomes "0".
+- A value that is not valid becomes `null`. The result gets a warning with the reason.
+
+Example:
+
+```yaml
+validate:
+  - {path: "Odwolujacy[].nip", kind: digits, lengths: [10]}
+  - {path: "przelew_bankowy.data_operacji", kind: date}
+```
+
 ## Add a field to a known type
 
 To add a field to `odwolanie`, `pelnomocnictwo` or `przelew`, do these steps:

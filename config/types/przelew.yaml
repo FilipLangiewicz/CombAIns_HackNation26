@@ -72,3 +72,10 @@ labels:
 
 fallback:
   numer_transakcji: '\bCEN\d{10,}\b'
+
+# Validation of the fields (see src/odw2json/validate.py). A value that is not valid becomes null.
+validate:
+  - {path: "przelew_bankowy.data_operacji", kind: date}
+  - {path: "przelew_bankowy.kwota", kind: amount}
+  - {path: "przelew_bankowy.z_rachunku", kind: regex, pattern: '(?:[A-Z]{2})?\d{2}[A-Z0-9]{10,30}'}
+  - {path: "przelew_bankowy.na_rachunek", kind: regex, pattern: '(?:[A-Z]{2})?\d{2}[A-Z0-9]{10,30}'}

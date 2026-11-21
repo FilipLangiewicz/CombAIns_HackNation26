@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from odw2json import validate
 from odw2json.classify import classify
 from odw2json.extractors import extract
 from odw2json.pdftext import read_pdf
@@ -16,6 +17,7 @@ class Result:
     doc_type: str | None
     data: dict
     evidence: dict[str, str] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)  # the values that the validation removed
     scores: dict[str, float] = field(default_factory=dict)
     ocr_pages: list[int] = field(default_factory=list)
     ocr_missing: bool = False
@@ -28,6 +30,7 @@ def process_text(text: str, path: Path = Path("text")) -> Result:
     if found.doc_type is not None:
         result.doc_type = found.doc_type.name
         result.data, result.evidence = extract(text, found.doc_type)
+        result.warnings = validate.apply(result.data, found.doc_type.raw.get("validate", []))
     return result
 
 
