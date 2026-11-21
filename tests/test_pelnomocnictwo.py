@@ -59,3 +59,26 @@ def test_consortium_signers_follow_the_company():
     principals = run(text)["mocodawca"]
     assert [p["data"]["nazwa"] for p in principals] == ["Torvex Budownictwo sp. z o.o.", "Hydromel Instalacje sp.j."]
     assert [len(p["podpisujacy"]) for p in principals] == [1, 2]
+
+
+def test_attorney_in_another_case():
+    text = "PEŁNOMOCNICTWO\nFirma Alfa S.A., KRS 9999669444, NIP 9990678035 udzielam pełnomocnictwa Panu Piotrowi Nowakowi."
+    assert run(text)["pelnomocnicy"] == [{"imie_nazwisko": "Piotr Nowak", "pesel": None}]
+    text = "PEŁNOMOCNICTWO\nFirma Alfa S.A., KRS 9999669444, NIP 9990678035 udzielam pełnomocnictwa adw. Katarzynie Kowalskiej."
+    assert run(text)["pelnomocnicy"] == [{"imie_nazwisko": "Katarzyna Kowalska", "pesel": None}]
+    text = "PEŁNOMOCNICTWO\nFirma Alfa S.A., KRS 9999669444, NIP 9990678035 ustanawiam r. pr. Marka Kowalskiego."
+    assert run(text)["pelnomocnicy"] == [{"imie_nazwisko": "Marek Kowalski", "pesel": None}]
+
+
+def test_signer_on_one_line_and_without_role():
+    text = (
+        "Pełnomocnictwo\nMocodawca Beta Usługi sp. z o.o. (KRS 9999669444, NIP 9990678035) upoważnia adw. Jan Nowak.\n"
+        "............\nAnna Kowalska – Prezes Zarządu\n............\nPiotr Wiśniewski\n"
+    )
+    signers = run(text)["mocodawca"][0]["podpisujacy"]
+    assert signers == [{"imie_nazwisko": "Anna Kowalska"}, {"imie_nazwisko": "Piotr Wiśniewski"}]
+
+
+def test_company_without_known_legal_form():
+    text = "PEŁNOMOCNICTWO\nMocodawca: Przedsiębiorstwo Handlowe Gamma, ul. Długa 1, 00-001 Łódź, KRS 9999669444, NIP 9990678035\nudziela adw. Jan Nowak."
+    assert run(text)["mocodawca"][0]["data"]["nazwa"] == "Przedsiębiorstwo Handlowe Gamma"
