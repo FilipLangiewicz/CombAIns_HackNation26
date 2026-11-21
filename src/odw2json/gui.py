@@ -1,0 +1,139 @@
+"""A local web interface: upload PDF files, see the PDF and the extracted JSON side by side."""
+
+from __future__ import annotations
+
+import json
+import re
+import shutil
+import tempfile
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlparse
+
+from odw2json.pipeline import process_pdf
+
+STATIC = Path(__file__).parent / "static"
+MAX_UPLOAD = 100 * 1024 * 1024
+TYPE_LABELS = {
+    "odwolanie": "Odwołanie",
+    "pelnomocnictwo": "Pełnomocnictwo",
+    "przelew": "Potwierdzenie przelewu",
+}
+
+
+def normalize_path(key: str) -> str:
+    """Write a path of the evidence in the form a.b.0.c, as the page builds it."""
+    key = re.sub(r"\[(\d+)\]", r".\1", key)
+    return key.replace("/", ".").strip(".")
+
+
+class Session:
+    """The uploaded files and their results. The files stay in a temp folder until the server stops."""
+
+    def __init__(self) -> None:
+        self.folder = Path(tempfile.mkdtemp(prefix="odw2json_"))
+        self.docs: dict[str, dict] = {}
+        self.lock = threading.Lock()
+        self.counter = 0
+
+    def add(self, name: str, content: bytes) -> dict:
+        with self.lock:
+            self.counter += 1
+            doc_id = str(self.counter)
+        path = self.folder / f"{doc_id}.pdf"
+        path.write_bytes(content)
+        try:
+            result = process_pdf(path)
+            doc = {
+                "doc_type": result.doc_type,
+                "type_label": TYPE_LABELS.get(result.doc_type or "", "Nieznany typ"),
+                "data": result.data,
+                "evidence": {normalize_path(k): v for k, v in result.evidence.items()},
+                "scores": result.scores,
+                "ocr_pages": result.ocr_pages,
+                "ocr_missing": result.ocr_missing,
+                "error": None,
+            }
+        except Exception as exc:  # noqa: BLE001 - a bad file must not stop the server.
+            doc = {
+                "doc_type": None,
+                "type_label": "Nieznany typ",
+                "data": {},
+                "evidence": {},
+                "scores": {},
+                "ocr_pages": [],
+                "ocr_missing": False,
+                "error": str(exc),
+            }
+        doc.update(id=doc_id, name=name, pdf_url=f"/pdf/{doc_id}")
+        self.docs[doc_id] = doc
+        return doc
+
+    def close(self) -> None:
+        shutil.rmtree(self.folder, ignore_errors=True)
+
+
+def make_handler(session: Session) -> type[BaseHTTPRequestHandler]:
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, format: str, *args) -> None:
+            pass
+
+        def send_bytes(self, status: int, body: bytes, content_type: str, extra: dict | None = None) -> None:
+            self.send_response(status)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(body)))
+            for key, value in (extra or {}).items():
+                self.send_header(key, value)
+            self.end_headers()
+            self.wfile.write(body)
+
+        def send_json(self, status: int, payload: object) -> None:
+            body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+            self.send_bytes(status, body, "application/json; charset=utf-8")
+
+        def do_GET(self) -> None:
+            path = urlparse(self.path).path
+            if path in ("/", "/index.html"):
+                self.send_bytes(200, (STATIC / "index.html").read_bytes(), "text/html; charset=utf-8")
+            elif path == "/api/docs":
+                self.send_json(200, list(session.docs.values()))
+            elif match := re.fullmatch(r"/pdf/(\d+)", path):
+                pdf = session.folder / f"{match.group(1)}.pdf"
+                if match.group(1) not in session.docs or not pdf.exists():
+                    self.send_json(404, {"error": "Nie znaleziono pliku"})
+                else:
+                    self.send_bytes(200, pdf.read_bytes(), "application/pdf", {"Content-Disposition": "inline"})
+            else:
+                self.send_json(404, {"error": "Nie znaleziono"})
+
+        def do_POST(self) -> None:
+            url = urlparse(self.path)
+            if url.path != "/api/analyze":
+                self.send_json(404, {"error": "Nie znaleziono"})
+                return
+            length = int(self.headers.get("Content-Length", 0))
+            if not 0 < length <= MAX_UPLOAD:
+                self.send_json(400, {"error": "Niepoprawny rozmiar pliku"})
+                return
+            name = unquote(parse_qs(url.query).get("name", ["dokument.pdf"])[0])
+            content = self.rfile.read(length)
+            if not content.startswith(b"%PDF"):
+                self.send_json(400, {"error": "To nie jest plik PDF"})
+                return
+            self.send_json(200, session.add(Path(name).name, content))
+
+    return Handler
+
+
+def serve(port: int = 8000, host: str = "127.0.0.1") -> None:
+    session = Session()
+    server = ThreadingHTTPServer((host, port), make_handler(session))
+    print(f"GUI: http://{host}:{port}  (Ctrl+C stops the server)")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+        session.close()

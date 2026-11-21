@@ -42,7 +42,14 @@ def main() -> None:
     parser.add_argument("--input", type=Path, default=ROOT / "input", help="the input folder (default: input/)")
     parser.add_argument("--output", type=Path, default=ROOT / "output", help="the output folder (default: output/)")
     parser.add_argument("-v", "--verbose", action="store_true", help="show the extracted data")
+    parser.add_argument("--gui", action="store_true", help="start the web interface")
+    parser.add_argument("--port", type=int, default=8000, help="the port of the web interface (default: 8000)")
     args = parser.parse_args()
+    if args.gui:
+        from odw2json.gui import serve
+
+        serve(args.port)
+        return
     sys.exit(run(args.input, args.output, args.verbose))
 
 

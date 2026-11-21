@@ -28,3 +28,9 @@ data/uzp/
 **/jobs/runs/*/output/**/*.log
 *.pt
 *.zip
+
+# The input and output folders of the application: keep only the folders
+input/*
+!input/.gitkeep
+output/*
+!output/.gitkeep
