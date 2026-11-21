@@ -1,0 +1,67 @@
+"""Read the text of a PDF file. Use OCR for a page without a text layer."""
+
+from __future__ import annotations
+
+import re
+import shutil
+from dataclasses import dataclass, field
+from pathlib import Path
+
+import pypdfium2 as pdfium
+
+# A page with fewer characters than this has no usable text layer.
+MIN_PAGE_CHARS = 30
+
+
+@dataclass
+class Document:
+    path: Path
+    pages: list[str]
+    ocr_pages: list[int] = field(default_factory=list)
+    ocr_missing: bool = False
+
+    @property
+    def text(self) -> str:
+        return "\n".join(self.pages)
+
+
+def clean(text: str) -> str:
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    text = text.replace(" ", " ").replace(" ", " ").replace(" ", " ")
+    text = text.replace("￾", "").replace("­", "").replace("\x02", "-")
+    text = re.sub(r"[ \t]+", " ", text)
+    return "\n".join(line.strip() for line in text.split("\n"))
+
+
+def ocr_available() -> bool:
+    try:
+        import pytesseract  # noqa: F401
+    except ImportError:
+        return False
+    return shutil.which("tesseract") is not None
+
+
+def ocr_page(page: pdfium.PdfPage) -> str:
+    import pytesseract
+
+    image = page.render(scale=300 / 72).to_pil()
+    return pytesseract.image_to_string(image, lang="pol")
+
+
+def read_pdf(path: Path) -> Document:
+    pdf = pdfium.PdfDocument(str(path))
+    doc = Document(Path(path), [])
+    try:
+        for i in range(len(pdf)):
+            page = pdf[i]
+            text = page.get_textpage().get_text_range()
+            if len(text.strip()) < MIN_PAGE_CHARS:
+                if ocr_available():
+                    text = ocr_page(page)
+                    doc.ocr_pages.append(i)
+                else:
+                    doc.ocr_missing = True
+            doc.pages.append(clean(text))
+    finally:
+        pdf.close()
+    return doc

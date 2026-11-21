@@ -1,0 +1,20 @@
+# The power of attorney (pełnomocnictwo).
+name: pelnomocnictwo
+label: Pełnomocnictwo
+order: 2
+extractor: pelnomocnictwo
+
+classify:
+  head_chars: 1500
+  min_score: 5
+  rules:
+    - {pattern: '^\s*PEŁNOMOCNICTW[OA]\b', weight: 4, where: head}
+    - {pattern: 'pełnomocnik', weight: 1}
+    - {pattern: 'mocodaw|udzielam|ustanawiam|upoważniam|udziela', weight: 1}
+    - {pattern: 'Sygn\.?\s*akt', weight: -10, where: start}
+    - {pattern: '^\s*(WYROK|POSTANOWIENIE|UCHWAŁA|DECYZJA)\b', weight: -10, where: start}
+    - {pattern: '^\s*ODWOŁANIE\s*$', weight: -4, where: head}
+
+template:
+  mocodawca: []
+  pelnomocnicy: []

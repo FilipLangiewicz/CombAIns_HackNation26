@@ -1,0 +1,40 @@
+# The appeal to the KIO (odwołanie).
+name: odwolanie
+label: Odwołanie do KIO
+order: 1
+extractor: odwolanie
+
+classify:
+  head_chars: 4000
+  min_score: 5
+  rules:
+    - {pattern: '^\s*ODWOŁANIE\b', weight: 4, where: head}
+    - {pattern: 'Odwołując\w*', weight: 1}
+    - {pattern: 'Zamawiając\w*', weight: 1}
+    - {pattern: 'Krajow\w+ Izb\w+ Odwoławcz\w+', weight: 1}
+    - {pattern: 'zarzut|zarzuc', weight: 1}
+    # The rulings of the KIO, notices and other documents also contain these words.
+    - {pattern: 'Sygn\.?\s*akt', weight: -10, where: start}
+    - {pattern: '^\s*(WYROK|POSTANOWIENIE|UCHWAŁA|DECYZJA)\b', weight: -10, where: start}
+    - {pattern: '^\s*Ogłoszenie o zamówieniu|See the notice on TED', weight: -10, where: start}
+
+template:
+  OdwolanieKIO: {data: null, czynnosc_dzien: null, czynnosc_powod_id: null, czynnosc_opis: null, miejscowosc: null}
+  Odwolujacy: []
+  Zamawiajacy: []
+  ZamowieniePubliczne: {numer_bzp: null, numer_postepowania: null, numer_ted: null, tytul: null}
+
+# The codes of the contested action. The description goes to "czynnosc_opis" without a change.
+actions:
+  1: Decyzja o odrzuceniu oferty
+  2: Ogłoszenie wyboru oferty
+  3: Decyzja o wykluczeniu wykonawcy
+  4: Publikacja specyfikacji warunków zamówienia (SWZ)
+  5: Modyfikacja treści SWZ
+  6: Odpowiedzi/wyjaśnienia do SWZ
+  7: Zaniechanie odrzucenia oferty
+  8: Zaniechanie wykluczenia wykonawcy
+  9: Decyzja o unieważnieniu postępowania
+  10: Zaniechanie unieważnienia postępowania
+  11: Opis przedmiotu zamówienia (OPZ)
+  12: Projektowane postanowienia umowy

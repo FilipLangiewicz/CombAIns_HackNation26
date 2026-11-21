@@ -1,0 +1,19 @@
+# The confirmation of a bank transfer (potwierdzenie przelewu).
+name: przelew
+label: Potwierdzenie przelewu
+order: 3
+extractor: przelew
+
+classify:
+  head_chars: 600
+  min_score: 5
+  rules:
+    - {pattern: '(potwierdzenie|dowód|polecenie|realizacji).{0,40}(przelewu|operacji|transakcji)', weight: 4, where: head}
+    - {pattern: 'potwierdzenie (transakcji|operacji)', weight: 4, where: head}
+    - {pattern: 'rachun|IBAN', weight: 1}
+    - {pattern: 'kwot', weight: 1}
+    - {pattern: '\bPLN\b|\bzł\b', weight: 1}
+    - {pattern: 'Sygn\.?\s*akt|^\s*Ogłoszenie o zamówieniu|See the notice on TED', weight: -10, where: start}
+
+template:
+  przelew_bankowy: {data_operacji: null, kwota: null, na_rachunek: null, numer_transakcji: null, tytul: null, z_rachunku: null}
