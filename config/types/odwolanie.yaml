@@ -38,6 +38,8 @@ ocr_more_pages_if_empty:
   - OdwolanieKIO.czynnosc_powod_id
   - OdwolanieKIO.czynnosc_dzien
   - ZamowieniePubliczne.tytul
+  # The name of the attorney can be only in the signature on the last page.
+  - Odwolujacy[].pelnomocnik.imie_nazwisko
 
 template:
   OdwolanieKIO: {data: null, czynnosc_dzien: null, czynnosc_powod_id: null, czynnosc_opis: null, miejscowosc: null}

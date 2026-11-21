@@ -35,9 +35,12 @@ def process_text(text: str, path: Path = Path("text")) -> Result:
 
 
 def key_field_empty(data: dict, paths: list[str]) -> bool:
-    from odw2json.extractors.generic import get_path
-
-    return any(get_path(data, path) is None for path in paths)
+    """True if a key field is empty or missing. "[]" in a path means each item of a list."""
+    for path in paths:
+        found = list(validate.locate(data, path.split("."), ""))
+        if not found or any(parent.get(key) is None for parent, key, _ in found):
+            return True
+    return False
 
 
 def fill_empty(first, second):
