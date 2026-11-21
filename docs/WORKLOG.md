@@ -2,6 +2,32 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): the roles in the power of attorney
+
+The organizers told many times that a system can confuse the attorney and the signer. This work makes the roles come from the words near the name.
+
+- Generator 1 has five new layouts of `pelnomocnictwo` (`pl_10` to `pl_14`):
+  - the attorney accepts the power under the signature of the principal;
+  - a letterhead of the law firm with its own NIP;
+  - "Pan" and "Pani" without a professional title for the signer and for the attorney;
+  - a table with two columns;
+  - roles and names in the accusative: "przez Prokurenta Katarzynę Nowak".
+- New rules in `extractors/pelnomocnictwo.py` and in `config/types/pelnomocnictwo.yaml`:
+  - A name found only by "Pan" or "Pani" is not an attorney if this person signs.
+  - A professional title after the name also marks an attorney.
+  - The prose can name a signer: "Jan Nowak (Prezes Zarządu)" or a role before the name (`roles_before_name`).
+  - A company with a word of a law firm (`law_firm_words`) is not a principal.
+  - A legal form between two identifiers starts a new company.
+
+F1 of `pelnomocnictwo`, no LLM:
+
+| Test set | Before | After |
+|---|---|---|
+| Generator 1 with the new layouts, seeds 1 to 5 (42 documents) | 0.928-0.949 | 0.990-1.000 |
+| Organizer dev and holdout (text) | 1.000 | 1.000 |
+| OCR train / val | 0.971 / 0.937 | 0.972 / 0.937 |
+| Generator 2, seeds 1, 7, 101 (final test, one run) | 0.988 / 0.974 / 0.984 | 0.994 / 0.986 / 0.984 |
+
 ## 2026-11-21, evening (rule-pipeline): the OCR path
 
 - OCR with RapidOCR (PP-OCRv6, pip only). Details in `docs/ocr-decision.md`.

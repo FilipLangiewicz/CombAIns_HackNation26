@@ -25,11 +25,17 @@ def _alt(items: list[str]) -> str:
 PESEL_AFTER = re.compile(r"PESEL[^\d]{0,30}?(\d{11})\b")
 
 
-def find_attorneys(text: str, cfg: dict, evidence: dict[str, str]) -> list[dict]:
+def find_attorneys(text: str, cfg: dict, evidence: dict[str, str], signers: set[str] = frozenset()) -> list[dict]:
     titles = _alt(cfg["titles"])
     candidates: list[tuple[int, int, str, str]] = []  # (start, end, name, source)
     for m in re.finditer(rf"(?<![{LOW}])(?:{titles})\s+({NAME})", text):
         candidates.append((m.start(), m.end(), m.group(1), m.group(0)))
+    # The title after the name: "Pani Annie Nowak, adwokat, PESEL ...".
+    masc, fem = common.first_names()
+    for m in re.finditer(rf"({NAME})(?:,\s*| )(?:{titles})(?![{LOW}])", text):
+        known = common.to_nominative(m.group(1)).split()[0] in masc | fem  # not "Kancelaria Adwokacka adw."
+        if known and not any(s <= m.start(1) < e for s, e, _, _ in candidates):
+            candidates.append((m.start(), m.end(), m.group(1), m.group(0)))
     # A form: the name on one line and the profession on the next line.
     for m in re.finditer(rf"({NAME})[ \t]*\n[ \t]*(?:Zawód|Tytuł zawodowy)\s*:", text):
         candidates.append((m.start(), m.end(), m.group(1), m.group(0)))
@@ -41,7 +47,9 @@ def find_attorneys(text: str, cfg: dict, evidence: dict[str, str]) -> list[dict]
         # No title: use a name after "Pan" or "Pani" or after the heading of the attorney.
         label = rf"(?:Pani?|Pana|Panu|Panią|Pełnomocnik\w*:?)\s+({NAME})"
         for m in re.finditer(label, text):
-            candidates.append((m.start(), m.end(), m.group(1), m.group(0)))
+            # Without a title, "Pan" or "Pani" can also name the signer of the principal.
+            if common.to_nominative(m.group(1)) not in signers:
+                candidates.append((m.start(), m.end(), m.group(1), m.group(0)))
     candidates.sort()
     found: dict[str, dict] = {}
     for i, (_, end, raw, src) in enumerate(candidates):
@@ -60,8 +68,12 @@ def find_attorneys(text: str, cfg: dict, evidence: dict[str, str]) -> list[dict]
     return out
 
 
-def identifier_clusters(text: str) -> list[dict]:
-    """Group the labelled identifiers of one company. A new group starts when a label repeats."""
+def identifier_clusters(text: str, cfg: dict) -> list[dict]:
+    """Group the labelled identifiers of one company.
+
+    A new group starts when a label repeats or when the gap has the legal form of another company.
+    """
+    forms = re.compile(rf"(?<![{LOW}{UP}])(?:{_alt(cfg.get('legal_forms', []))})")
     clusters: list[dict] = []
     current: dict | None = None
     last_end = 0
@@ -69,7 +81,7 @@ def identifier_clusters(text: str) -> list[dict]:
         label = m.group(1).upper()
         value = common.digits(m.group(2))
         gap = text[last_end : m.start()]
-        if current is None or label in current["ids"] or ";" in gap or len(gap) > 150:
+        if current is None or label in current["ids"] or ";" in gap or len(gap) > 150 or forms.search(gap):
             current = {"start": m.start(), "ids": {}, "src": {}}
             clusters.append(current)
         current["ids"][label] = value
@@ -197,17 +209,31 @@ def find_signers(text: str, cfg: dict) -> list[tuple[int, str, str]]:
                 )
         # Keep the flag over the line "Za <company>" that can stand between the dots and the name.
         dots_before = (has_dots and not line) or (has_dots and bool(re.match(r"(?:Za|W imieniu)\b", line)))
+    # The prose can name the signers: "my, Jan Nowak (Prezes Zarządu)" or "przez Prokurenta Jana Nowaka".
+    before = _alt(cfg.get("roles_before_name", []))
+    prose = [rf"({NAME})\s*\(\s*{role}\s*\)"] + ([rf"(?<![{LOW}])(?:{before})\s+({NAME})"] if before else [])
+    for pattern in prose:
+        for m in re.finditer(pattern, text[:limit]):
+            name = common.to_nominative(m.group(1))
+            masc, fem = common.first_names()
+            known = name.split()[0] in masc | fem  # the prose has many capital words that are not names
+            if known and valid(m.group(1)) and all(f[1] != name for f in found):
+                found.append((m.start(), name, common.normalize_spaces(m.group(0))))
     return found
 
 
 def find_name_without_legal_form(text: str, before: int) -> tuple[str, int] | None:
     """Find a company name that has no known legal form. The name stands before the address or the KRS."""
     window_start = max(before - 250, 0)
-    anchor = r"(?:Mocodawc\w*:?\s+(?:jest\s+)?|Nazwa(?:\s+\w+)?:\s*|imieniu\s+|reprezentacji\s+|Za\s+|\d\)\s+|^)"
-    pattern = re.compile(rf"{anchor}([{UP}\d][^\n,;:()]*?)(?=\s*(?:,|\(|z\s+siedzibą|KRS\b|NIP\b|\n))", re.MULTILINE)
+    anchor = r"(?:Mocodawc\w*:?\s+(?:jest\s+)?|Nazwa(?:\s+\w+)?:\s*|imieniu\s+|reprezentacji\s+|reprezentowania\s+|Za\s+|\d\)\s+|^(?!(?:Niniejszym|Działając|Ja|My|PEŁNOMOCNICTW\w*)\b))"
+    pattern = re.compile(
+        rf"{anchor}([{UP}\d][^\n,;:()|]*?)(?=\s*(?:,|\(|\||z\s+siedzibą|KRS\b|NIP\b|\n)|[ \t]{{3,}})", re.MULTILINE
+    )
     last = None
     for m in pattern.finditer(text, window_start, before):
-        last = m
+        # A wrapped line can start with the postal code, the street or a sentence of the text.
+        if not re.match(r"\d{2}-\d{3}|(?:ul|al|pl|os)\.", m.group(1)):
+            last = m
     if last is None:
         return None
     return clean_name(common.normalize_spaces(last.group(1))), last.end()
@@ -233,10 +259,13 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
             }
         )  # fmt: skip
     else:
-        for cluster in identifier_clusters(text):
-            company = find_company_name(text, cluster["start"], cfg) or find_name_without_legal_form(
-                text, cluster["start"]
-            )
+        law_firm = re.compile(_alt(cfg.get("law_firm_words", [])) or r"(?!)")
+        for cluster in identifier_clusters(text, cfg):
+            with_form = find_company_name(text, cluster["start"], cfg)
+            without_form = find_name_without_legal_form(text, cluster["start"])
+            company = with_form or without_form
+            if with_form and without_form and law_firm.search(with_form[0]) and without_form[1] > with_form[1]:
+                company = without_form  # the law firm in the letterhead stands before the principal
             nazwa = company[0] if company else None
             principals.append(
                 {
@@ -250,6 +279,9 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
                 }
             )  # fmt: skip
             mark_natural_person(text, principals[-1])
+        if any(not law_firm.search(p["data"]["nazwa"] or "") for p in principals):
+            # The letterhead of the attorney can have the NIP of the law firm.
+            principals = [p for p in principals if not law_firm.search(p["data"]["nazwa"] or "")]
         signers = find_signers(text, cfg)
         if declarant:  # the declarant signs for the company
             signers.insert(
@@ -270,7 +302,8 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
             evidence[f"mocodawca[{i}].podpisujacy[{j}].imie_nazwisko"] = s.pop("src", "")
         data["mocodawca"].append({"data": p["data"], "podpisujacy": p["podpisujacy"]})
 
-    data["pelnomocnicy"] = find_attorneys(text, cfg, evidence)
+    signer_names = {s["imie_nazwisko"] for p in data["mocodawca"] for s in p["podpisujacy"]}
+    data["pelnomocnicy"] = find_attorneys(text, cfg, evidence, signer_names)
     return data
 
 

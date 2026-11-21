@@ -31,7 +31,7 @@ extract:
     - 'adw\.'
     - 'r\.\s?pr\.'
     - 'radca\s+prawny'
-    - 'radc[ay]\s+prawn\w+'
+    - 'radc[aęy]\s+prawn\w+'
     - 'adwokat\w*'
     - 'apl\.\s?(?:adw\.|radc\.)'
     - 'aplikant\s+\w+'
@@ -49,6 +49,16 @@ extract:
     - 'Partner'
     - 'Kierownik'
     - 'Członek\s+Rady\s+Nadzorczej'
+  # Roles in another case before the name of a signer: "reprezentowana przez Prezesa Zarządu Jana Kowalskiego".
+  roles_before_name:
+    - '(?:Wice)?[Pp]rezes\w*\s+Zarządu'
+    - 'Członk\w*\s+Zarządu'
+    - 'Prokurent\w*'
+    - 'Dyrektor\w*(?:\s+Generaln\w+)?'
+    - 'Wspólnik\w*'
+    - 'Likwidator\w*'
+  # Words in a company name that show a law firm. The law firm of the attorney is not a principal.
+  law_firm_words: ['Kancelari\w*', 'Adwokack\w*', 'Radc(?:y|ów)\s+Prawn\w+']
   # Legal forms that end the name of a company.
   legal_forms:
     - 'sp\.\s?z\s?o\.\s?o\.(?:\s*sp\.\s?(?:k|j|p|komandytowa)\.)?'

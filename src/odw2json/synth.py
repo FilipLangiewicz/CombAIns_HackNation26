@@ -726,7 +726,117 @@ def pl_9(c, d):
     return "\n".join(lines), None
 
 
-PL_LAYOUTS = ["pl_1", "pl_2", "pl_3", "pl_4", "pl_5", "pl_6", "pl_7", "pl_8", "pl_9"]
+def pl_10(c, d):
+    """The attorney accepts the power under the signature of the principal, with dots and a title."""
+    m, _, signers = d["mocs"][0]
+    reps = " i ".join(f"Pana {s['acc']}" if s["sex"] == "M" else f"Panią {s['acc']}" for s in signers)
+    att = " oraz ".join(att_dat(a) for a in d["atts"])
+    lines = [f"{d['place']}, {fmt_date(d['date'], 'pl_r')}", "PEŁNOMOCNICTWO",
+             c.para(f"{m['nazwa']} z siedzibą w {m['city']}, {m['addr']}, {ids(m)}, reprezentowana przez {reps}, "
+                    f"udziela niniejszym pełnomocnictwa {att} do reprezentowania Mocodawcy przed Krajową Izbą Odwoławczą "
+                    f"w sprawie odwołania w postępowaniu {d['nr']} „{d['tytul']}”."),
+             "W imieniu Mocodawcy:"]  # fmt: skip
+    for s in signers:
+        lines += ["............................", s["nom"], f"({c.rng.choice(ROLES)})"]
+    lines.append("Przyjmuję pełnomocnictwo:")
+    for a in d["atts"]:
+        lines += ["............................", f"{a['title']} {a['nom']}"]
+    return "\n".join(lines)
+
+
+def pl_11(c, d):
+    """A letterhead of the law firm with its own NIP. The attorneys sign the copy as true."""
+    m, _, signers = d["mocs"][0]
+    a0 = d["atts"][0]
+    r = c.rng
+    firm = law_firm(r, a0)
+    lines = [firm, f"ul. {r.choice(['Mokotowska', 'Długa', 'Prosta'])} {r.randint(1, 90)}, NIP {digits(r, 10)}",
+             f"{d['place']}, {fmt_date(d['date'], 'dot')}", "PEŁNOMOCNICTWO"]  # fmt: skip
+    reps = ", ".join(f"{s['nom']} ({r.choice(ROLES)})" for s in signers)
+    att = ", ".join(att_acc(a) for a in d["atts"])
+    lines.append(c.para(f"Działając w imieniu {m['nazwa']}, {m['addr']}, {ids(m)}, na podstawie odpisu z rejestru, "
+                        f"my, {reps}, upoważniamy {att} z kancelarii {firm} do reprezentowania spółki w postępowaniu "
+                        f"odwoławczym dotyczącym zamówienia {d['nr']}."))  # fmt: skip
+    lines += ["Podpisy osób reprezentujących Mocodawcę:", "............................", "............................",
+              "Za zgodność z oryginałem:", f"{a0['title']} {a0['nom']}"]  # fmt: skip
+    return "\n".join(lines), [s["nom"] for s in signers]
+
+
+def pl_12(c, d):
+    """No professional title. The signer and the attorney both have "Pan" or "Pani"."""
+    m, _, signers = d["mocs"][0]
+    s0 = signers[0]
+    pre = "Pan" if s0["sex"] == "M" else "Pani"
+    dz = "działający" if s0["sex"] == "M" else "działająca"
+    atts = []
+    for a in d["atts"]:
+        a.pop("title", None)
+        atts.append(
+            f"{'Panu' if a['sex'] == 'M' else 'Pani'} {a['dat']}" + (f" (PESEL {a['pesel']})" if a["pesel"] else "")
+        )
+    role = c.rng.choice(ROLES)
+    lines = ["PEŁNOMOCNICTWO", f"{d['place']}, dnia {fmt_date(d['date'], 'pl_r')}",
+             c.para(f"{pre} {s0['nom']}, {dz} jako {role} spółki {m['nazwa']}, {ids(m)}, niniejszym udziela "
+                    f"{' oraz '.join(atts)} pełnomocnictwa do wniesienia odwołania i reprezentowania spółki przed KIO "
+                    f"w postępowaniu {d['nr']} prowadzonym przez {d['zam']['nazwa']}."),
+             "............................", f"{s0['nom']}", role]  # fmt: skip
+    return "\n".join(lines)
+
+
+def pl_13(c, d):
+    """A table with two columns: the principal at the left and the attorney at the right."""
+    m, _, signers = d["mocs"][0]
+    lines = ["PEŁNOMOCNICTWO", "MOCODAWCA      PEŁNOMOCNIK"]
+    left = [m["nazwa"], m["addr"], ids(m)] + [f"{s['nom']} – {c.rng.choice(ROLES)}" for s in signers]
+    right = []
+    for a in d["atts"]:
+        right += [f"{a['title']} {a['nom']}", f"nr wpisu {a['reg']}"] + ([f"PESEL {a['pesel']}"] if a["pesel"] else [])
+    for k in range(max(len(left), len(right))):
+        lines.append(f"{left[k] if k < len(left) else ''}      {right[k] if k < len(right) else ''}".strip())
+    lines.append(
+        c.para(
+            f"Mocodawca udziela Pełnomocnikowi pełnomocnictwa do reprezentowania w postępowaniu {d['nr']} „{d['tytul']}”."
+        )
+    )
+    lines += ["Podpis Mocodawcy: ............................", "Podpis Pełnomocnika: ............................"]
+    return "\n".join(lines)
+
+
+def pl_14(c, d):
+    """The roles come before the names in the accusative: "przez Prezesa Zarządu Jana Kowalskiego"."""
+    m, _, signers = d["mocs"][0]
+    gen_roles = ["Prezesa Zarządu", "Członka Zarządu", "Wiceprezesa Zarządu", "Prokurenta"]
+    reps = " oraz ".join(f"{c.rng.choice(gen_roles)} {s['acc']}" for s in signers)
+    prof = {
+        ("adw.", "M"): "adwokata",
+        ("adw.", "F"): "adwokat",
+        ("r. pr.", "M"): "radcę prawnego",
+        ("r. pr.", "F"): "radcę prawną",
+    }
+    att = " i ".join(f"{prof[a['title'], a['sex']]} {a['acc']}" for a in d["atts"])
+    lines = [f"{d['place']}, {fmt_date(d['date'], 'dot')}", "PEŁNOMOCNICTWO",
+             c.para(f"{m['nazwa']} ({ids(m)}), reprezentowana przez {reps}, ustanawia swoim pełnomocnikiem {att} "
+                    f"w sprawie odwołania od czynności zamawiającego {d['zam']['nazwa']} w postępowaniu {d['nr']}."),
+             "............................", "(podpis i pieczęć)"]  # fmt: skip
+    return "\n".join(lines), [s["nom"] for s in signers]
+
+
+PL_LAYOUTS = [
+    "pl_1",
+    "pl_2",
+    "pl_3",
+    "pl_4",
+    "pl_5",
+    "pl_6",
+    "pl_7",
+    "pl_8",
+    "pl_9",
+    "pl_10",
+    "pl_11",
+    "pl_12",
+    "pl_13",
+    "pl_14",
+]
 
 
 def gen_pelnomocnictwo(rng, i):
@@ -744,10 +854,13 @@ def gen_pelnomocnictwo(rng, i):
         d = pel_data(rng, rng.choice(["company", "person"]), 1)
         d["mocs"][0][1]["podpisujacy"] = d["mocs"][0][1]["podpisujacy"][:1]
         d["mocs"] = [(d["mocs"][0][0], d["mocs"][0][1], d["mocs"][0][2][:1])]
-    elif name == "pl_9":
+    elif name in ("pl_9", "pl_14"):
         d = pel_data(rng, "company", 1)
         for a in d["atts"]:
             a["pesel"] = None  # this layout has no PESEL
+    elif name == "pl_12":
+        d = pel_data(rng, "company", 1)
+        d["mocs"][0][1]["podpisujacy"] = d["mocs"][0][1]["podpisujacy"][:1]
     else:
         d = pel_data(rng, rng.choice(["company", "company", "person"]), 1)
     gold = pel_gold(d)

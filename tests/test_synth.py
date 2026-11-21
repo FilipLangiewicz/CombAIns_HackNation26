@@ -81,7 +81,8 @@ def test_pelnomocnictwo_formats():
             assert m["data"]["nip"] in text, name
             assert norm(m["data"]["nazwa"]) in norm(text), name
             for s in m["podpisujacy"]:
-                assert s["imie_nazwisko"] in text, name
+                # The layout pl_14 gives the signers only in the accusative.
+                assert s["imie_nazwisko"] in text or "/pl_14/" in name, name
 
 
 def test_odwolanie_formats():

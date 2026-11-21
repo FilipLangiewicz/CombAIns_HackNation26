@@ -110,3 +110,53 @@ def test_sole_proprietor_without_krs():
     data = run(text)["mocodawca"][0]["data"]
     assert data["typ"] == "osoba_fizyczna"
     assert data["imie_nazwisko"] == "Grzegorz Kozłowski"
+
+
+def names(items: list[dict]) -> list[str]:
+    return [i["imie_nazwisko"] for i in items]
+
+
+def test_signer_with_pan_is_not_an_attorney():
+    data = run(
+        "PEŁNOMOCNICTWO\nPani Maria Jankowska, działająca jako Dyrektor spółki Poltech Serwis sp. z o.o., KRS 0003884146, "
+        "NIP 1553848431, niniejszym udziela Panu Adamowi Baranowi (PESEL 68042407885) pełnomocnictwa.\n"
+        "............................\nMaria Jankowska\nDyrektor\n"
+    )
+    assert names(data["mocodawca"][0]["podpisujacy"]) == ["Maria Jankowska"]
+    assert data["pelnomocnicy"] == [{"imie_nazwisko": "Adam Baran", "pesel": "68042407885"}]
+
+
+def test_attorney_who_accepts_is_not_a_signer():
+    data = run(
+        "PEŁNOMOCNICTWO\nEkoma Ochrona sp. z o.o., KRS 0007275192, NIP 7317663813, udziela pełnomocnictwa Pani Aleksandrze "
+        "Woźniak, adwokat, legitymującej się numerem PESEL 83060299696.\nW imieniu Mocodawcy:\n"
+        "............................\nKarolina Szymańska\n(Członek Zarządu)\nPrzyjmuję pełnomocnictwo:\n"
+        "............................\nadw. Aleksandra Woźniak\n"
+    )
+    assert names(data["mocodawca"][0]["podpisujacy"]) == ["Karolina Szymańska"]
+    assert data["pelnomocnicy"] == [{"imie_nazwisko": "Aleksandra Woźniak", "pesel": "83060299696"}]
+
+
+def test_roles_before_the_names_in_the_accusative():
+    data = run(
+        "PEŁNOMOCNICTWO\nMedixa Technologie S.A. (KRS 0001250745, NIP 9454494443), reprezentowana przez Prokurenta "
+        "Katarzynę Nowak, ustanawia swoim pełnomocnikiem radcę prawną Marię Kubiak w sprawie odwołania.\n"
+        "............................\n(podpis i pieczęć)\n"
+    )
+    assert names(data["mocodawca"][0]["podpisujacy"]) == ["Katarzyna Nowak"]
+    assert names(data["pelnomocnicy"]) == ["Maria Kubiak"]
+
+
+def test_letterhead_of_the_law_firm_is_not_a_principal():
+    data = run(
+        "Kancelaria Prawna Majewska sp. z o.o.\nul. Mokotowska 45, NIP 3376507103\nPEŁNOMOCNICTWO\n"
+        "Działając w imieniu Nordis Konstrukcje sp. j., ul. Piłsudskiego 42, 30-799 Warszawa, KRS 0002947999, NIP "
+        "8913991871, my, Magdalena Szewczyk (Prokurent), upoważniamy adw. Natalia Majewska z kancelarii Kancelaria "
+        "Prawna Majewska sp. z o.o.\nZa zgodność z oryginałem:\nadw. Natalia Majewska\n"
+    )
+    assert len(data["mocodawca"]) == 1
+    principal = data["mocodawca"][0]
+    assert principal["data"]["nazwa"] == "Nordis Konstrukcje sp. j."
+    assert principal["data"]["krs"] == "0002947999"
+    assert names(principal["podpisujacy"]) == ["Magdalena Szewczyk"]
+    assert names(data["pelnomocnicy"]) == ["Natalia Majewska"]
