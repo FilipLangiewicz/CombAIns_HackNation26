@@ -140,8 +140,14 @@ def split_points(gray, max_width: int = MAX_PART_WIDTH) -> list[int]:
             run = run + 1 if value == 0 else 0
             if run > best_len:
                 best, best_len = k - run // 2, run
-        cuts.append(low + (best if best is not None else high - low))
+        # A cut inside a word breaks the word. Without a gap between words, the box stays whole.
+        if best is None or best_len < MIN_GAP:
+            break
+        cuts.append(low + best)
     return [*cuts, width]
+
+
+MIN_GAP = 6  # pixels without ink: a gap between words, not between letters
 
 
 def ocr_boxes(image: Image.Image) -> list[list]:
@@ -210,7 +216,28 @@ def repair(text: str) -> str:
         known = words.get(fold(token).lower())
         return same_case(known, token) if known else token
 
-    return re.sub(r"[^\W\d_]{3,}", fix, text)
+    text = re.sub(r"[^\W\d_]{3,}", fix, text)
+    # Typical letter errors of the OCR: a zero in "sp. z o.o.", a capital I for a small l inside a word.
+    text = re.sub(r"\bsp\.\s?[zZ]\s?[oO0]\.\s?[oO0]\.", "sp. z o.o.", text)
+    text = re.sub(r"(?<=[^\W\d_])I(?=[a-ząćęłńóśźż])", "l", text)
+    return repair_emails(text)
+
+
+TOP_DOMAINS = {"pl", "com", "eu", "org", "net", "info", "biz", "gov", "edu", "example"}
+
+
+def repair_emails(text: str) -> str:
+    """Remove the spaces that the OCR puts into an e-mail address."""
+    text = re.sub(r"(?<=\w)[ \t]*@[ \t]*(?=\w)", "@", text)
+    # A short part before the address: "bi uro@firma.pl".
+    text = re.sub(r"(?<=[\s,:])([a-z]{1,3}) (?=[\w.\-]+@[\w\-]+\.)", r"\1", text)
+
+    def join_domain(m: re.Match) -> str:
+        joined = m.group(2) + m.group(3)
+        return m.group(1) + joined if joined.lower() in TOP_DOMAINS else m.group(0)
+
+    # A broken top domain: "biuro@firma.exam ple".
+    return re.sub(r"(@[\w\-]+(?:\.[\w\-]+)*\.)([a-z]+) ([a-z]{1,5})\b", join_domain, text)
 
 
 def ocr_page(page) -> str:

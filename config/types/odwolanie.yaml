@@ -7,6 +7,9 @@ extractor: odwolanie
 classify:
   head_chars: 4000
   min_score: 5
+  # A line similar to a title (80% or more) counts as the title. The OCR can change some letters.
+  titles: ['ODWOŁANIE']
+  title_weight: 4
   rules:
     # The title is a whole line. A wrapped line that starts with "odwołanie" is not a title.
     - {pattern: '(?-i:^\s*(?:ODWOŁANIE\b|Odwołanie\s*$))', weight: 4, where: head}

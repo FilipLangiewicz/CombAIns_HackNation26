@@ -7,6 +7,9 @@ extractor: pelnomocnictwo
 classify:
   head_chars: 1500
   min_score: 5
+  # A line similar to a title (80% or more) counts as the title. The OCR can change some letters.
+  titles: ['PEŁNOMOCNICTWO', 'PEŁNOMOCNICTWO PROCESOWE']
+  title_weight: 4
   rules:
     - {pattern: '^\s*PEŁNOMOCNICTW[OA]\b', weight: 4, where: head}
     - {pattern: '(?-i:\bPEŁNOMOCNICTW[OA]\b)', weight: 4, where: head}

@@ -6,6 +6,7 @@ import copy
 import os
 import re
 from dataclasses import dataclass, field
+from difflib import SequenceMatcher
 from functools import cache
 from pathlib import Path
 
@@ -14,6 +15,8 @@ import yaml
 from odw2json.common import despace_caps
 from odw2json.ocr import fold
 
+TITLE_LINES = 25
+TITLE_SIMILARITY = 0.8
 CONFIG_DIR = Path(__file__).resolve().parents[2] / "config" / "types"
 
 
@@ -37,6 +40,8 @@ class DocType:
     fields: list[dict] = field(default_factory=list)
     order: int = 0
     raw: dict = field(default_factory=dict)  # the whole YAML configuration
+    titles: list[str] = field(default_factory=list)  # titles in lower case, without diacritics and spaces
+    title_weight: float = 4
 
     def empty(self) -> dict:
         return copy.deepcopy(self.template)
@@ -51,7 +56,23 @@ class DocType:
             if rule.pattern.search(scope) or rule.folded.search(folded_scope):
                 total += rule.weight
                 hits.append(f"{rule.weight:+g} {rule.pattern.pattern}")
+        title = self.fuzzy_title(head)
+        if title:
+            total += self.title_weight
+            hits.append(f"{self.title_weight:+g} title like '{title}'")
         return total, hits
+
+    def fuzzy_title(self, head: str) -> str | None:
+        """Find a line in the head that is similar to a title of the type. The OCR can change some letters."""
+        for line in head.split("\n")[:TITLE_LINES]:
+            letters = re.sub(r"[^a-z]", "", fold(line).lower())
+            for title in self.titles:
+                if (
+                    abs(len(letters) - len(title)) <= 3
+                    and SequenceMatcher(None, letters, title).ratio() >= TITLE_SIMILARITY
+                ):
+                    return line.strip()
+        return None
 
 
 def _rules(items: list[dict]) -> list[Rule]:
@@ -83,6 +104,8 @@ def load_types(config_dir: Path | None = None) -> list[DocType]:
                 fields=cfg.get("fields", []),
                 order=int(cfg.get("order", 0)),
                 raw=cfg,
+                titles=[re.sub(r"[^a-z]", "", fold(t).lower()) for t in c.get("titles", [])],
+                title_weight=float(c.get("title_weight", 4)),
             )
         )
     return sorted(types, key=lambda t: t.order)
