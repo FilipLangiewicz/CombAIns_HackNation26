@@ -21,7 +21,7 @@ The code is in `src/odw2json/ocr.py`.
 3. **OCR:** RapidOCR with the default model PP-OCRv6 gives text boxes. RapidOCR installs with pip only, so the test machine needs no system program. On the 30 real scans, the default model found 78% of the gold values in the text, and the model for Latin scripts found 68%.
 4. **Lines:** boxes with a similar vertical center form one line, from left to right.
 5. **Columns:** a gap wider than 5% of the page width splits a row into parts. Two or more rows with two parts at the same place are two columns, for example two signature blocks. The left column comes first, as in the text layer of a PDF.
-6. **Diacritics:** the OCR can lose the Polish diacritics. A word without diacritics gets them back if `config/ocr_words.txt` has exactly one form for it, for example "Odwolujacy" becomes "Odwołujący". The vocabulary comes from the dev cases and the configuration. A word is in the vocabulary only if its form without diacritics is not a word of the dev texts ("dostawa" and "dostawą" are both words, so "dostawa" does not change).
+6. **Diacritics:** the OCR can lose the Polish diacritics. A word without diacritics gets them back if `config/ocr_words.txt` has exactly one form for it, for example "Odwolujacy" becomes "Odwołujący". The vocabulary comes from the dev cases and the configuration. A word is in the vocabulary only if its form without diacritics is not a word of the dev texts. For example, "dostawa" and "dostawą" are both words, so "dostawa" does not change.
 7. **Classification:** each classification rule also matches the text without diacritics (see `docs/classification.md`).
 8. **Cache:** the boxes of each image are kept in `data/cache/ocr/`. A second run of the same image needs no OCR.
 
@@ -35,6 +35,7 @@ The code is in `src/odw2json/scans.py`. The jobs on Kaggle make the OCR boxes (s
 | val | organizer negative documents, generator 1 seed 3, real scans 0001-0004 | select variants |
 | test | organizer holdout cases, generator 2 seed 101, real scans 0005-0010 | final measurement only |
 
-- A synthetic scan is a rendered page with a degradation: rotation, blur, noise, specks, punch holes, a dark edge and JPEG compression, at the levels light, medium and heavy.
+- A synthetic scan is a rendered page with a degradation at the level light, medium or heavy.
+- The degradation has rotation, blur, noise, specks, punch holes, a dark edge and JPEG compression.
 - The real scans with the same number are one case. Thus a case is in one split only.
 - `python -m odw2json.scans --report <files>` gives the F1 for each split, source, level and type.
