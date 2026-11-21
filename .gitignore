@@ -1,0 +1,30 @@
+# Secrets: the Kaggle tokens and the API keys.
+.kaggle/
+.env
+.env.*
+!.env.example
+
+# Local environment and tools
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.claude/
+CLAUDE.local.md
+.vscode/
+.idea/
+
+# Windows metadata files from a copy into WSL
+*:Zone.Identifier
+
+# The data of the organizer (clone it, see AGENTS.md)
+data/uzp/
+
+# Kaggle job outputs: keep only small files in git
+**/jobs/runs/*/output/**/*.npy
+**/jobs/runs/*/output/**/*.npz
+**/jobs/runs/*/output/**/*.log
+*.pt
+*.zip
