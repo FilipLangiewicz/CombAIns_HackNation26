@@ -1308,7 +1308,8 @@ def od_4(c, d):
     for i, (z, tag) in enumerate(zam_block(c, d, "paren"), 1):
         lines += [f"{i}) {z['nazwa']}{tag}", z["addr"], co_ids(z)]
     lines.append(c.para(f"dotyczy: postępowania pn. „{d['tytul']}”" + (f", numer postępowania: {d['nr']}" if d["nr"] else "")
-                        + (f", ogłoszenie o zamówieniu {d['bzp_text']}" if d["bzp_text"] else "")))  # fmt: skip
+                        + (f", ogłoszenie o zamówieniu {d['bzp_text']}" if d["bzp_text"] else "")
+                        + (f", ogłoszenie w Dzienniku Urzędowym UE {d['ted_text']}" if d["ted_text"] else "")))  # fmt: skip
     lines.append(c.para("Wnoszę odwołanie wobec następujących czynności i zaniechań, polegających na:"))
     for i, np_ in enumerate(nps, 1):
         lines.append(c.para(f"{i}) {np_};"))

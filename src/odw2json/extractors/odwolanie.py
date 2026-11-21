@@ -144,6 +144,10 @@ def split_entities(section: str) -> list[dict]:
         name = re.sub(r"^\s*\d+\)\s*", "", name.lstrip(" ,;.–-"))
         name = re.sub(r"^(?:Działając\s+)?w\s+imieniu\s+(?:wykonawcy\s+)?", "", name.strip(), flags=I)
         name = name.strip(" ,;-")
+        # A sole trader: "Jan Nowak prowadzący działalność gospodarczą pod firmą NOWAK-BUD Jan Nowak".
+        firm = re.search(r"\bpod\s+(?:firmą|nazwą)\s*:?\s*(.+)$", name, I)
+        if firm:
+            name = firm.group(1).strip(' ,;-„”"')
         if name:
             pos = section.find(name[:20], seg_start)
             entities.append({"name": common.normalize_spaces(name), "ids": ids, "role": role, "pos": pos})
@@ -181,7 +185,7 @@ def entity_fields(entity: dict, path: str, evidence: dict[str, str]) -> dict:
 TITLE = r"(?:adw\.|r\.\s*pr\.|radc\w*\s+prawn\w+|adwokat\w*|mec\.|apl\.\s*(?:radc\.|adw\.)?)"
 TITLES_RE = re.compile(rf"(?:{TITLE}\s+)+", I)
 ANCHOR_RE = re.compile(
-    r"(?P<rep>reprezentowan\w*\s+przez)|działa\w*\s+(?:przez|jako)\s+(?:ustanowion\w+\s+)?pełnomocnik\w*"
+    r"(?P<rep>reprezentowan\w*\s+przez(?:\s+(?:swo\w+\s+)?pełnomocnik\w*\s*:?)?)|działa\w*\s+(?:przez|jako)\s+(?:ustanowion\w+\s+)?pełnomocnik\w*"
     r"|(?<!bez )pełnomocnik\w*(?:\s+(?:wykonawcy|Odwołującego))?",
     I,
 )
@@ -205,7 +209,7 @@ def find_firm(region: str, name_end: int) -> str | None:
     if m:
         cut = ADDRESS_CUT_RE.search(m.group(1))
         firm = (m.group(1)[: cut.start()] if cut else m.group(1)).strip(" ,;")
-        if firm:
+        if firm and not STREET_RE.match(firm):  # only an address, without a name
             return firm
     m = FIRM_AFTER_NAME_RE.match(region, name_end)
     if m:
@@ -217,18 +221,33 @@ def find_firm(region: str, name_end: int) -> str | None:
         ):
             return cand
     m = re.search(
-        r"Kancelari\w+(?!\s*:)\b.*?(?=\s*(?:,|\(|;)|\s+e-?mail\b|\s+tel\b|\s+adres\b|\s+[\w.\-]+@|$)", region, I
+        r"(?<![@.\w])(?-i:Kancelari)\w+(?!\s*:)\b.*?(?=\s*(?:,|\(|;)|\s+e-?mail\b|\s+tel\b|\s+adres\b|\s+[\w.\-]+@|$)",
+        region,
+        I,
     )
     if m:
-        return m.group(0).strip(" ,;")
+        # The surnames of the partners can stand before the word: "Nowak Kowalski Kancelaria Prawna sp.p.".
+        before = re.search(rf"(?:(?<=[\s,])|^)((?:{NAME_WORD}\s+){{1,3}})$", region[: m.start()])
+        names = before.group(1) if before and not TITLES_RE.search(before.group(1)) else ""
+        names = "" if re.search(r"\b(?:Pełnomocnik|Odwołując|Wykonawc)", names, I) else names
+        return (names + m.group(0)).strip(" ,;")
     return None
 
 
-def parse_attorney(section: str, evidence: dict[str, str]) -> tuple[dict, str] | tuple[None, None]:
+def parse_attorney(
+    section: str, evidence: dict[str, str], board_roles: list[str] = ()
+) -> tuple[dict, str] | tuple[None, None]:
     """Give the attorney and the text that shows him, found with a role word or with a title."""
+    roles = "|".join(board_roles) or "(?!)"
+    board = re.compile(rf"\s*:?\s*(?:{roles})\b", I)
+    board_after = re.compile(rf"\s*(?:[,–—-]|\()\s*(?:{roles})\b", I)
     found = None
     for m in ANCHOR_RE.finditer(section):
         person = find_person(section[m.end() :])
+        # "reprezentowana przez Prezesa Zarządu" names a member of the board, not an attorney.
+        is_board = board.match(section, m.end()) or (person and board_after.match(section[m.end() :], person[1]))
+        if m.group("rep") and "pełnomocnik" not in m.group(0).lower() and is_board:
+            continue
         if person or m.group("rep"):
             found = (m, person)
             break
@@ -394,6 +413,10 @@ def parse_procurement(block: str, evidence: dict[str, str]) -> dict:
             r"Dzienniku\s+Urzędowym\D{0,40}(\d{6})\s*-\s*(\d{4})", block, I
         )
         ted = f"{m.group(1)}-{m.group(2)}" if m else None
+    if ted is None:
+        # A number of the TED form without a label, for example "ogłoszenie 2026/BZP 00842365, 961192-2026".
+        m = re.search(r"(?<![\d/.\-])(\d{6})\s*-\s*(20\d\d)(?![\d/.\-])", block)
+        ted = f"{m.group(1)}-{m.group(2)}" if m else None
     out["numer_ted"] = ted
     sources["numer_ted"] = m.group(0) if m else ""
     m = re.search(r"(?:nr|numer|znak)\s+(?:referencyjny|sprawy|postępowania)(?:\s+sprawy)?\s*:?\s*([^\s,;]+)", block, I)
@@ -487,7 +510,20 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
     if appellants:
         leader = next((a for a in appellants if "lider" in a["role"].lower()), appellants[0])
         row = entity_fields(leader, "Odwolujacy[0]", evidence)
-        attorney, attorney_text = parse_attorney(" ".join(appellant_sections), evidence)
+        board_roles = doc_type.raw.get("board_roles", [])
+        attorney, attorney_text = parse_attorney(" ".join(appellant_sections), evidence, board_roles)
+        if attorney is None:
+            # The block of the attorney can stand before the appellant: "Pełnomocnik Odwołującego: ...".
+            other = [
+                s for k, s in sections if k == "inny" and re.match(r"\s*Pełnomocnik\w*\s+(?:Odwołując|wykonawc)", s, I)
+            ]
+            other += [
+                m.group(0) for m in re.finditer(r"Pełnomocnik\w*\s+Odwołując\w*\s*:.{0,300}", head, I | re.DOTALL)
+            ]
+            for block in other:
+                attorney, attorney_text = parse_attorney(block, evidence, board_roles)
+                if attorney:
+                    break
         row["przez-pelnomocnika"] = 1 if attorney else 0
         row["pelnomocnik"] = attorney
         # Without an attorney the decision comes from the start of the section of the appellant.

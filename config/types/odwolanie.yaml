@@ -81,6 +81,18 @@ action_rules:
   - {code: 4, fallback: true, patterns: ['publik', 'opublik', 'specyfikacj', '\bSWZ\b', 'warunków zamówienia']}
 
 # Validation of the fields (see src/odw2json/validate.py). A value that is not valid becomes null.
+# Roles of a person who represents the appellant as a member of its board. Such a person is not an attorney.
+board_roles:
+  - '(?:Wice)?[Pp]rezes\w*'
+  - 'Członk\w*\s+Zarządu'
+  - 'Zarząd\w*'
+  - 'Prokurent\w*'
+  - 'Wspólnik\w*'
+  - 'Komplementariusz\w*'
+  - 'Dyrektor\w*'
+  - 'Właściciel\w*'
+  - 'Likwidator\w*'
+
 validate:
   - {path: "OdwolanieKIO.data", kind: date}
   - {path: "OdwolanieKIO.czynnosc_dzien", kind: date}

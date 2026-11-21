@@ -2,6 +2,29 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): the appellant and the attorney in the appeal
+
+- "reprezentowana przez Prezesa Zarządu ..." names a member of the board, not an attorney. Then `przez-pelnomocnika` is 0. The roles are in `board_roles` of `config/types/odwolanie.yaml`.
+- "reprezentowana przez pełnomocnika: r. pr. ..." gives the name of the attorney.
+- The block "Pełnomocnik Odwołującego: ..." can stand before the appellant.
+- A sole trader gives the name after "pod firmą".
+- The name of a law firm keeps the surnames before "Kancelaria". An e-mail domain or an address is not a law firm.
+- A number of the form `NNNNNN-YYYY` without a label is the TED number.
+- Generator 1: the layout `od_4` now shows the TED number that is in its gold JSON.
+
+F1 of `odwolanie`, no LLM:
+
+| Test set | Before | After |
+|---|---|---|
+| Generator 1, seeds 1 to 3 (42 documents) | 0.988-0.990 | 0.995-0.997 |
+| Organizer dev and holdout (text) | 1.000 | 1.000 |
+| OCR train / val | 0.983 / 0.965 | 0.984 / 0.977 |
+| OCR, all splits: val real scans | 0.916 | 0.935 |
+| Generator 2, seeds 1, 7, 101 (final test, one run) | 0.832 / 0.843 / 0.834 | 0.832 / 0.844 / 0.834 |
+| OCR test, real scans 0005-0010 (one run) | 0.845 | 0.862 |
+
+Generator 2 does not change. Its errors are of other kinds than the role of the attorney.
+
 ## 2026-11-22 (main): the roles in the power of attorney
 
 The organizers told many times that a system can confuse the attorney and the signer. This work makes the roles come from the words near the name.

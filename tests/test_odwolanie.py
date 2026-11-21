@@ -175,3 +175,71 @@ def test_answer_to_appeal_is_not_an_appeal():
 
     text = "ODPOWIEDŹ NA ODWOŁANIE\nZamawiający Gmina Eta wnosi o oddalenie odwołania. Zarzuty Odwołującego są bezzasadne.\nKrajowa Izba Odwoławcza"
     assert classify(text).doc_type is None
+
+
+ROLE_HEAD = "Warszawa, dnia 12.10.2026 r.\nKrajowa Izba Odwoławcza\nul. Postępu 17a, 02-676 Warszawa\n"
+ROLE_TAIL = (
+    "Zamawiający: Gmina Miasto Płock, ul. Stary Rynek 1, 09-400 Płock, NIP 7740001454\nODWOŁANIE\n"
+    "od czynności Zamawiającego polegającej na odrzuceniu oferty Odwołującego, o czym Zamawiający zawiadomił "
+    "w dniu 2.10.2026 r.\n"
+)
+APPELLANT = "Odwołujący: Budimex Serwis sp. z o.o., ul. Długa 5, 00-950 Warszawa, KRS 0000123456\n"
+
+
+def appellant(block: str) -> dict:
+    doc_type = next(t for t in load_types() if t.name == "odwolanie")
+    return odwolanie.extract(ROLE_HEAD + block + ROLE_TAIL, doc_type, {})["Odwolujacy"][0]
+
+
+@pytest.mark.parametrize(
+    "rep",
+    [
+        "reprezentowana przez Prezesa Zarządu Jana Kowalskiego",
+        "reprezentowany przez: Jan Kowalski – Prezes Zarządu",
+        "reprezentowany przez prokurenta Adama Nowaka",
+    ],
+)
+def test_member_of_the_board_is_not_an_attorney(rep):
+    row = appellant(APPELLANT + rep + "\n")
+    assert row["przez-pelnomocnika"] == 0
+    assert row["pelnomocnik"] is None
+
+
+def test_board_and_attorney_together():
+    row = appellant(
+        APPELLANT + "reprezentowana przez Prezesa Zarządu Jana Kowalskiego, działająca przez pełnomocnika "
+        "adw. Piotra Zielińskiego\n"
+    )
+    assert row["przez-pelnomocnika"] == 1
+    assert row["pelnomocnik"]["imie_nazwisko"] == "Piotr Zieliński"
+
+
+def test_attorney_after_the_word_pelnomocnik():
+    row = appellant(APPELLANT + "reprezentowana przez pełnomocnika: r. pr. Anna Nowak, e-mail: a.nowak@kancelaria.pl\n")
+    assert row["pelnomocnik"] == {"imie_nazwisko": "Anna Nowak", "nazwa": None, "mail": "a.nowak@kancelaria.pl"}
+
+
+def test_attorney_before_the_appellant():
+    row = appellant(
+        "Pełnomocnik Odwołującego: adw. Piotr Zieliński, Kancelaria Adwokacka Zieliński, ul. Prosta 2, 00-001 Warszawa\n"
+        + APPELLANT
+    )
+    assert row["nazwa"] == "Budimex Serwis sp. z o.o."
+    assert row["pelnomocnik"]["imie_nazwisko"] == "Piotr Zieliński"
+    assert row["pelnomocnik"]["nazwa"] == "Kancelaria Adwokacka Zieliński"
+
+
+def test_sole_trader_gives_the_name_of_the_firm():
+    row = appellant(
+        "Odwołujący: Jan Kowalski prowadzący działalność gospodarczą pod firmą KOWALSKI-BUD Jan Kowalski, "
+        "ul. Długa 5, 00-950 Warszawa, NIP 5250001090\n"
+    )
+    assert row["nazwa"] == "KOWALSKI-BUD Jan Kowalski"
+
+
+def test_surnames_before_the_law_firm():
+    row = appellant(
+        APPELLANT + "Pełnomocnik: adw. Łukasz Wiśniewski, Wiśniewski Adamczyk Kancelaria Prawna sp.p., "
+        "wisniewski@adwokat.pl\n"
+    )
+    assert row["pelnomocnik"]["nazwa"] == "Wiśniewski Adamczyk Kancelaria Prawna sp.p."
