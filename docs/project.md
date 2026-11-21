@@ -126,11 +126,11 @@ These points of the FAQ add to the information above:
 - The final evaluation gives many points when a new type or a new field needs only a change of the configuration.
 - The UZP stand at the event shows examples of the test data.
 
-## Open questions
+## Decisions
 
-- Do we need an LLM? The rules give F1 = 1.0 on the 60 example cases. An LLM is only a fallback.
-- How do we give the API key to the organizer? Somebody asked this on Discord. There is no answer yet.
-- Which OCR engine gives good results on the scans on a CPU?
+- No LLM. The rules give the results below. A solution without an LLM gets the maximum points for the size of the model.
+- OCR: RapidOCR (PP-OCRv6). It installs with pip only and has its models in the package. Details in `docs/ocr-decision.md`.
+- The API key: not necessary, because the application uses no external service.
 
 ## Notes about the data
 
@@ -141,24 +141,47 @@ These points of the FAQ add to the information above:
 
 ## Plan
 
-The branch `rule-pipeline` has the first version. The team merges it into `main` at the end.
+The first version is in `main`. The complete description of the parts is in `docs/architecture.md`.
 
 ### Architecture
 
 The application uses rules, not an LLM. A solution without an LLM gets the maximum points for the size of the model.
 
-1. `pdftext.py` reads the text layer with pypdfium2. A page with fewer than 30 characters goes to OCR.
+1. `pdftext.py` reads the text layer with pypdfium2. A page with fewer than 30 characters goes to OCR (`ocr.py`, RapidOCR).
 2. `classify.py` gives a score to each type with weighted regular expressions from `config/types/*.yaml`. If no type has its minimum score, the output is `{}`.
 3. An extractor for each type finds the values. Each extractor also records the source text of each value (evidence).
 4. `extractors/generic.py` reads field rules from the configuration. Thus a new type or a new field needs only a YAML file.
-5. `cli.py` writes `output/<case>/<file>.json`. `gui.py` shows the PDF and the fields side by side.
+5. `validate.py` checks the values with the key `validate` of the type.
+6. `cli.py` writes `output/<case>/<file>.json`. `gui.py` shows the PDF and the fields side by side.
 
 ### Measurement
 
 - `python -m odw2json.evaluate --split dev` gives the F1 score with the rules of the organizer. The tests in `tests/test_evaluate.py` check the score on cases with known results.
 - `python -m odw2json.perturb --split dev` changes the form of the text and keeps the expected values. It shows the rules that fail on other layouts.
 
+### Status (2026-11-22)
+
+The work of the first stage is in `main`. The results are in `docs/WORKLOG.md`. The final test results:
+
+| Path | Test set | F1 |
+|---|---|---|
+| text | organizer holdout cases | 1.000 |
+| text | generator 2 (new layouts) | odwolanie 0.84, pelnomocnictwo 0.98, przelew 0.98 |
+| OCR | all 30 real scans, complete application | 0.874 |
+| OCR | real scans 0005-0010 (test split) | 0.845 |
+
 ### Next steps
 
-- OCR for the scans. Tesseract needs a system installation. RapidOCR installs with pip only.
-- Optional: a small LLM from an EU provider for the fields that the rules do not find.
+Do the work on a new branch. Merge it into `main` when the tests and the measurements are good. In the order of the value:
+
+1. The appeal with a new layout: the block of the appellant and the attorney. Tune on generator 1 (`odw2json.synth`, seeds 1 to 3) and on the OCR train split. Measure on generator 2 and on the OCR test split only at the end.
+2. The real scans: the reading order of tables with three columns in bank confirmations (`ocr.boxes_to_lines`), and the OCR errors in names.
+3. The speed, if the organizer gives a time limit: `ODW2JSON_OCR_MAX_PAGES`, `--workers`.
+4. A new OCR data set on Kaggle after each change of the OCR steps (`jobs/new_ocr_jobs.py`). A change of the rules only needs `odw2json.scans --report` on the boxes that are in `jobs/runs/`.
+
+### How to continue the work
+
+1. Clone the data of the organizer into `data/uzp/` (see `CLAUDE.md`, section "Data").
+2. Run `uv pip sync --python .venv requirements-dev.txt`. The lock has RapidOCR now.
+3. Run the tests and the measurements in `docs/architecture.md`, section "Quality". The OCR boxes of the scan data set are in `jobs/runs/*_ocr-set-v5*/output/`.
+4. Do not tune rules on the test split: the organizer holdout cases, generator 2, and the real scans 0005-0010.
