@@ -58,7 +58,6 @@ The deadline is short. Thus the work is on `main`, without issues and without pu
 - After each step of work, add an entry to `docs/WORKLOG.md` with the date and the changes. Add new entries at the top.
 - Keep `README.md` correct: it tells how to install and run the application. Change it when this procedure changes.
 - Do not change the files in `docs/task/`. They are the original materials of the challenge. `docs/task/organizer/` has copies of the README and of the JSON structures from the organizer repository (commit `84cc976`).
-- Do not create `CLAUDE.md` or `CLAUDE.local.md`. If one of these files exists, Claude Code does not read `AGENTS.md`.
 - Keep personal settings of a tool out of git (see `.gitignore`).
 - Do not commit the folder `.claude/`.
 

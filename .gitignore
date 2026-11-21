@@ -19,7 +19,7 @@ CLAUDE.local.md
 # Windows metadata files from a copy into WSL
 *:Zone.Identifier
 
-# The data of the organizer (clone it, see AGENTS.md)
+# The data of the organizer (clone it, see CLAUDE.md)
 data/uzp/
 
 # Kaggle job outputs: keep only small files in git

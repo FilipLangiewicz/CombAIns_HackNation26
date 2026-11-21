@@ -15,4 +15,4 @@ To install the application, do these steps:
    pip install -r requirements.txt
    ```
 
-For development, use the procedure in `AGENTS.md`, section "Environment".
+For development, use the procedure in `CLAUDE.md`, section "Environment".
