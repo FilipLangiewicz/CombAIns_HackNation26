@@ -17,3 +17,29 @@ classify:
 
 template:
   przelew_bankowy: {data_operacji: null, kwota: null, na_rachunek: null, numer_transakcji: null, tytul: null, z_rachunku: null}
+
+# Label aliases for the extractor. Each entry is a regular expression, tested on one line without case.
+# The value comes after the label on the same line, or on the next line.
+labels:
+  data_operacji:
+    - '\bdata\s+(?:operacji|transakcji|realizacji|wykonania|księgowania|zlecenia)\b'
+    - '\bw\s+dniu\b'
+  kwota:
+    - '(?<![\wąćęłńóśźż])(?:kwota(?:\s+(?:przelewu|operacji|transakcji))?|wartość|w\s+kwocie)(?![\wąćęłńóśźż])'
+  numer_transakcji:
+    - '^\s*(?:numer|nr)\s+(?:referencyjny|ref\.?|transakcji|operacji)(?:\s+(?:operacji|transakcji))?(?![\wąćęłńóśźż])'
+    - '^\s*(?:identyfikator|id)(?:\s+(?:operacji|transakcji|przelewu))?(?![\wąćęłńóśźż])'
+  tytul:
+    - '^\s*tytuł(?:em|\s+przelewu|\s+operacji|\s+płatności)?(?![\wąćęłńóśźż])'
+    - '^\s*opis(?:\s+przelewu|\s+operacji|\s+płatności)?(?![\wąćęłńóśźż])'
+  # A keyword before an account tells whose account it is. The nearest keyword wins.
+  z_rachunku:
+    - 'nadawc|zleceniodawc|obciążan|obciążeni|płatnik|z\s+rachunku|ze\s+rachunku'
+  na_rachunek:
+    - 'odbiorc|beneficjent|uznawan|uznani|adresat|na\s+rachunek'
+  # A line that starts with one of these words ends the title.
+  stop:
+    - '^\s*(?:status|typ|rodzaj|kanał|tryb|opłata|prowizja|waluta|godz|data|numer|nr|identyfikator|id|rachunek|kwota|wartość|nazwa|adres|nadawca|odbiorca|płatnik|zleceniodawca|beneficjent|adresat|bank|dokument|potwierdzenie|z\s+poważaniem|dział|w\s+razie|dziękujemy|zrealizowano|wykonano)(?![\wąćęłńóśźż])'
+
+fallback:
+  numer_transakcji: '\bCEN\d{10,}\b'

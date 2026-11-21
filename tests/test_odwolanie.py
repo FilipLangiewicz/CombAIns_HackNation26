@@ -1,0 +1,103 @@
+import pytest
+
+from odw2json.classify import load_types
+from odw2json.extractors import odwolanie
+
+HEADER = """Gdańsk, dnia 3 września 2026 roku
+Prezes Krajowej Izby Odwoławczej
+Zamawiający (zamawiający wspólnie przeprowadzający postępowanie):
+1) Zamawiający – Lider, prowadzący postępowanie:
+Gmina Alfa
+ul. Długa 1, 80-001 Gdańsk
+KRS: 9990000001, NIP: 9990000002, REGON: 999000003
+2) Zamawiający – Partner:
+Gmina Beta
+ul. Krótka 2, 80-002 Gdańsk
+NIP: 9990000004
+Odwołujący: Konsorcjum wykonawców w składzie:
+1) Lider Konsorcjum:
+Firma Gamma sp. z o.o.
+ul. Polna 3, 80-003 Gdańsk
+KRS: 9990000005, NIP: 9990000006, REGON: 999000007
+2) Partner Konsorcjum:
+Firma Delta S.A.
+ul. Leśna 4, 80-004 Gdańsk
+NIP: 9990000008
+reprezentowany przez: adw. Jan Kowalski, r. pr. Anna Nowak
+adres do korespondencji: Kancelaria Adwokacka Kowalski,
+ul. Cicha 5, 80-005 Gdańsk
+tel. 000 000 000, e-mail: jan@kancelaria.example
+dotyczy: postępowania pn. „Budowa drogi
+wraz z chodnikiem”, nr referencyjny: ZP.1.2026, ogłoszenie nr 2026/BZP
+00999778, ogłoszenie w Dzienniku nr 2026/S 142-999327
+Strona 1 z 2
+O D W O Ł A N I E
+Działając w imieniu Konsorcjum, wnoszę odwołanie wobec czynności Zamawiającego, polegających na:
+1) zaniechaniu odrzucenia oferty wykonawcy X z dnia 2 czerwca 2026 r.;
+2) wyborze oferty.
+Zarzut nr 1 – zaniechania odrzucenia oferty
+"""
+
+
+@pytest.fixture(scope="module")
+def result():
+    doc_type = next(t for t in load_types() if t.name == "odwolanie")
+    evidence: dict[str, str] = {}
+    return odwolanie.extract(HEADER, doc_type, evidence), evidence
+
+
+def test_header_line(result):
+    kio = result[0]["OdwolanieKIO"]
+    assert (kio["data"], kio["miejscowosc"]) == ("2026-09-03", "Gdańsk")
+
+
+def test_action(result):
+    kio = result[0]["OdwolanieKIO"]
+    assert kio["czynnosc_powod_id"] == 7
+    assert kio["czynnosc_opis"] == "Zaniechanie odrzucenia oferty"
+    assert kio["czynnosc_dzien"] == "2026-06-02"
+
+
+def test_consortium_leader_and_attorney(result):
+    row = result[0]["Odwolujacy"][0]
+    assert row["nazwa"] == "Firma Gamma sp. z o.o."
+    assert (row["krs"], row["nip"], row["regon"]) == ("9990000005", "9990000006", "999000007")
+    assert row["przez-pelnomocnika"] == 1
+    assert row["pelnomocnik"] == {
+        "imie_nazwisko": "Jan Kowalski",
+        "nazwa": "Kancelaria Adwokacka Kowalski",
+        "mail": "jan@kancelaria.example",
+    }
+
+
+def test_several_contracting_authorities(result):
+    rows = result[0]["Zamawiajacy"]
+    assert [r["nazwa"] for r in rows] == ["Gmina Alfa", "Gmina Beta"]
+    assert [r["prowadzacy_postepowanie"] for r in rows] == [1, 0]
+    assert rows[1]["krs"] is None
+
+
+def test_procurement(result):
+    p = result[0]["ZamowieniePubliczne"]
+    assert p == {
+        "numer_bzp": "2026/BZP00999778",
+        "numer_postepowania": "ZP.1.2026",
+        "numer_ted": "999327-2026",
+        "tytul": "Budowa drogi wraz z chodnikiem",
+    }
+
+
+@pytest.mark.parametrize(
+    "sentence, code",
+    [
+        ("Zamawiający w dniu 1 marca 2026 roku unieważniił postępowanie.", 9),
+        ("Zamawiający w dniu 1 marca 2026 roku zaniechał unieważnienia postępowania.", 10),
+        ("Zamawiający w dniu 1 marca 2026 roku nie wykluczył wykonawcy.", 8),
+        ("Zamawiający w dniu 1 marca 2026 roku udostępnił Opis Przedmiotu Zamówienia.", 11),
+        ("Zamawiający w dniu 1 marca 2026 roku przekazał odpowiedzi i wyjaśnienia do treści SWZ.", 6),
+    ],
+)
+def test_action_codes(sentence, code):
+    doc_type = next(t for t in load_types() if t.name == "odwolanie")
+    found, _ = odwolanie.classify_action([sentence], doc_type.raw["action_rules"])
+    assert found == code

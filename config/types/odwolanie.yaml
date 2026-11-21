@@ -38,3 +38,20 @@ actions:
   10: Zaniechanie unieważnienia postępowania
   11: Opis przedmiotu zamówienia (OPZ)
   12: Projektowane postanowienia umowy
+
+# Keyword rules for the code of the contested action. The extractor reads the text of the first
+# charge and gives the code of the first rule that has a matching pattern. Order matters:
+# a specific rule (a failure to act) must come before a general rule.
+action_rules:
+  - {code: 10, patterns: ['zaniecha\w*\s+(?:\w+\s+){0,2}unieważ', 'nie\s+unieważ']}
+  - {code: 7, patterns: ['zaniecha\w*\s+(?:\w+\s+){0,2}odrzuc', 'nie\s+odrzuc']}
+  - {code: 8, patterns: ['zaniecha\w*\s+(?:\w+\s+){0,2}wyklucz', 'nie\s+wyklucz']}
+  - {code: 9, patterns: ['unieważ']}
+  - {code: 3, patterns: ['wyklucz']}
+  - {code: 1, patterns: ['odrzu(?:c|ci)']}
+  - {code: 2, patterns: ['\bwybór\b', '\bwyborze\b', '\bwyboru\b', 'wybrał', 'wybrano']}
+  - {code: 6, patterns: ['odpowiedz', 'wyjaśnie']}
+  - {code: 5, patterns: ['zmodyfik', 'modyfikac']}
+  - {code: 11, patterns: ['opis\w*\s+przedmiotu', '\bOPZ\b']}
+  - {code: 12, patterns: ['projektowan\w+\s+postanowie', 'postanowie\w+\s+umow']}
+  - {code: 4, patterns: ['publik', 'opublik', 'specyfikacj', '\bSWZ\b', 'warunków zamówienia']}

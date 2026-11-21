@@ -18,3 +18,38 @@ classify:
 template:
   mocodawca: []
   pelnomocnicy: []
+
+# Word lists for the extractor. Each item is a regular expression.
+extract:
+  # Professional titles that come before the name of an attorney.
+  titles:
+    - 'adw\.'
+    - 'r\.\s?pr\.'
+    - 'radca\s+prawny'
+    - 'radc[ay]\s+prawn\w+'
+    - 'adwokat\w*'
+    - 'apl\.\s?(?:adw\.|radc\.)'
+    - 'aplikant\s+\w+'
+    - 'mec\.'
+  # Roles of the persons who sign for the principal.
+  roles:
+    - '(?:Wice)?prezes(?:\s+Zarządu)?'
+    - 'Członek\s+Zarządu'
+    - 'Prokurent'
+    - 'Dyrektor(?:\s+\w+)?'
+    - 'Wspólnik'
+    - 'Komplementariusz'
+    - 'Likwidator'
+    - 'Właściciel'
+    - 'Partner'
+    - 'Kierownik'
+    - 'Członek\s+Rady\s+Nadzorczej'
+  # Legal forms that end the name of a company.
+  legal_forms:
+    - 'sp\.\s?z\s?o\.\s?o\.(?:\s*sp\.\s?(?:k|j|p|komandytowa)\.)?'
+    - 'sp\.\s?(?:k|j|p|komandytowa|jawna|partnerska)\.'
+    - 'sp\.\s?k\.a\.'
+    - 'S\.\s?A\.'
+    - 'spółka\s+(?:akcyjna|cywilna)'
+  # Words that can stand before a company name but are not part of it.
+  stop_words: [Mocodawca, Mocodawcą, Mocodawcy, Za, Wykonawca, Wykonawcy, Pełnomocnictwo, Pełnomocnik, Pełnomocnicy, Konsorcjum, Lider, Partner, Dane, Firma, Zamawiający, Postępowanie, Data, PEŁNOMOCNICTWO, PROCESOWE, MOCODAWCA, PEŁNOMOCNIK, Ja, Pan, Pani]

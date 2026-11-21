@@ -33,6 +33,7 @@ class DocType:
     rules: list[Rule]
     fields: list[dict] = field(default_factory=list)
     order: int = 0
+    raw: dict = field(default_factory=dict)  # the whole YAML configuration
 
     def empty(self) -> dict:
         return copy.deepcopy(self.template)
@@ -69,6 +70,7 @@ def load_types(config_dir: Path = CONFIG_DIR) -> list[DocType]:
                 rules=_rules(c.get("rules", [])),
                 fields=cfg.get("fields", []),
                 order=int(cfg.get("order", 0)),
+                raw=cfg,
             )
         )
     return sorted(types, key=lambda t: t.order)
