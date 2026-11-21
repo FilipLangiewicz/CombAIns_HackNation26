@@ -75,7 +75,8 @@ Git ignores `data/uzp/`. To get the last version of the data, run `git -C data/u
 The repository of the organizer has these folders:
 
 - `dane/przyklad_NN/`: the example cases. Each case has PDF files and the expected JSON files.
-- `dane/negatywne/`: PDF files that are not of a known type. The application must write an empty JSON for them.
+- `dane/negatywne/`: PDF files that are not of a known type. The application must write `{}` for them.
+- `dane/skany/`: scanned documents without a text layer, with the expected JSON files.
 - `oczekiwane-json/`: the expected structure of the JSON for each type of document.
 - `szablon-aplikacja/`: the expected `input/` and `output/` folders of the application.
 

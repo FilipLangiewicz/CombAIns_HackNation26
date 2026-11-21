@@ -19,7 +19,7 @@ The known types of documents:
 | Power of attorney (`pelnomocnictwo`) | `oczekiwane-json/pelnomocnictwo.json` |
 | Payment confirmation (`przelew`) | `oczekiwane-json/przelew.json` |
 
-If a document is not of a known type, the application writes an empty JSON file.
+If a document is not of a known type, the application writes a JSON file with only `{}`. The file has the name of the PDF file.
 
 ## Input and output
 
@@ -64,11 +64,70 @@ If the team wins, it must also give these items:
 - documentation of the configuration of a document type
 - documentation of the procedure to add a new document type
 
+## Answers of the organizer (Discord, 2026-11-21)
+
+The organizer gave these answers on the Discord channel of the challenge. They have priority over the PDF files in `docs/task/`.
+
+The F1 score:
+
+- True positive: the value is in our JSON and agrees with the reference.
+- True negative: the value is not in our JSON and not in the reference.
+- False positive: the value is only in our JSON, or the value is in both but it is not correct.
+- False negative: the value is only in the reference.
+- These fields are "long strings". For them, an 80% agreement is sufficient:
+  - the name of the company of the attorney
+  - the title of the payment
+  - the name of the appellant and the name of the contracting authority
+  - the title of the public procurement
+- All other fields must agree exactly (for example KRS, NIP, dates, amounts).
+- The jury matches the items of a list by their content, not by their order.
+
+The data and the output:
+
+- The 60 example cases in the organizer repository are the correct data. The presentation tells about 39 cases and `ground_truth.yaml`. This information is old.
+- The test set has synthetic documents. The organizer made them from real cases.
+- The folder `dane/skany/` has scans without a text layer: 10 appeals, 10 powers of attorney and 10 payment confirmations, each with its JSON. Thus the application must have OCR.
+- The JSON must agree strictly with the format. Do not add fields, for example a quote of the source.
+- Write the names of persons in the nominative case, for example "Mateusz Szymański", not "Mateusza Szymańskiego".
+- In `czynnosc_opis`, use the text from `oczekiwane-json/czynnosc_powod_id_dict.md` exactly, for example "Odpowiedzi/wyjaśnienia do SWZ". The code 12 occurs only in this dictionary, not in the examples.
+
+The LLM and the test machine:
+
+- The LLM must be open source.
+- A company must host the LLM in the EU. Its privacy policy must tell the scope and the place of the data processing.
+- Do not host the LLM on a private computer. The organizer does not allow this.
+- We give the API key to the organizer for the test.
+- A solution without an LLM gets the maximum points for the size of the model.
+- The test machine is a usual laptop with internet. There is no time limit.
+- If the repository is private, give access to these GitHub accounts: `DominikOlczak`, `MateuSzSz-Sz`, `rkrol-dev`.
+
+## FAQ of the organizer (version 1.0)
+
+These points of the FAQ add to the information above:
+
+- If a document does not have a value, do not invent it. Use `null` where the structure allows it, as the examples show.
+- The application must read PDF files with a text layer and scans (OCR).
+- The LLM must be free of license fees. It must also be possible to install it locally.
+- A CLI with instructions is necessary. It is the most important interface.
+- A GUI is optional, but it gives points. The ideal GUI has these functions:
+  - upload a PDF file
+  - start the analysis
+  - show the source document and the extracted data side by side
+- The final evaluation gives many points when a new type or a new field needs only a change of the configuration.
+- The UZP stand at the event shows examples of the test data.
+
 ## Open questions
 
 - Which LLM and which API provider in the EU do we use?
-- How does the jury calculate F1: for each field, for each document, or for each case?
-- How do we read scanned PDF files (OCR)?
+- How do we give the API key to the organizer? Somebody asked this on Discord. There is no answer yet.
+- Which OCR engine gives good results on the scans on a CPU?
+
+## Notes about the data
+
+- The JSON files in `oczekiwane-json/` have comments (`//`). A usual JSON parser cannot read them. Use `json5` or remove the comments.
+- Some titles have spaces between the letters, for example "P E Ł N O M O C N I C T W O".
+- A payment confirmation often has the data in a table with labels and values.
+- Many values have a fixed form (NIP, REGON, KRS, PESEL, IBAN, amounts, dates). Rules can find them without an LLM.
 
 ## Plan
 
