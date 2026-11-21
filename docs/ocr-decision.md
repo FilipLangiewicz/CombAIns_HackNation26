@@ -7,7 +7,7 @@ This file tells how the application decides if a PDF page needs OCR.
 The code is in `src/odw2json/pdftext.py`.
 
 1. The application reads the text layer of each page with pypdfium2.
-2. If a page has fewer than 30 characters after the removal of spaces (`MIN_PAGE_CHARS`), the page has no usable text layer.
+2. If a page has fewer than 30 characters without the spaces at its start and end (`MIN_PAGE_CHARS`), the page has no usable text layer.
 3. Such a page goes to OCR: the application renders the page at 300 DPI and gives the image to Tesseract with the Polish language data (`pol`).
 4. If Tesseract is not installed, the page text stays empty and the result marks the document with `ocr_missing`. The CLI shows "no text layer and no OCR engine".
 

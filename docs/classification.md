@@ -26,7 +26,9 @@ The code is in `src/odw2json/classify.py`. The rules are in the key `classify` o
 | Words for the type | +1 | "Zamawiający", "mocodawca", "rachunek", "PLN" |
 | Signs of another kind of document | -10 | "Sygn. akt", "WYROK", "Ogłoszenie o zamówieniu", "See the notice on TED" |
 
-The minimum score is 5. Thus a title alone is not sufficient: the document must also have one or more words for the type. Words alone are also not sufficient, because a title gives most of the score.
+The minimum score is 5. Words alone are not sufficient: each type has 4 or fewer rules of +1. Thus a document needs a title.
+
+A title can match two title rules, for example `^\s*PEŁNOMOCNICTWO` and the same word in capitals. Then the title alone gives the minimum score. The second rule finds a title that a PDF reader joined to another line.
 
 The negative rules are necessary. A decision of the KIO or a procurement notice contains many words of an appeal ("odwołanie", "Zamawiający", "Odwołujący").
 
