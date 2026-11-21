@@ -134,7 +134,7 @@ function renderDocs() {
   if (!docs.length && !pending) return;
   box.innerHTML = docs.map((d) =>
     `<div class="chip ${d.id === current ? "active" : ""}" data-id="${d.id}">${esc(d.name)}<small>${esc(d.type_label)}</small></div>`
-  ).join("") + (pending ? `<span class="spin">Analizuję (${pending})…</span>` : "");
+  ).join("") + (pending ? `<span class="spin">Analizuję (${pending})… skan z OCR może trwać do minuty</span>` : "");
   box.querySelectorAll(".chip").forEach((c) => c.onclick = () => select(c.dataset.id));
 }
 
