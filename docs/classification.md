@@ -14,9 +14,11 @@ The code is in `src/odw2json/classify.py`. The rules are in the key `classify` o
    - `start`: the first 300 characters,
    - `head`: the first `head_chars` characters of the type,
    - `all`: the full text.
-4. The score of a type is the sum of the weights of the rules that match.
-5. The type with the highest score wins, if its score is equal to or more than its `min_score`.
-6. If no type has its `min_score`, the document is of an unknown type.
+4. A rule also matches the text without Polish diacritics, because the OCR can lose them. For example, the rule `ODWOŁANIE` also finds "ODWOLANIE".
+5. The key `titles` gives the titles of the type. A line in the head that is 80% or more similar to a title adds `title_weight` (4). Thus "Pehnomocnictwo" from the OCR counts as the title "PEŁNOMOCNICTWO".
+6. The score of a type is the sum of the weights of the rules that match.
+7. The type with the highest score wins, if its score is equal to or more than its `min_score`.
+8. If no type has its `min_score`, the document is of an unknown type.
 
 ## The kinds of rules
 
