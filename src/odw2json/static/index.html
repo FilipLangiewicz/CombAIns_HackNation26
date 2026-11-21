@@ -8,6 +8,7 @@
 :root {
   --bg: #f4f6fa; --panel: #fff; --line: #dde3ec; --text: #1c2536; --muted: #667085;
   --accent: #1f4eb4; --accent-soft: #e8efff; --ok: #1a7f4b; --warn: #b54708; --warn-soft: #fff4e5;
+  --amber: #d98e04; --amber-soft: #fff3c4; --quote-bg: #f1f4f9; --quote-line: #d3dbe8;
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
@@ -46,8 +47,33 @@ td.key { width: 34%; color: var(--muted); word-break: break-word; }
 td.val input { width: 100%; font: inherit; padding: 4px 6px; border: 1px solid transparent; border-radius: 4px; background: transparent; }
 td.val input:hover, td.val input:focus { border-color: var(--line); background: #fff; outline: none; }
 td.val input.null { color: var(--muted); font-style: italic; }
-td.val input.edited { border-color: var(--ok); background: #effaf3; }
-.ev { display: block; margin-top: 3px; font-size: 12px; color: var(--ok); border-left: 3px solid var(--ok); padding-left: 8px; }
+td.val input.edited { border-color: var(--amber); background: var(--amber-soft); }
+td.val input.null::placeholder { color: #98a2b3; font-style: italic; }
+.ev { display: block; margin-top: 4px; font-size: 12px; color: #475467; background: var(--quote-bg); border: 1px solid var(--quote-line); border-radius: 4px; padding: 3px 8px; cursor: pointer; }
+.ev b { font-weight: 600; color: #3b5b8c; margin-right: 4px; font-style: normal; }
+.ev i { font-style: italic; }
+.ev:hover { border-color: #3b5b8c; }
+.editmark { display: none; margin-top: 4px; font-size: 12px; align-items: center; gap: 8px; }
+tr.changed .editmark { display: flex; }
+.tag { background: var(--amber); color: #fff; border-radius: 10px; padding: 1px 8px; font-size: 11px; font-weight: 600; }
+.editmark button { padding: 1px 8px; font-size: 12px; }
+.legend p { margin: 6px 0; }
+.sw { display: inline-block; padding: 0 6px; border-radius: 3px; font-size: 12px; }
+.sw.q { background: var(--quote-bg); border: 1px solid var(--quote-line); color: #475467; }
+.sw.a { background: var(--amber-soft); border: 1px solid var(--amber); }
+.sw.n { background: #f2f4f7; color: #98a2b3; font-style: italic; }
+.scores span.win { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.hits { margin: 8px 0 0; padding-left: 18px; font-size: 12px; }
+.hits code { font-size: 11px; }
+.tabs { display: flex; background: var(--panel); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 2; }
+.tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 8px 16px; background: transparent; }
+.tabs button.on { border-bottom-color: var(--accent); color: var(--accent); font-weight: 600; }
+#left { display: flex; flex-direction: column; overflow: hidden; }
+#left iframe { flex: 1; min-height: 0; }
+#doctext { flex: 1; min-height: 0; overflow: auto; padding: 14px 18px; background: #fff; white-space: pre-wrap; word-break: break-word; font: 12.5px/1.5 ui-monospace, Consolas, monospace; display: none; }
+mark.ev-mark { background: #d9e6fb; color: inherit; border-bottom: 2px solid #3b5b8c; border-radius: 2px; cursor: pointer; }
+mark.flash { animation: flash 1.6s ease-out; }
+@keyframes flash { 0%, 40% { background: #ffd54a; outline: 3px solid #ffd54a; } 100% { background: #d9e6fb; outline: 3px solid transparent; } }
 details summary { cursor: pointer; font-weight: 600; }
 pre { background: #101828; color: #e4e9f2; padding: 12px; border-radius: 6px; overflow: auto; max-height: 420px; margin: 10px 0 0; font-size: 12px; }
 .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
@@ -115,9 +141,57 @@ function renderDocs() {
 function select(id) {
   current = id;
   const doc = docs.find((d) => d.id === id);
-  $("left").innerHTML = `<iframe title="PDF" src="${doc.pdf_url}"></iframe>`;
+  $("left").innerHTML = `<div class="tabs"><button class="on" data-tab="pdf">PDF</button><button data-tab="text">Tekst dokumentu</button></div>
+    <iframe title="PDF" src="${doc.pdf_url}"></iframe><div id="doctext"></div>`;
+  $("doctext").innerHTML = markedText(doc);
+  $("left").querySelectorAll(".tabs button").forEach((b) => b.onclick = () => showTab(b.dataset.tab));
+  $("doctext").querySelectorAll("mark").forEach((m) => m.onclick = () => focusField(m.dataset.path.split("|")[0]));
   renderDocs();
   renderResult(doc);
+}
+
+function showTab(tab) {
+  const text = tab === "text";
+  $("left").querySelector("iframe").style.display = text ? "none" : "block";
+  $("doctext").style.display = text ? "block" : "none";
+  $("left").querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
+}
+
+// Mark the first place of each evidence snippet in the text. Spaces match any run of white space.
+function markedText(doc) {
+  const text = doc.text || "";
+  if (!text) return `<i>Brak tekstu dokumentu.</i>`;
+  const ranges = [];
+  for (const [path, ev] of Object.entries(doc.evidence)) {
+    const words = String(ev).trim().split(/\s+/).filter(Boolean).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    if (!words.length) continue;
+    const m = new RegExp(words.join("\\s+")).exec(text);
+    if (m) ranges.push({start: m.index, end: m.index + m[0].length, path});
+  }
+  ranges.sort((a, b) => a.start - b.start || b.end - a.end);
+  let out = "", pos = 0;
+  for (const r of ranges) {
+    const same = ranges.filter((o) => o.start === r.start && o.end === r.end).map((o) => o.path);
+    if (r.start < pos || same[0] !== r.path) continue;
+    out += esc(text.slice(pos, r.start)) + `<mark class="ev-mark" data-path="${esc(same.join("|"))}" title="Kliknij, aby przejść do pola">${esc(text.slice(r.start, r.end))}</mark>`;
+    pos = r.end;
+  }
+  return out + esc(text.slice(pos));
+}
+
+function flashSnippet(path) {
+  showTab("text");
+  const m = [...$("doctext").querySelectorAll("mark")].find((x) => x.dataset.path.split("|").includes(path));
+  if (!m) { alert("Nie znaleziono tego fragmentu w tekście dokumentu."); showTab("pdf"); return; }
+  m.scrollIntoView({block: "center", behavior: "smooth"});
+  m.classList.remove("flash"); void m.offsetWidth; m.classList.add("flash");
+}
+
+function focusField(path) {
+  const inp = [...$("right").querySelectorAll("input[data-path]")].find((i) => i.dataset.path === path);
+  if (!inp) return;
+  inp.scrollIntoView({block: "center", behavior: "smooth"});
+  inp.focus();
 }
 
 function flatten(value, path, rows, depth) {
@@ -167,7 +241,24 @@ function renderResult(doc) {
   if (doc.ocr_missing) html += `<div class="note">Dokument nie ma warstwy tekstowej, a silnik OCR jest niedostępny.</div>`;
   else if (doc.ocr_pages.length) html += `<div class="note">Zastosowano OCR na stronach: ${doc.ocr_pages.map((p) => p + 1).join(", ")}.</div>`;
   const scores = Object.entries(doc.scores);
-  if (scores.length) html += `<div class="scores">${scores.map(([k, v]) => `<span>${esc(k)}: <b>${Number(v).toFixed(1)}</b></span>`).join("")}</div>`;
+  if (scores.length) {
+    html += `<div class="scores">${scores.map(([k, v]) => {
+      const t = doc.types[k] || {label: k, min_score: null};
+      const thr = t.min_score === null ? "" : ` / próg ${t.min_score}`;
+      return `<span class="${k === doc.doc_type ? "win" : ""}" title="${esc(k)}">${esc(t.label)} <b>${Number(v)}</b>${thr}</span>`;
+    }).join("")}</div>`;
+    const hitList = Object.entries(doc.hits || {}).filter(([, h]) => h.length);
+    if (hitList.length) {
+      html += `<details style="margin-top:8px"><summary>Dlaczego ten typ?</summary>${hitList.map(([k, h]) =>
+        `<div class="hint"><b>${esc((doc.types[k] || {}).label || k)}</b></div><ul class="hits">${h.map((x) => `<li><code>${esc(x)}</code></li>`).join("")}</ul>`).join("")}</details>`;
+    }
+  }
+  html += `<details class="legend" style="margin-top:8px"><summary>Jak czytać wynik?</summary>
+    <p><span class="sw q">Źródło:</span> fragment tekstu dokumentu, z którego pochodzi wartość. Kliknij go, aby zobaczyć go w zakładce „Tekst dokumentu”.</p>
+    <p><span class="sw a">żółte pole</span> wartość zmieniona ręcznie (znacznik „zmienione ręcznie”). Przycisk „przywróć” cofa zmianę.</p>
+    <p><span class="sw n">brak (null)</span> program nie znalazł wartości w dokumencie.</p>
+    <p>Punkty klasyfikacji: suma wag reguł z config/types/*.yaml; wygrywa typ z najwyższym wynikiem, jeśli ma co najmniej próg (min_score); inaczej dokument jest nieznany i wynikiem jest {}.</p>
+  </details>`;
   html += `</div>`;
 
   if (rows.length) {
@@ -177,11 +268,12 @@ function renderResult(doc) {
       if (r.group) { html += `<tr class="group"><td colspan="2" style="${pad}">${esc(r.label)}</td></tr>`; return; }
       const ev = doc.evidence[r.path];
       const shown = r.value === null ? "" : String(r.value);
-      html += `<tr><td class="key" style="${pad}">${esc(r.label)}</td><td class="val">
+      html += `<tr data-row="${esc(r.path)}"><td class="key" style="${pad}">${esc(r.label)}</td><td class="val">
         <input data-path="${esc(r.path)}" class="${r.value === null ? "null" : ""}" value="${esc(shown)}" placeholder="brak (null)">
-        ${ev ? `<span class="ev">${esc(ev)}</span>` : ""}</td></tr>`;
+        ${ev ? `<span class="ev" data-ev="${esc(r.path)}" title="Pokaż w tekście dokumentu"><b>Źródło:</b><i>${esc(ev)}</i></span>` : ""}
+        <span class="editmark"><span class="tag">zmienione ręcznie</span><button type="button" data-reset="${esc(r.path)}">przywróć</button></span></td></tr>`;
     });
-    html += `</table><div class="hint">Kliknij wartość, aby ją poprawić. Poprawione pola są zaznaczone na zielono.</div></div>`;
+    html += `</table><div class="hint">Kliknij wartość, aby ją poprawić. Ręcznie zmienione pola są żółte. Kliknij „Źródło”, aby zobaczyć fragment w tekście.</div></div>`;
   }
 
   html += `<div class="card"><details open><summary>Surowy JSON</summary>
@@ -195,11 +287,25 @@ function renderResult(doc) {
     inp.oninput = () => {
       const original = getAt(doc.data, inp.dataset.path);
       setAt(doc.edited, inp.dataset.path, parseValue(inp.value, original));
-      inp.classList.toggle("edited", JSON.stringify(getAt(doc.edited, inp.dataset.path)) !== JSON.stringify(original));
-      inp.classList.remove("null");
+      const changed = JSON.stringify(getAt(doc.edited, inp.dataset.path)) !== JSON.stringify(original);
+      inp.classList.toggle("edited", changed);
+      inp.classList.toggle("null", !changed && original === null);
+      inp.closest("tr").classList.toggle("changed", changed);
       refreshJson(doc);
     };
   });
+  $("right").querySelectorAll("[data-reset]").forEach((b) => b.onclick = () => {
+    const path = b.dataset.reset;
+    const original = getAt(doc.data, path);
+    setAt(doc.edited, path, structuredClone(original));
+    const inp = b.closest("tr").querySelector("input");
+    inp.value = original === null ? "" : String(original);
+    inp.classList.remove("edited");
+    inp.classList.toggle("null", original === null);
+    b.closest("tr").classList.remove("changed");
+    refreshJson(doc);
+  });
+  $("right").querySelectorAll("[data-ev]").forEach((e) => e.onclick = () => flashSnippet(e.dataset.ev));
   $("dl").onclick = () => {
     const blob = new Blob([jsonText(doc)], {type: "application/json"});
     const a = document.createElement("a");

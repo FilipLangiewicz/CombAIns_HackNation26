@@ -44,11 +44,12 @@ def main() -> None:
     parser.add_argument("-v", "--verbose", action="store_true", help="show the extracted data")
     parser.add_argument("--gui", action="store_true", help="start the web interface")
     parser.add_argument("--port", type=int, default=8000, help="the port of the web interface (default: 8000)")
+    parser.add_argument("--host", default="127.0.0.1", help="the address of the web interface (Docker: 0.0.0.0)")
     args = parser.parse_args()
     if args.gui:
         from odw2json.gui import serve
 
-        serve(args.port)
+        serve(args.port, args.host)
         return
     sys.exit(run(args.input, args.output, args.verbose))
 

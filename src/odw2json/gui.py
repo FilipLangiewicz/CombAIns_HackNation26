@@ -11,15 +11,16 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
+from odw2json.classify import classify, load_types
 from odw2json.pipeline import process_pdf
 
 STATIC = Path(__file__).parent / "static"
 MAX_UPLOAD = 100 * 1024 * 1024
-TYPE_LABELS = {
-    "odwolanie": "Odwołanie",
-    "pelnomocnictwo": "Pełnomocnictwo",
-    "przelew": "Potwierdzenie przelewu",
-}
+
+
+def type_info() -> dict[str, dict]:
+    """The label and the minimum score of each type, read from config/types."""
+    return {t.name: {"label": t.label, "min_score": t.min_score} for t in load_types()}
 
 
 def normalize_path(key: str) -> str:
@@ -45,9 +46,13 @@ class Session:
         path.write_bytes(content)
         try:
             result = process_pdf(path)
+            info = type_info()
             doc = {
                 "doc_type": result.doc_type,
-                "type_label": TYPE_LABELS.get(result.doc_type or "", "Nieznany typ"),
+                "type_label": info[result.doc_type]["label"] if result.doc_type else "Nieznany typ",
+                "types": info,
+                "hits": classify(result.text).hits if result.text else {},
+                "text": result.text,
                 "data": result.data,
                 "evidence": {normalize_path(k): v for k, v in result.evidence.items()},
                 "scores": result.scores,
@@ -59,6 +64,9 @@ class Session:
             doc = {
                 "doc_type": None,
                 "type_label": "Nieznany typ",
+                "types": {},
+                "hits": {},
+                "text": "",
                 "data": {},
                 "evidence": {},
                 "scores": {},
