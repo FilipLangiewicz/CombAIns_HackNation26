@@ -1,0 +1,67 @@
+# The power of attorney (pełnomocnictwo).
+name: pelnomocnictwo
+label: Pełnomocnictwo
+order: 2
+extractor: pelnomocnictwo
+
+classify:
+  head_chars: 1500
+  min_score: 5
+  # A line similar to a title (80% or more) counts as the title. The OCR can change some letters.
+  titles: ['PEŁNOMOCNICTWO', 'PEŁNOMOCNICTWO PROCESOWE']
+  title_weight: 4
+  rules:
+    - {pattern: '^\s*PEŁNOMOCNICTW[OA]\b', weight: 4, where: head}
+    - {pattern: '(?-i:\bPEŁNOMOCNICTW[OA]\b)', weight: 4, where: head}
+    - {pattern: '(?-i:\sPełnomocnictwo)[ \t]*$', weight: 4, where: head}
+    - {pattern: 'pełnomocnik', weight: 1}
+    - {pattern: 'mocodaw|udzielam|ustanawiam|upoważniam|udziela', weight: 1}
+    - {pattern: 'Sygn\.?\s*akt', weight: -10, where: start}
+    - {pattern: '^\s*(WYROK|POSTANOWIENIE|UCHWAŁA|DECYZJA)\b', weight: -10, where: start}
+    - {pattern: '^\s*ODWOŁANIE\s*$', weight: -4, where: head}
+
+template:
+  mocodawca: []
+  pelnomocnicy: []
+
+# Word lists for the extractor. Each item is a regular expression.
+extract:
+  # Professional titles that come before the name of an attorney.
+  titles:
+    - 'adw\.'
+    - 'r\.\s?pr\.'
+    - 'radca\s+prawny'
+    - 'radc[ay]\s+prawn\w+'
+    - 'adwokat\w*'
+    - 'apl\.\s?(?:adw\.|radc\.)'
+    - 'aplikant\s+\w+'
+    - 'mec\.'
+  # Roles of the persons who sign for the principal.
+  roles:
+    - '(?:Wice)?prezes(?:\s+Zarządu)?'
+    - 'Członek\s+Zarządu'
+    - 'Prokurent'
+    - 'Dyrektor(?:\s+\w+)?'
+    - 'Wspólnik'
+    - 'Komplementariusz'
+    - 'Likwidator'
+    - 'Właściciel'
+    - 'Partner'
+    - 'Kierownik'
+    - 'Członek\s+Rady\s+Nadzorczej'
+  # Legal forms that end the name of a company.
+  legal_forms:
+    - 'sp\.\s?z\s?o\.\s?o\.(?:\s*sp\.\s?(?:k|j|p|komandytowa)\.)?'
+    - 'sp\.\s?(?:k|j|p|komandytowa|jawna|partnerska)\.'
+    - 'sp\.\s?k\.a\.'
+    - 'S\.\s?A\.'
+    - 'spółka\s+(?:akcyjna|cywilna)'
+    - 's\.\s?c\.'
+  # Words that can stand before a company name but are not part of it.
+  stop_words: [Mocodawca, Mocodawcą, Mocodawcy, Za, Wykonawca, Wykonawcy, Pełnomocnictwo, Pełnomocnik, Pełnomocnicy, Konsorcjum, Lider, Partner, Dane, Firma, Zamawiający, Postępowanie, Data, PEŁNOMOCNICTWO, PROCESOWE, MOCODAWCA, PEŁNOMOCNIK, Ja, Pan, Pani]
+
+# Validation of the fields (see src/odw2json/validate.py). A value that is not valid becomes null.
+validate:
+  - {path: "mocodawca[].data.krs", kind: digits, lengths: [10]}
+  - {path: "mocodawca[].data.nip", kind: digits, lengths: [10]}
+  - {path: "pelnomocnicy[].pesel", kind: digits, lengths: [11]}

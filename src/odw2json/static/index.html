@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Odwołania2json</title>
+<style>
+:root {
+  --bg: #f4f6fa; --panel: #fff; --line: #dde3ec; --text: #1c2536; --muted: #667085;
+  --accent: #1f4eb4; --accent-soft: #e8efff; --ok: #1a7f4b; --warn: #b54708; --warn-soft: #fff4e5;
+  --amber: #d98e04; --amber-soft: #fff3c4; --quote-bg: #f1f4f9; --quote-line: #d3dbe8;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
+header { background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+header h1 { font-size: 18px; margin: 0; color: var(--accent); }
+header .sub { color: var(--muted); font-size: 12px; }
+header .spacer { flex: 1; }
+button, .btn { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--text); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+#docs { display: flex; gap: 6px; padding: 8px 18px; overflow-x: auto; background: var(--panel); border-bottom: 1px solid var(--line); min-height: 44px; align-items: center; }
+#docs .empty { color: var(--muted); }
+.chip { border: 1px solid var(--line); border-radius: 16px; padding: 4px 12px; white-space: nowrap; cursor: pointer; background: var(--bg); }
+.chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.chip small { color: var(--muted); margin-left: 6px; font-weight: 400; }
+main { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; }
+.pane { min-height: 0; overflow: auto; position: relative; }
+#left { border-right: 1px solid var(--line); background: #e9edf3; }
+#left iframe { width: 100%; height: 100%; border: 0; display: block; }
+#right { padding: 16px 20px 40px; }
+.placeholder { color: var(--muted); display: grid; place-items: center; height: 100%; text-align: center; padding: 20px; }
+#drop { position: fixed; inset: 0; background: rgba(31,78,180,.12); border: 3px dashed var(--accent); display: none; place-items: center; font-size: 22px; color: var(--accent); z-index: 10; }
+#drop.on { display: grid; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; }
+.card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 10px; }
+.badge { display: inline-block; padding: 3px 12px; border-radius: 14px; font-weight: 600; background: var(--accent-soft); color: var(--accent); font-size: 16px; }
+.badge.unknown { background: var(--warn-soft); color: var(--warn); }
+.note { background: var(--warn-soft); color: var(--warn); border-radius: 6px; padding: 8px 12px; margin-top: 10px; }
+.scores { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.scores span { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; font-size: 12px; }
+table { width: 100%; border-collapse: collapse; }
+td, th { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+tr.group td { background: var(--bg); font-weight: 600; color: var(--accent); }
+td.key { width: 34%; color: var(--muted); word-break: break-word; }
+td.val input { width: 100%; font: inherit; padding: 4px 6px; border: 1px solid transparent; border-radius: 4px; background: transparent; }
+td.val input:hover, td.val input:focus { border-color: var(--line); background: #fff; outline: none; }
+td.val input.null { color: var(--muted); font-style: italic; }
+td.val input.edited { border-color: var(--amber); background: var(--amber-soft); }
+td.val input.null::placeholder { color: #98a2b3; font-style: italic; }
+.ev { display: block; margin-top: 4px; font-size: 12px; color: #475467; background: var(--quote-bg); border: 1px solid var(--quote-line); border-radius: 4px; padding: 3px 8px; cursor: pointer; }
+.ev b { font-weight: 600; color: #3b5b8c; margin-right: 4px; font-style: normal; }
+.ev i { font-style: italic; }
+.ev:hover { border-color: #3b5b8c; }
+.editmark { display: none; margin-top: 4px; font-size: 12px; align-items: center; gap: 8px; }
+tr.changed .editmark { display: flex; }
+.tag { background: var(--amber); color: #fff; border-radius: 10px; padding: 1px 8px; font-size: 11px; font-weight: 600; }
+.editmark button { padding: 1px 8px; font-size: 12px; }
+.legend p { margin: 6px 0; }
+.sw { display: inline-block; padding: 0 6px; border-radius: 3px; font-size: 12px; }
+.sw.q { background: var(--quote-bg); border: 1px solid var(--quote-line); color: #475467; }
+.sw.a { background: var(--amber-soft); border: 1px solid var(--amber); }
+.sw.n { background: #f2f4f7; color: #98a2b3; font-style: italic; }
+.scores span.win { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.hits { margin: 8px 0 0; padding-left: 18px; font-size: 12px; }
+.hits code { font-size: 11px; }
+.tabs { display: flex; background: var(--panel); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 2; }
+.tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 8px 16px; background: transparent; }
+.tabs button.on { border-bottom-color: var(--accent); color: var(--accent); font-weight: 600; }
+#left { display: flex; flex-direction: column; overflow: hidden; }
+#left iframe { flex: 1; min-height: 0; }
+#doctext { flex: 1; min-height: 0; overflow: auto; padding: 14px 18px; background: #fff; white-space: pre-wrap; word-break: break-word; font: 12.5px/1.5 ui-monospace, Consolas, monospace; display: none; }
+mark.ev-mark { background: #d9e6fb; color: inherit; border-bottom: 2px solid #3b5b8c; border-radius: 2px; cursor: pointer; }
+mark.flash { animation: flash 1.6s ease-out; }
+@keyframes flash { 0%, 40% { background: #ffd54a; outline: 3px solid #ffd54a; } 100% { background: #d9e6fb; outline: 3px solid transparent; } }
+details summary { cursor: pointer; font-weight: 600; }
+pre { background: #101828; color: #e4e9f2; padding: 12px; border-radius: 6px; overflow: auto; max-height: 420px; margin: 10px 0 0; font-size: 12px; }
+.actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
+.spin { color: var(--accent); padding: 4px 18px; }
+@media (max-width: 800px) {
+  main { grid-template-columns: 1fr; grid-template-rows: 45vh 1fr; }
+  #left { border-right: 0; border-bottom: 1px solid var(--line); }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Odwołania2json</h1>
+  <span class="sub">Ekstrakcja danych z dokumentów spraw KIO</span>
+  <span class="spacer"></span>
+  <input id="file" type="file" accept="application/pdf,.pdf" multiple hidden>
+  <button class="primary" id="pick">Wybierz pliki PDF</button>
+</header>
+<div id="docs"><span class="empty">Przeciągnij pliki PDF na stronę lub użyj przycisku.</span></div>
+<main>
+  <section class="pane" id="left"><div class="placeholder">Podgląd dokumentu PDF</div></section>
+  <section class="pane" id="right"><div class="placeholder">Wynik analizy pojawi się tutaj.</div></section>
+</main>
+<div id="drop">Upuść pliki PDF, aby je przeanalizować</div>
+<script>
+const docs = [];
+let current = null;
+let pending = 0;
+const $ = (id) => document.getElementById(id);
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+}
+
+async function upload(file) {
+  pending++; renderDocs();
+  try {
+    const resp = await fetch("/api/analyze?name=" + encodeURIComponent(file.name), {method: "POST", body: file});
+    const doc = await resp.json();
+    if (!resp.ok) throw new Error(doc.error || resp.status);
+    doc.edited = structuredClone(doc.data);
+    docs.push(doc);
+    select(doc.id);
+  } catch (err) {
+    alert("Błąd analizy pliku " + file.name + ": " + err.message);
+  } finally {
+    pending--; renderDocs();
+  }
+}
+
+function addFiles(files) {
+  [...files].filter((f) => /\.pdf$/i.test(f.name) || f.type === "application/pdf").forEach(upload);
+}
+
+function renderDocs() {
+  const box = $("docs");
+  if (!docs.length && !pending) return;
+  box.innerHTML = docs.map((d) =>
+    `<div class="chip ${d.id === current ? "active" : ""}" data-id="${d.id}">${esc(d.name)}<small>${esc(d.type_label)}</small></div>`
+  ).join("") + (pending ? `<span class="spin">Analizuję (${pending})… skan z OCR może trwać do minuty</span>` : "");
+  box.querySelectorAll(".chip").forEach((c) => c.onclick = () => select(c.dataset.id));
+}
+
+function select(id) {
+  current = id;
+  const doc = docs.find((d) => d.id === id);
+  $("left").innerHTML = `<div class="tabs"><button class="on" data-tab="pdf">PDF</button><button data-tab="text">Tekst dokumentu</button></div>
+    <iframe title="PDF" src="${doc.pdf_url}"></iframe><div id="doctext"></div>`;
+  $("doctext").innerHTML = markedText(doc);
+  $("left").querySelectorAll(".tabs button").forEach((b) => b.onclick = () => showTab(b.dataset.tab));
+  $("doctext").querySelectorAll("mark").forEach((m) => m.onclick = () => focusField(m.dataset.path.split("|")[0]));
+  renderDocs();
+  renderResult(doc);
+}
+
+function showTab(tab) {
+  const text = tab === "text";
+  $("left").querySelector("iframe").style.display = text ? "none" : "block";
+  $("doctext").style.display = text ? "block" : "none";
+  $("left").querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
+}
+
+// Mark the first place of each evidence snippet in the text. Spaces match any run of white space.
+function markedText(doc) {
+  const text = doc.text || "";
+  if (!text) return `<i>Brak tekstu dokumentu.</i>`;
+  const ranges = [];
+  for (const [path, ev] of Object.entries(doc.evidence)) {
+    const words = String(ev).trim().split(/\s+/).filter(Boolean).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    if (!words.length) continue;
+    const m = new RegExp(words.join("\\s+")).exec(text);
+    if (m) ranges.push({start: m.index, end: m.index + m[0].length, path});
+  }
+  ranges.sort((a, b) => a.start - b.start || b.end - a.end);
+  let out = "", pos = 0;
+  for (const r of ranges) {
+    const same = ranges.filter((o) => o.start === r.start && o.end === r.end).map((o) => o.path);
+    if (r.start < pos || same[0] !== r.path) continue;
+    out += esc(text.slice(pos, r.start)) + `<mark class="ev-mark" data-path="${esc(same.join("|"))}" title="Kliknij, aby przejść do pola">${esc(text.slice(r.start, r.end))}</mark>`;
+    pos = r.end;
+  }
+  return out + esc(text.slice(pos));
+}
+
+function flashSnippet(path) {
+  showTab("text");
+  const m = [...$("doctext").querySelectorAll("mark")].find((x) => x.dataset.path.split("|").includes(path));
+  if (!m) { alert("Nie znaleziono tego fragmentu w tekście dokumentu."); showTab("pdf"); return; }
+  m.scrollIntoView({block: "center", behavior: "smooth"});
+  m.classList.remove("flash"); void m.offsetWidth; m.classList.add("flash");
+}
+
+function focusField(path) {
+  const inp = [...$("right").querySelectorAll("input[data-path]")].find((i) => i.dataset.path === path);
+  if (!inp) return;
+  inp.scrollIntoView({block: "center", behavior: "smooth"});
+  inp.focus();
+}
+
+function flatten(value, path, rows, depth) {
+  if (value !== null && typeof value === "object") {
+    const entries = Array.isArray(value) ? value.map((v, i) => [String(i), v]) : Object.entries(value);
+    for (const [k, v] of entries) {
+      const p = path ? path + "." + k : k;
+      const label = Array.isArray(value) ? "#" + (Number(k) + 1) : k;
+      if (v !== null && typeof v === "object") {
+        rows.push({group: true, label, depth});
+        flatten(v, p, rows, depth + 1);
+      } else {
+        rows.push({label, path: p, value: v, depth});
+      }
+    }
+  } else {
+    rows.push({label: path, path, value, depth});
+  }
+}
+
+function getAt(obj, path) {
+  return path.split(".").reduce((o, k) => o[k], obj);
+}
+function setAt(obj, path, val) {
+  const keys = path.split(".");
+  const last = keys.pop();
+  keys.reduce((o, k) => o[k], obj)[last] = val;
+}
+
+function parseValue(text, original) {
+  if (text === "") return null;
+  if (typeof original === "number") {
+    const n = Number(text.replace(",", "."));
+    return Number.isNaN(n) ? text : n;
+  }
+  return text;
+}
+
+function renderResult(doc) {
+  const unknown = !doc.doc_type;
+  const rows = [];
+  flatten(doc.data, "", rows, 0);
+  let html = `<div class="card"><h2>Rozpoznany typ dokumentu</h2>
+    <span class="badge ${unknown ? "unknown" : ""}">${esc(doc.type_label)}</span>`;
+  if (unknown) html += `<div class="hint">Dokument nie pasuje do znanego typu. Wynik: <code>{}</code>.</div>`;
+  if (doc.error) html += `<div class="note">Błąd przetwarzania: ${esc(doc.error)}</div>`;
+  if (doc.ocr_missing) html += `<div class="note">Dokument nie ma warstwy tekstowej, a silnik OCR jest niedostępny.</div>`;
+  else if (doc.ocr_pages.length) html += `<div class="note">Zastosowano OCR na stronach: ${doc.ocr_pages.map((p) => p + 1).join(", ")}.</div>`;
+  const scores = Object.entries(doc.scores);
+  if (scores.length) {
+    html += `<div class="scores">${scores.map(([k, v]) => {
+      const t = doc.types[k] || {label: k, min_score: null};
+      const thr = t.min_score === null ? "" : ` / próg ${t.min_score}`;
+      return `<span class="${k === doc.doc_type ? "win" : ""}" title="${esc(k)}">${esc(t.label)} <b>${Number(v)}</b>${thr}</span>`;
+    }).join("")}</div>`;
+    const hitList = Object.entries(doc.hits || {}).filter(([, h]) => h.length);
+    if (hitList.length) {
+      html += `<details style="margin-top:8px"><summary>Dlaczego ten typ?</summary>${hitList.map(([k, h]) =>
+        `<div class="hint"><b>${esc((doc.types[k] || {}).label || k)}</b></div><ul class="hits">${h.map((x) => `<li><code>${esc(x)}</code></li>`).join("")}</ul>`).join("")}</details>`;
+    }
+  }
+  html += `<details class="legend" style="margin-top:8px"><summary>Jak czytać wynik?</summary>
+    <p><span class="sw q">Źródło:</span> fragment tekstu dokumentu, z którego pochodzi wartość. Kliknij go, aby zobaczyć go w zakładce „Tekst dokumentu”.</p>
+    <p><span class="sw a">żółte pole</span> wartość zmieniona ręcznie (znacznik „zmienione ręcznie”). Przycisk „przywróć” cofa zmianę.</p>
+    <p><span class="sw n">brak (null)</span> program nie znalazł wartości w dokumencie.</p>
+    <p>Punkty klasyfikacji: suma wag reguł z config/types/*.yaml; wygrywa typ z najwyższym wynikiem, jeśli ma co najmniej próg (min_score); inaczej dokument jest nieznany i wynikiem jest {}.</p>
+  </details>`;
+  html += `</div>`;
+
+  if (rows.length) {
+    html += `<div class="card"><h2>Wyodrębnione pola</h2><table>`;
+    rows.forEach((r, i) => {
+      const pad = `padding-left:${8 + r.depth * 16}px`;
+      if (r.group) { html += `<tr class="group"><td colspan="2" style="${pad}">${esc(r.label)}</td></tr>`; return; }
+      const ev = doc.evidence[r.path];
+      const shown = r.value === null ? "" : String(r.value);
+      html += `<tr data-row="${esc(r.path)}"><td class="key" style="${pad}">${esc(r.label)}</td><td class="val">
+        <input data-path="${esc(r.path)}" class="${r.value === null ? "null" : ""}" value="${esc(shown)}" placeholder="brak (null)">
+        ${ev ? `<span class="ev" data-ev="${esc(r.path)}" title="Pokaż w tekście dokumentu"><b>Źródło:</b><i>${esc(ev)}</i></span>` : ""}
+        <span class="editmark"><span class="tag">zmienione ręcznie</span><button type="button" data-reset="${esc(r.path)}">przywróć</button></span></td></tr>`;
+    });
+    html += `</table><div class="hint">Kliknij wartość, aby ją poprawić. Ręcznie zmienione pola są żółte. Kliknij „Źródło”, aby zobaczyć fragment w tekście.</div></div>`;
+  }
+
+  html += `<div class="card"><details open><summary>Surowy JSON</summary>
+    <pre id="json"></pre>
+    <div class="actions"><button class="primary" id="dl">Pobierz JSON</button><button id="copy">Kopiuj</button></div>
+  </details></div>`;
+  $("right").innerHTML = html;
+  refreshJson(doc);
+
+  $("right").querySelectorAll("input[data-path]").forEach((inp) => {
+    inp.oninput = () => {
+      const original = getAt(doc.data, inp.dataset.path);
+      setAt(doc.edited, inp.dataset.path, parseValue(inp.value, original));
+      const changed = JSON.stringify(getAt(doc.edited, inp.dataset.path)) !== JSON.stringify(original);
+      inp.classList.toggle("edited", changed);
+      inp.classList.toggle("null", !changed && original === null);
+      inp.closest("tr").classList.toggle("changed", changed);
+      refreshJson(doc);
+    };
+  });
+  $("right").querySelectorAll("[data-reset]").forEach((b) => b.onclick = () => {
+    const path = b.dataset.reset;
+    const original = getAt(doc.data, path);
+    setAt(doc.edited, path, structuredClone(original));
+    const inp = b.closest("tr").querySelector("input");
+    inp.value = original === null ? "" : String(original);
+    inp.classList.remove("edited");
+    inp.classList.toggle("null", original === null);
+    b.closest("tr").classList.remove("changed");
+    refreshJson(doc);
+  });
+  $("right").querySelectorAll("[data-ev]").forEach((e) => e.onclick = () => flashSnippet(e.dataset.ev));
+  $("dl").onclick = () => {
+    const blob = new Blob([jsonText(doc)], {type: "application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = doc.name.replace(/\.pdf$/i, "") + ".json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+  $("copy").onclick = async () => {
+    try { await navigator.clipboard.writeText(jsonText(doc)); $("copy").textContent = "Skopiowano"; }
+    catch { $("copy").textContent = "Nie udało się"; }
+    setTimeout(() => { $("copy").textContent = "Kopiuj"; }, 1500);
+  };
+}
+
+const jsonText = (doc) => JSON.stringify(doc.edited, null, 2) + "\n";
+function refreshJson(doc) { $("json").textContent = jsonText(doc); }
+
+$("pick").onclick = () => $("file").click();
+$("file").onchange = (e) => { addFiles(e.target.files); e.target.value = ""; };
+let depth = 0;
+addEventListener("dragenter", (e) => { e.preventDefault(); depth++; $("drop").classList.add("on"); });
+addEventListener("dragleave", () => { if (--depth <= 0) { depth = 0; $("drop").classList.remove("on"); } });
+addEventListener("dragover", (e) => e.preventDefault());
+addEventListener("drop", (e) => { e.preventDefault(); depth = 0; $("drop").classList.remove("on"); addFiles(e.dataTransfer.files); });
+</script>
+</body>
+</html>

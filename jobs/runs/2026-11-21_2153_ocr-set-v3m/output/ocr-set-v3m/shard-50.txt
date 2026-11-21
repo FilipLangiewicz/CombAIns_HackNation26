@@ -1,0 +1,14 @@
+1/14 przyklad_06/odwolanie.pdf#2 53.62 s
+2/14 przyklad_14/pelnomocnictwo.pdf#2 18.62 s
+3/14 przyklad_23/odwolanie.pdf#2 63.78 s
+4/14 przyklad_30/pelnomocnictwo.pdf#2 17.92 s
+5/14 przyklad_44/odwolanie.pdf#2 115.69 s
+6/14 przyklad_52/potwierdzenie_przelewu.pdf#2 18.84 s
+7/14 przyklad_60/pelnomocnictwo.pdf#2 21.35 s
+8/14 negatywne/KIO_KIO 2617-21.pdf#0 121.38 s
+9/14 synth-1/pelnomocnictwo/pl_1/18#0 13.41 s
+10/14 synth-1/odwolanie/od_9/38#0 14.63 s
+11/14 synth-3/przelew/pz_9/18#0 11.99 s
+12/14 synth-3/negative/neg_wyrok/18#0 12.98 s
+13/14 synth2-101/pelnomocnictwo/L4/028#0 12.96 s
+14/14 synth2-101/negatyw/N4/028#0 12.23 s

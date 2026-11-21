@@ -101,6 +101,16 @@ The LLM and the test machine:
 - The test machine is a usual laptop with internet. There is no time limit.
 - If the repository is private, give access to these GitHub accounts: `DominikOlczak`, `MateuSzSz-Sz`, `rkrol-dev`.
 
+## Answers of the organizer (Discord, 2026-11-21, evening)
+
+- A bank account must be written as the document gives it. An example JSON without "PL" for a document with "PL" is an error of the examples. The evaluation set does not have this error. The application writes "PL" and 26 digits without spaces if the document has "PL".
+- The name of a company must be written as the document gives it, also if it differs from CEIDG.
+- A document of an unknown type gives a JSON file with only `{}`. The JSON file has the name of the PDF file, for example `potwierdzenie_przelewu.json`.
+- The evaluation uses documents with a text layer and scans.
+- A new document type must be possible with a configuration file only.
+- A small NER model (not an LLM) that runs locally is allowed.
+- The number of documents and the time limit are not known yet. One team mentioned 150 documents in 45 minutes.
+
 ## FAQ of the organizer (version 1.0)
 
 These points of the FAQ add to the information above:
@@ -118,7 +128,7 @@ These points of the FAQ add to the information above:
 
 ## Open questions
 
-- Which LLM and which API provider in the EU do we use?
+- Do we need an LLM? The rules give F1 = 1.0 on the 60 example cases. An LLM is only a fallback.
 - How do we give the API key to the organizer? Somebody asked this on Discord. There is no answer yet.
 - Which OCR engine gives good results on the scans on a CPU?
 
@@ -131,4 +141,24 @@ These points of the FAQ add to the information above:
 
 ## Plan
 
-The team writes the plan here when it decides the architecture.
+The branch `rule-pipeline` has the first version. The team merges it into `main` at the end.
+
+### Architecture
+
+The application uses rules, not an LLM. A solution without an LLM gets the maximum points for the size of the model.
+
+1. `pdftext.py` reads the text layer with pypdfium2. A page with fewer than 30 characters goes to OCR.
+2. `classify.py` gives a score to each type with weighted regular expressions from `config/types/*.yaml`. If no type has its minimum score, the output is `{}`.
+3. An extractor for each type finds the values. Each extractor also records the source text of each value (evidence).
+4. `extractors/generic.py` reads field rules from the configuration. Thus a new type or a new field needs only a YAML file.
+5. `cli.py` writes `output/<case>/<file>.json`. `gui.py` shows the PDF and the fields side by side.
+
+### Measurement
+
+- `python -m odw2json.evaluate --split dev` gives the F1 score with the rules of the organizer. The tests in `tests/test_evaluate.py` check the score on cases with known results.
+- `python -m odw2json.perturb --split dev` changes the form of the text and keeps the expected values. It shows the rules that fail on other layouts.
+
+### Next steps
+
+- OCR for the scans. Tesseract needs a system installation. RapidOCR installs with pip only.
+- Optional: a small LLM from an EU provider for the fields that the rules do not find.

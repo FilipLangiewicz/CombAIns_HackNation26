@@ -1,1 +1,7 @@
 # The direct dependencies of the application.
+pdfplumber
+pypdfium2
+pyyaml
+rapidocr
+onnxruntime
+numpy
