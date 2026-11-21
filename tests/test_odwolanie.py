@@ -243,3 +243,83 @@ def test_surnames_before_the_law_firm():
         "wisniewski@adwokat.pl\n"
     )
     assert row["pelnomocnik"]["nazwa"] == "Wiśniewski Adamczyk Kancelaria Prawna sp.p."
+
+
+def parties(text: str) -> dict:
+    doc_type = next(t for t in load_types() if t.name == "odwolanie")
+    return odwolanie.extract(ROLE_HEAD + text + ROLE_TAIL.split("\n", 1)[1], doc_type, {})
+
+
+FIRM = "Budimex Serwis sp. z o.o.\nul. Długa 5, 00-950 Warszawa\nNIP: 5250001090\n"
+AUTHORITY = "Gmina Miasto Płock\nul. Stary Rynek 1, 09-400 Płock\nNIP: 7740001454\n"
+
+
+@pytest.mark.parametrize(
+    ("odw", "zam"),
+    [
+        ("ODWOŁUJĄCY", "ZAMAWIAJĄCY"),
+        ("I. Odwołujący", "II. Zamawiający"),
+        ("Odwołujący –", "Zamawiający –"),
+        ("Wykonawca:", "Zamawiający:"),
+    ],
+)
+def test_headings_without_a_colon(odw, zam):
+    data = parties(f"{odw}\n{FIRM}{zam}\n{AUTHORITY}")
+    assert data["Odwolujacy"][0]["nazwa"] == "Budimex Serwis sp. z o.o."
+    assert data["Zamawiajacy"][0]["nazwa"] == "Gmina Miasto Płock"
+
+
+@pytest.mark.parametrize(
+    "ids",
+    [
+        "NIP 525 000 10 90; REGON 012345678",
+        "nr NIP: 5250001090 nr REGON: 012345678",
+        "NIP: PL5250001090, REGON: 012345678",
+    ],
+)
+def test_forms_of_the_identifiers(ids):
+    row = parties(
+        f"Odwołujący:\nBudimex Serwis sp. z o.o.\nul. Długa 5, 00-950 Warszawa\n{ids}\nZamawiający:\n{AUTHORITY}"
+    )["Odwolujacy"][0]
+    assert (row["nip"], row["regon"]) == ("5250001090", "012345678")
+
+
+@pytest.mark.parametrize(
+    "lead",
+    [
+        "1) Gmina Alfa (pełnomocnik Zamawiających), ul. Długa 1, 80-001 Gdańsk, NIP 9990000002\n2) Gmina Beta, ul. Krótka 2, 80-002 Gdańsk, NIP 9990000004",
+        "1) Gmina Alfa (Zamawiający wiodący), ul. Długa 1, 80-001 Gdańsk, NIP 9990000002\n2) Gmina Beta, ul. Krótka 2, 80-002 Gdańsk, NIP 9990000004",
+        "1 (prowadzący postępowanie):\nGmina Alfa, ul. Długa 1, 80-001 Gdańsk, NIP 9990000002\nZamawiający 2:\nGmina Beta, ul. Krótka 2, 80-002 Gdańsk, NIP 9990000004",
+    ],
+)
+def test_lead_contracting_authority(lead):
+    sep = " " if lead.startswith("1 (") else ":\n"
+    rows = parties(f"Odwołujący:\n{FIRM}Zamawiający{sep}{lead}\n")["Zamawiajacy"]
+    assert [(r["nazwa"], r["prowadzacy_postepowanie"]) for r in rows] == [("Gmina Alfa", 1), ("Gmina Beta", 0)]
+
+
+def test_name_of_the_attorney_on_its_own_line():
+    row = parties(
+        "Odwołujący:\n"
+        + FIRM
+        + "Pełnomocnik Odwołującego:\nr. pr. Anna Nowak\nNowak i Partnerzy Kancelaria Prawna sp. p.\n"
+        "ul. Prosta 2, 00-001 Warszawa\nemail: a.nowak@kancelaria.pl\nZamawiający:\n" + AUTHORITY
+    )["Odwolujacy"][0]
+    assert row["pelnomocnik"] == {
+        "imie_nazwisko": "Anna Nowak", "nazwa": "Nowak i Partnerzy Kancelaria Prawna sp. p.", "mail": "a.nowak@kancelaria.pl",
+    }  # fmt: skip
+
+
+def test_attorney_only_in_the_signature():
+    doc_type = next(t for t in load_types() if t.name == "odwolanie")
+    text = ROLE_HEAD + APPELLANT + ROLE_TAIL + "W imieniu Odwołującego:\nadw. Piotr Zieliński\n(pełnomocnik)\n"
+    row = odwolanie.extract(text, doc_type, {})["Odwolujacy"][0]
+    assert row["przez-pelnomocnika"] == 1
+    assert row["pelnomocnik"]["imie_nazwisko"] == "Piotr Zieliński"
+
+
+def test_board_member_in_the_signature_is_not_an_attorney():
+    doc_type = next(t for t in load_types() if t.name == "odwolanie")
+    text = ROLE_HEAD + APPELLANT + ROLE_TAIL + "............\nJan Kowalski\nPrezes Zarządu\n"
+    row = odwolanie.extract(text, doc_type, {})["Odwolujacy"][0]
+    assert row["przez-pelnomocnika"] == 0

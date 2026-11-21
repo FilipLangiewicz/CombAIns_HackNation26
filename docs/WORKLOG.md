@@ -2,6 +2,27 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): the headings of the parties and the signature of the attorney
+
+Generator 2 did not find the appellant in 8 of 20 appeals. Only the summary of the fields was read, not the documents. The rules below come from new probe texts.
+
+- A heading of a party on its own line, without a colon, is a heading: "ODWOŁUJĄCY", "I. Odwołujący", "Odwołujący –".
+- "Zamawiający 1 (...):" and "Odwołujący 1:" are headings.
+- If no heading "Odwołujący" is found, "Wykonawca:" is the heading of the appellant.
+- The identifiers can have "nr", "numer", "PL" and ";". A list number "2)" is not a part of an identifier.
+- New words for the field `prowadzacy_postepowanie`: "pełnomocnik Zamawiających", "wiodący", "koordynator", "upoważniony".
+- A name of an attorney does not take the first word of the next line.
+- If the header has no attorney, a name with a professional title in the signature is the attorney. All 45 dev appeals have such a signature.
+
+| Test set | Before | After |
+|---|---|---|
+| Organizer dev and holdout (text) | 1.000 | 1.000 |
+| Generator 1, seeds 1 to 3, `odwolanie` | 0.995-0.997 | 0.995-0.997 |
+| OCR train / val | 0.980 / 0.963 | 0.980 / 0.963 |
+| Generator 2, `odwolanie`, seeds 1, 7, 101 (final test) | 0.832 / 0.844 / 0.834 | 0.927 / 0.932 / 0.918 |
+| Generator 2, `przelew`, seeds 1, 7, 101 | - | 0.967 / 0.987 / 0.982 |
+| OCR test, all / real scans 0005-0010 | 0.907 / 0.862 | 0.933 / 0.866 |
+
 ## 2026-11-22 (main): the appellant and the attorney in the appeal
 
 - "reprezentowana przez Prezesa Zarządu ..." names a member of the board, not an attorney. Then `przez-pelnomocnika` is 0. The roles are in `board_roles` of `config/types/odwolanie.yaml`.

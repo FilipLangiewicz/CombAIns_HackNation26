@@ -17,8 +17,8 @@ I = re.IGNORECASE
 STREET = r"(?:ul\.|ulica|al\.|aleja|aleje|pl\.|plac|os\.|osiedle)(?:\s|(?=[A-ZŁŚŻŹĆ]))"  # the OCR can lose the space after "ul."
 GAP = r"(?:\s*\([^()]{0,160}\)|[^:\d,;.()]{0,40}?)"
 SECTION_RE = re.compile(
-    rf"(?<![\w(])(?<!ełnomocnik )(?:(?P<odw>Odwołując\w*|Wykonawc\w+\s*\(\s*Odwołując\w*\s*\)|Wykonawc\w+\s+wnosząc\w+\s+odwołanie"
-    rf"|Wnosząc\w+\s+odwołanie)|(?P<zam>Zamawiając\w*)|(?P<wyb>Wykonawca\s+wybrany)){GAP}\s*:"
+    rf"(?<![\w(])(?<!ełnomocnik )(?:(?P<odw>Odwołując\w*(?:\s+\d{{1,2}}\b)?|Wykonawc\w+\s*\(\s*Odwołując\w*\s*\)|Wykonawc\w+\s+wnosząc\w+\s+odwołanie"
+    rf"|Wnosząc\w+\s+odwołanie)|(?P<zam>Zamawiając\w*(?:\s+\d{{1,2}}\b)?)|(?P<wyb>Wykonawca\s+wybrany)){GAP}\s*:"
     r"|(?<![\w(])(?:(?P<odw2>(?-i:Od))|(?P<zam2>(?-i:Przeciwko))|(?P<oth>(?-i:Do)))\s*:"
     r"|(?<![\w(])(?:(?P<odw3>(?:Działając\s+)?(?-i:W|w)\s+imieniu)(?=\s)"
     r"|(?P<odw4>Odwołując\w*|Zamawiając\w*)(?=\s+Nazwa\s*:))",
@@ -29,7 +29,11 @@ DOTYCZY_END_RE = re.compile(
     r"ODWOŁANIE\b|Wartość\s+zamówienia|Wpis\s+od|Działając|Prezes\s+Krajowej|Krajowa\s+Izba"
     r"|(?:Odwołując|Zamawiając)\w*\s*:",
 )
-IDS_RE = re.compile(r"(?:\b(?:KRS|NIP|REGON)\b\s*:?\s*\d[\d \-]*\d\s*,?\s*)+", I)
+# A number does not take the next list number: "NIP 9990000002 2) Gmina Beta".
+IDS_RE = re.compile(
+    r"(?:(?:\b(?:nr|numer)\s+)?\b(?:KRS|NIP|REGON)\b\s*:?\s*(?:PL\s*)?\d(?:[\d\-]|\s(?!\d{1,2}\s*[.)]))*\d\s*[,;]?\s*)+",
+    I,
+)
 STREET_RE = re.compile(rf"(?<!\w){STREET}", I)
 POSTAL_RE = re.compile(r"\d{2}-\d{3}\b")
 ADDRESS_CUT_RE = re.compile(rf",?\s+{STREET}|,\s*\d{{2}}-\d{{3}}\s", I)
@@ -45,6 +49,22 @@ PLACE_DATE_RE = re.compile(
 
 def flat(text: str) -> str:
     return common.normalize_spaces(text)
+
+
+# A heading of a party on its own line, without a colon: "ODWOŁUJĄCY", "I. Zamawiający", "Odwołujący –".
+HEADING_LINE_RE = re.compile(
+    r"^[ \t]*(?:[IVX]{1,4}\.|\d{1,2}[.)])?[ \t]*((?:Odwołując|Zamawiając)\w*(?:[ \t]+się)?)[ \t]*[–—-]?[ \t]*$",
+    I | re.MULTILINE,
+)
+HEADING_DASH_RE = re.compile(
+    r"^[ \t]*(?:[IVX]{1,4}\.|\d{1,2}[.)])?[ \t]*((?:Odwołując|Zamawiając)\w*)[ \t]*[–—][ \t]+", I | re.MULTILINE
+)
+
+
+def mark_headings(text: str) -> str:
+    """Give each heading of a party a colon, because the text is flat after this step."""
+    text = HEADING_LINE_RE.sub(r"\1:", text)
+    return HEADING_DASH_RE.sub(r"\1: ", text)
 
 
 ACTION_START_RE = re.compile(
@@ -63,13 +83,16 @@ def _head(text: str) -> str:
 # --- sections of the header ------------------------------------------------------
 
 ROLE_TAG_RE = re.compile(
-    r"\(\s*(?:zamawiając|lider|partner|uczestni|prowadząc|odwołując|wykonawc)[^()]{0,80}\)"
+    r"\(\s*(?:zamawiając|lider|partner|uczestni|prowadząc|odwołując|wykonawc|pełnomocnik|koordynator|wiodąc)[^()]{0,80}\)"
     r"|\s[–—-]\s(?:lider|partner)\w*(?:\s*,\s*prowadząc\w+\s+postępowani\w+)?"
+    r"|\s[–—-]\s(?:upoważnion\w*|prowadząc\w*)\s+(?:do\s+)?\w*\s*postępowani\w*"
     r"|\bRola\s*:\s*.*?(?=\s(?:NIP|KRS|REGON|Adres)\s*:|$)",
     I,
 )
 NAME_LABEL_RE = re.compile(r"\b(?:Adres(?:\s+siedziby)?|Siedziba)\s*:\s*$", I)
-LEAD_WORD_RE = re.compile(r"\b(?:lider\w*|prowadząc\w+)\b", I)
+LEAD_WORD_RE = re.compile(
+    r"\b(?:lider\w*|prowadząc\w+|wiodąc\w*|koordynator\w*|pełnomocnik\w*\s+zamawiając\w*|upoważnion\w*)\b", I
+)
 
 
 # --- sections of the header ------------------------------------------------------
@@ -191,7 +214,11 @@ ANCHOR_RE = re.compile(
 )
 NAME_WORD = r"[A-ZŁŚŻŹĆ][a-ząćęłńóśźż\-]+"
 PERSON_RE = re.compile(rf"{NAME_WORD}(?:\s+(?!Kancelari|Biuro|Adres|Spółk){NAME_WORD}){{1,2}}")
-FIRM_AFTER_NAME_RE = re.compile(r"\s*(?:[–—-]|,|\(|\bz\b)\s*([^,()@]+?)\s*(?:,|\(|\)|$|\s+e-?mail\b|\s+tel\b)", I)
+FIRM_AFTER_NAME_RE = re.compile(
+    r"\s*(?:[–—-]|,|\(|\bz\b)\s*([^,()@]+?)\s*(?:,|\(|\)|$|\s+e-?mail\b|\s+tel\b|\s+adres\b|\s+\S+@)", I
+)
+# Words after a name that start the name of a law firm: "r. pr. Anna Nowak Nowak i Partnerzy Kancelaria ...".
+FIRM_START_RE = re.compile(r"\s+(?:i|&)\s|\s+(?:Kancelari|Partner|Legal|Wspólni|sp\.|Spółk)", I)
 
 
 def find_person(after: str) -> tuple[str, int] | None:
@@ -201,7 +228,14 @@ def find_person(after: str) -> tuple[str, int] | None:
     t = TITLES_RE.match(after, pos)
     pos = t.end() if t else pos
     person = PERSON_RE.match(after, pos)
-    return (person.group(0), person.end()) if person else None
+    if not person:
+        return None
+    words = person.group(0).split()
+    if len(words) == 3 and FIRM_START_RE.match(after, person.end()):
+        # The flat text joins the name and the next line: the third word is the start of the firm.
+        end = pos + person.group(0).rindex(words[2])
+        return " ".join(words[:2]), end - 1
+    return person.group(0), person.end()
 
 
 def find_firm(region: str, name_end: int) -> str | None:
@@ -221,13 +255,14 @@ def find_firm(region: str, name_end: int) -> str | None:
         ):
             return cand
     m = re.search(
-        r"(?<![@.\w])(?-i:Kancelari)\w+(?!\s*:)\b.*?(?=\s*(?:,|\(|;)|\s+e-?mail\b|\s+tel\b|\s+adres\b|\s+[\w.\-]+@|$)",
+        rf"(?<![@.\w])(?-i:Kancelari)\w+(?!\s*:)\b.*?(?=\s*(?:,|\(|;)|\s+e-?mail\b|\s+tel\b|\s+adres\b|\s+[\w.\-]+@|\s+{STREET}|$)",
         region,
         I,
     )
     if m:
         # The surnames of the partners can stand before the word: "Nowak Kowalski Kancelaria Prawna sp.p.".
-        before = re.search(rf"(?:(?<=[\s,])|^)((?:{NAME_WORD}\s+){{1,3}})$", region[: m.start()])
+        gap = region[name_end : m.start()] if name_end <= m.start() else region[: m.start()]
+        before = re.search(rf"(?:(?<=[\s,])|^)((?:(?:{NAME_WORD}|i|&)\s+){{1,4}})$", gap)
         names = before.group(1) if before and not TITLES_RE.search(before.group(1)) else ""
         names = "" if re.search(r"\b(?:Pełnomocnik|Odwołując|Wykonawc)", names, I) else names
         return (names + m.group(0)).strip(" ,;")
@@ -475,9 +510,14 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
     data = doc_type.empty()
     text = common.despace_caps(text)
     text = PAGE_LINE_RE.sub("", text)
-    text = flat(text)
+    text = flat(mark_headings(text))
     head = _head(text)
     sections, procurement = split_head(head)
+    if not any(k == "odwolujacy" for k, _ in sections):
+        # Without the word "Odwołujący", the contractor that brings the appeal has the heading "Wykonawca:".
+        alt = re.sub(r"(?<![\w(])Wykonawc[aya]\s*:", "Odwołujący:", head, count=1, flags=I)
+        if alt != head:
+            sections, procurement = split_head(alt)
 
     kio = data["OdwolanieKIO"]
     place, day, line = find_place_and_date(head)
@@ -524,6 +564,15 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
                 attorney, attorney_text = parse_attorney(block, evidence, board_roles)
                 if attorney:
                     break
+        if attorney is None:
+            # Only an attorney signs with a professional title: "adw. Jan Nowak" under the appeal.
+            signature = text[-700:]
+            title = TITLES_RE.search(signature)
+            person = find_person(signature[title.start() :]) if title else None
+            if person:
+                attorney = {"imie_nazwisko": common.to_nominative(person[0]), "nazwa": None, "mail": None}
+                attorney_text = common.normalize_spaces(signature[title.start() : title.start() + person[1]])
+                evidence["Odwolujacy[0].pelnomocnik.imie_nazwisko"] = attorney_text
         row["przez-pelnomocnika"] = 1 if attorney else 0
         row["pelnomocnik"] = attorney
         # Without an attorney the decision comes from the start of the section of the appellant.
