@@ -36,6 +36,8 @@ To process the documents, do these steps:
 
 Use `--input` and `--output` to select other folders. Use `--workers` to set the number of processes.
 
+On the VM of the jury, the application runs in Docker with the command in `RUN.md`. The procedure is in `docs/deployment.md`.
+
 ## Web interface
 
 To see a document and its data side by side, do these steps:

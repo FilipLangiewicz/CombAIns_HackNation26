@@ -2,6 +2,13 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): the deployment on the VM
+
+- New file `docs/deployment.md`: the rules of the organizer, the VM, the update procedure and the test results.
+- `README.md`: a link to `RUN.md` and `docs/deployment.md`.
+- Commit `1ae7827` is on the VM in `/opt/solution`, with the Docker image `solution-cli`.
+- All 226 PDF files of the organizer and 6 broken files ran on the VM in 434 s, with exit code 0.
+
 ## 2026-11-22 (main): the run on the VM of the organizer
 
 - `RUN.md`: the command for the jury, `docker compose run --rm cli`. The organizer runs it in `/opt/solution` on an Ubuntu VM.
