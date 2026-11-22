@@ -2,6 +2,24 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): joint authorities, a second attorney and the letterhead of the law firm
+
+The errors come from generator 2 with the seeds 55 to 57. The fixes are in `extractors/odwolanie.py`.
+
+- "w imieniu pozostałych" in the role of an authority is not the start of the appellant.
+- A role after identifiers in parentheses, "(NIP: ...) – prowadzący postępowanie;", belongs to the authority before it.
+- "r. pr. Anna Nowak, adw. Jan Kos Kancelaria ...": the second attorney is not a part of the name of the law firm.
+- The title "Odwołanie" before the town is not a part of the town.
+- If the appeal has no law firm near the attorney, the letterhead above the town and the date gives the firm and the e-mail.
+- Five new tests in `tests/test_odwolanie.py`.
+
+| Test set | Before | After |
+|---|---|---|
+| Organizer dev / holdout (text) | 1.000 / 1.000 | 1.000 / 1.000 |
+| Generator 1, seeds 1 to 3 | no change | no change |
+| Generator 2, `odwolanie`, seeds 55 / 56 / 57 | 0.981 / 0.956 / 0.978 | 0.995 / 0.991 / 0.987 |
+| OCR train / val | 0.9852 / 0.9797 | 0.9852 / 0.9797 |
+
 ## 2026-11-22 (main): party tables and more forms of the contested action
 
 The errors come from generator 2 with the new seeds 55 to 57. The final test seeds 1, 7 and 101 stay for the final check.

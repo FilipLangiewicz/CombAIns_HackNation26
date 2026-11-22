@@ -498,3 +498,51 @@ def test_action_forms(item, code):
         "\nODWOŁANIE\nwnoszę odwołanie wobec czynności Zamawiającego, polegających na:\n1) " + item + ";\n"
     )
     assert process_text(text).data["OdwolanieKIO"]["czynnosc_powod_id"] == code
+
+
+@pytest.mark.parametrize(
+    "block",
+    [
+        "Zamawiający:\n(zamawiający wspólnie przeprowadzający postępowanie na podstawie art. 38 ust. 1 Pzp):\n"
+        "1) Zamawiający – zamawiający prowadzący postępowanie w imieniu pozostałych:\nGmina Alfa\n"
+        "ul. Długa 1, 80-001 Gdańsk\nNIP: 9990000002\n2) Zamawiający – zamawiający uczestniczący:\n"
+        "Gmina Beta\nul. Krótka 2, 80-002 Gdańsk\nNIP: 9990000004\n",
+        "Zamawiający (wspólnie): Gmina Alfa, ul. Długa 1, 80-001 Gdańsk (NIP: 9990000002) – prowadzący postępowanie;"
+        " Gmina Beta, ul. Krótka 2, 80-002 Gdańsk (NIP: 9990000004).\n",
+    ],
+)
+def test_lead_authority_more_forms(block):
+    data = process_text(APPEAL_HEAD + block + PROBE_APPELLANT + APPEAL_BODY).data
+    rows = [(z["nazwa"], z["prowadzacy_postepowanie"]) for z in data["Zamawiajacy"]]
+    assert rows == [("Gmina Alfa", 1), ("Gmina Beta", 0)]
+
+
+def test_firm_after_two_attorneys():
+    block = (
+        "Pełnomocnik:\nr. pr. Anna Lipowczyk, adw. Paweł Jabłoński\n"
+        "Kancelaria Radcy Prawnego Anna Lipowczyk, ul. Sienkiewicza 37, 98-552 Rzeszów\n"
+    )
+    data = process_text(APPEAL_HEAD + ONE_AUTHORITY + PROBE_APPELLANT + block + APPEAL_BODY).data
+    assert data["Odwolujacy"][0]["pelnomocnik"]["nazwa"] == "Kancelaria Radcy Prawnego Anna Lipowczyk"
+
+
+def test_title_before_town():
+    text = "Odwołanie\n\n          Warszawa, 29 marca 2026 r.\n" + ONE_AUTHORITY + PROBE_APPELLANT + APPEAL_BODY
+    assert process_text(text).data["OdwolanieKIO"]["miejscowosc"] == "Warszawa"
+
+
+def test_firm_in_letterhead():
+    text = (
+        "Kancelaria Prawa Zamówień Publicznych Kamiński sp.k.\nul. Fabryczna 65, 29-916 Toruń\n"
+        "tel. 87 994 73 83, kaminski@adwokat.pl\n          Rzeszów, 22.07.2026 r.\nPrezes Krajowej Izby Odwoławczej\n"
+        + ONE_AUTHORITY
+        + PROBE_APPELLANT
+        + "reprezentowany przez adwokata Pawła Kamińskiego.\n"
+        + APPEAL_BODY
+    )
+    attorney = process_text(text).data["Odwolujacy"][0]["pelnomocnik"]
+    assert attorney == {
+        "imie_nazwisko": "Paweł Kamiński",
+        "nazwa": "Kancelaria Prawa Zamówień Publicznych Kamiński sp.k.",
+        "mail": "kaminski@adwokat.pl",
+    }

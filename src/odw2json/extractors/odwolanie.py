@@ -20,7 +20,7 @@ SECTION_RE = re.compile(
     rf"(?<![\w(])(?<!ełnomocnik )(?:(?P<odw>Odwołując\w*(?:\s+\d{{1,2}}\b)?|Wykonawc\w+\s*\(\s*Odwołując\w*\s*\)|Wykonawc\w+\s+wnosząc\w+\s+odwołanie"
     rf"|Wnosząc\w+\s+odwołanie)|(?P<zam>Zamawiając\w*(?:\s+\d{{1,2}}\b)?)|(?P<wyb>Wykonawca\s+wybrany)){GAP}\s*:"
     r"|(?<![\w(])(?:(?P<odw2>(?-i:Od))|(?P<zam2>(?-i:Przeciwko))|(?P<oth>(?-i:Do)))\s*:"
-    r"|(?<![\w(])(?:(?P<odw3>(?:Działając\s+)?(?-i:W|w)\s+imieniu)(?=\s)"
+    r"|(?<![\w(])(?:(?P<odw3>(?:Działając\s+)?(?-i:W|w)\s+imieniu)(?=\s)(?!\s+pozostał)"
     r"|(?P<odw4>Odwołując\w*|Zamawiając\w*)(?=\s+Nazwa\s*:))",
     I,
 )
@@ -212,7 +212,7 @@ def split_entities(section: str) -> list[dict]:
         lead, _, name = raw.rpartition(":") if ":" in raw else ("", "", raw)
         marker = list(re.finditer(r"\d+\)", lead))
         role = (lead[marker[-1].end() :] if marker else lead) + " " + label_role
-        name = LIST_MARK_RE.sub("", name.lstrip(" ,;.–-"))
+        name = LIST_MARK_RE.sub("", name.lstrip(" ,;.–-)"))
         name = re.sub(r"^(?:Działając\s+)?w\s+imieniu\s+(?:wykonawcy\s+)?", "", name.strip(), flags=I)
         name = name.strip(" ,;-")
         # A sole trader: "Jan Nowak prowadzący działalność gospodarczą pod firmą NOWAK-BUD Jan Nowak".
@@ -317,6 +317,9 @@ def find_firm(region: str, name_end: int) -> str | None:
         gap = region[name_end : m.start()] if name_end <= m.start() else region[: m.start()]
         before = re.search(rf"(?:(?<=[\s,])|^)((?:(?:{NAME_WORD}|i|&)\s+){{1,4}})$", gap)
         names = before.group(1) if before and not TITLES_RE.search(before.group(1)) else ""
+        # "r. pr. Anna Nowak, adw. Jan Kos Kancelaria ...": the names after a title are a second attorney.
+        if before and re.search(rf"{TITLE}\s*$", gap[: before.start(1)], I):
+            names = ""
         names = "" if re.search(r"\b(?:Pełnomocnik|Odwołując|Wykonawc)", names, I) else names
         # "z Kancelarii Radcy Prawnego ..." gives the name in the nominative: "Kancelaria Radcy Prawnego ...".
         return (names + m.group(0)).strip(" ,;")
@@ -373,6 +376,21 @@ def parse_attorney(
     return pn, m.group(0)
 
 
+LETTERHEAD_FIRM_RE = re.compile(rf"(?<![@.\w])(?-i:Kancelari)\w+\b.*?(?=\s*[,;(]|\s+{STREET}|\s+\d{{2}}-\d{{3}}|\s+tel\b|\s+e-?mail\b|$)", I)
+
+
+def letterhead_of_firm(top: str, attorney: dict, evidence: dict[str, str]) -> None:
+    """The law firm can write the appeal on its letterhead, above the town and the date."""
+    m = LETTERHEAD_FIRM_RE.search(top)
+    if not m:
+        return
+    attorney["nazwa"] = evidence["Odwolujacy[0].pelnomocnik.nazwa"] = m.group(0).strip()
+    mail = common.EMAIL_RE.search(top, m.end())
+    if mail and not attorney["mail"]:
+        attorney["mail"] = mail.group(0).rstrip(".")
+        evidence["Odwolujacy[0].pelnomocnik.mail"] = mail.group(0)
+
+
 # --- the header line with the town and the date -----------------------------------
 
 
@@ -383,6 +401,9 @@ def find_place_and_date(head: str) -> tuple[str | None, str | None, str | None]:
         if not iso:
             continue
         words = m.group("city").split()
+        # The title of the letter can stand before the town in the flat text: "Odwołanie Warszawa, 29 marca 2026".
+        while len(words) > 1 and re.fullmatch(r"Odwołani\w*|Pismo|ODWOŁANIE", words[0]):
+            words = words[1:]
         # After a postal code, the first word is the town of an address.
         if len(words) > 1 and re.search(r"\d{2}-\d{3}\s*$", head[: m.start("city")]):
             words = words[1:]
@@ -631,6 +652,8 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
                 attorney = {"imie_nazwisko": common.to_nominative(person[0]), "nazwa": None, "mail": None}
                 attorney_text = common.normalize_spaces(signature[title.start() : title.start() + person[1]])
                 evidence["Odwolujacy[0].pelnomocnik.imie_nazwisko"] = attorney_text
+        if attorney and not attorney["nazwa"] and line:
+            letterhead_of_firm(head[: head.find(line)][-400:], attorney, evidence)
         row["przez-pelnomocnika"] = 1 if attorney else 0
         row["pelnomocnik"] = attorney
         # Without an attorney the decision comes from the start of the section of the appellant.
