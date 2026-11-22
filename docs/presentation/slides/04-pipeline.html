@@ -8,7 +8,7 @@
   <div class="pad c4">
     <h2>Przetwarzanie dokumentu w pięciu krokach</h2>
     <p class="lead">Każdy krok to osobny moduł w <span class="mono">src/odw2json/</span>. Każda wartość w wyniku ma zapisany fragment tekstu, z którego pochodzi.</p>
-    <div class="flow" style="margin-top: 90px;">
+    <div class="flow" style="margin-top: 90px;"><div class="line"></div>
       <div class="st on"><div class="dot">1</div><h3>Odczyt</h3><p>Czytamy warstwę tekstową PDF. Stronę bez tekstu wysyłamy do OCR.</p><div class="tech">pypdfium2 · RapidOCR</div></div>
       <div class="st on"><div class="dot">2</div><h3>Klasyfikacja</h3><p>Reguły z wagami dają punkty każdemu typowi. Wygrywa najwyższa suma powyżej progu.</p><div class="tech">config/types/*.yaml</div></div>
       <div class="st on"><div class="dot">3</div><h3>Ekstrakcja</h3><p>Szukamy etykiet, wzorców i układu tabel. Imiona i nazwiska zapisujemy w mianowniku.</p><div class="tech">extractors/ + YAML</div></div>

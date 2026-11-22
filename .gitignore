@@ -40,3 +40,4 @@ output/*
 docs/presentation/node_modules/
 docs/presentation/preview/
 docs/presentation/deck.html
+docs/presentation/layout.json

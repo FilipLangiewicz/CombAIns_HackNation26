@@ -2,6 +2,12 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): the presentation as a PPTX file
+
+- `docs/presentation/deck.pptx` has the slides with text boxes, shapes and pictures. PowerPoint, Google Slides and Canva can change it.
+- `build.js` also writes `layout.json`. This file has the position, the color and the font of each element of the HTML slides.
+- `make_pptx.py` makes `deck.pptx` from `layout.json`. The text boxes keep the line breaks of the HTML slides.
+
 ## 2026-11-22 (main): the presentation for the final
 
 - New folder `docs/presentation/`: 15 slides for a talk of about 10 minutes, and `deck.pdf`.

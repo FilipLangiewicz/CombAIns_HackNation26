@@ -95,7 +95,7 @@ pre.code .c { color: #7d8aa3; }
 .flow .st .dot { width: 72px; height: 72px; border-radius: 50%; background: #fff; border: 3px solid var(--blue); color: var(--blue); font-size: 28px; font-weight: 800;
                  display: grid; place-items: center; position: relative; z-index: 1; }
 .flow .st.on .dot { background: var(--blue); color: #fff; }
-.flow::before { content: ""; position: absolute; left: 36px; right: 20%; top: 35px; height: 3px; background: var(--blue); }
+.flow .line { position: absolute; left: 36px; right: 20%; top: 35px; height: 3px; background: var(--blue); }
 .flow .st h3 { font-size: 32px; font-weight: 800; margin-top: 34px; letter-spacing: -.01em; }
 .flow .st p { font-size: 22px; color: var(--muted); line-height: 1.45; margin-top: 12px; }
 .flow .st .tech { margin-top: 18px; font-size: 17px; font-family: "JetBrains Mono", monospace; color: var(--blue); }
