@@ -177,7 +177,9 @@ def declarant_is_legal(text: str, m: re.Match, cfg: dict) -> bool:
 
 def find_person_principal(text: str, m: re.Match) -> dict:
     """A natural person who runs a business: "Ja, niżej podpisany Jan Kowalski, ... pod firmą X, ul. ..."."""
-    firm = re.search(r"pod\s+(?:firmą|nazwą)\s+(.+?),\s*(?:ul\.|al\.|pl\.|os\.|\d)", text[m.end() :], re.DOTALL)
+    firm = re.search(
+        r"pod\s+(?:firmą|nazwą)\s+(.+?),\s*(?:ul\.|al\.|pl\.|os\.|\d|NIP\b|REGON\b|z\s+siedzibą)", text[m.end() :], re.DOTALL
+    )
     ids, id_src = {}, {}
     for i in IDENT.finditer(text):
         label = i.group(1).upper()
@@ -260,8 +262,10 @@ def find_signers(text: str, cfg: dict) -> list[tuple[int, str, str]]:
         dots_before = dots_before or bool(PRINCIPAL_HEADING_RE.fullmatch(line))
     # The prose can name the signers: "my, Jan Nowak (Prezes Zarządu)" or "przez Prokurenta Jana Nowaka".
     before = _alt(cfg.get("roles_before_name", []))
-    prose = [rf"({NAME})\s*\(\s*{role}\s*\)", rf"przez\s*:?\s+({NAME})\s*[–—-]\s*{role}"]
+    prose = [rf"({NAME})\s*\(\s*{role}\s*\)", rf"przez\s*:?\s+({NAME})\s*[,–—-]\s*{role}"]
     prose += [rf"(?<![{LOW}])(?:{before})\s+({NAME})"] if before else []
+    # The role in another case after the name: "reprezentowana przez Piotra Zająca, Prezesa Zarządu".
+    prose += [rf"przez\s*:?\s+({NAME})\s*,\s*(?:{before})"] if before else []
     for pattern in prose:
         for m in re.finditer(pattern, text[:limit]):
             name = common.to_nominative(m.group(1))

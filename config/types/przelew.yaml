@@ -54,7 +54,7 @@ labels:
     - '(?<![\wąćęłńóśźż])(?:(?:transaction|operation|payment)\s+(?:id|reference|number|no\.?)|reference\s+(?:id|number|no\.?))(?![\wąćęłńóśźż])'
   tytul:
     - '(?<![\wąćęłńóśźż])tytuł(?:em|\s+przelewu|\s+operacji|\s+płatności)?(?![\wąćęłńóśźż])'
-    - '(?<![\wąćęłńóśźż])opis(?:\s+przelewu|\s+operacji|\s+płatności)?(?![\wąćęłńóśźż])'
+    - '(?<![\wąćęłńóśźż])opis(?:\s+przelewu|\s+operacji|\s+transakcji|\s+płatności)?(?![\wąćęłńóśźż])'
     - '(?<![\wąćęłńóśźż])szczeg\w*\s+(?:płatności|przelewu|operacji)(?![\wąćęłńóśźż])'
     - '(?<![\wąćęłńóśźż])(?:payment\s+details|details\s+of\s+payment|remittance(?:\s+information)?|title|description)(?![\wąćęłńóśźż])'
   # A keyword before an account tells whose account it is. The nearest keyword wins.

@@ -65,6 +65,27 @@ def is_label_only(line: str, patterns: list[str]) -> bool:
     return any(re.search(p, text, re.IGNORECASE) for p in patterns)
 
 
+def unfold_header_rows(text: str, patterns: list[str]) -> str:
+    """Join a row of labels and the row of values below it: "Data  Kwota" over "2026-07-21  100,00"."""
+    rows = text.splitlines()
+    out, i = [], 0
+    while i < len(rows):
+        cols = re.split(r"\s{2,}|\t", rows[i].strip())
+        values = re.split(r"\s{2,}|\t", rows[i + 1].strip()) if i + 1 < len(rows) else []
+        if (
+            len(cols) >= 2
+            and len(cols) == len(values)
+            and all(is_label_only(c, patterns) for c in cols)
+            and not any(is_label_only(v, patterns) for v in values)
+        ):
+            out += [f"{c}: {v}" for c, v in zip(cols, values)]
+            i += 2
+        else:
+            out.append(rows[i])
+            i += 1
+    return "\n".join(out)
+
+
 def label_kind(line: str, labels: dict) -> str | None:
     for kind in ("data_operacji", "kwota", "numer_transakcji", "tytul"):
         if any(re.search(p, line, re.IGNORECASE) for p in labels.get(kind, [])):
@@ -271,6 +292,7 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
         for key in ("data_operacji", "kwota", "numer_transakcji", "tytul", "z_rachunku", "na_rachunek", "other")
         for p in (labels.get(key, []))
     ]
+    text = unfold_header_rows(text, label_patterns)
     lines = merge_columns(join_label_tails(prepare_lines(text)), label_patterns, labels)
 
     def put(name: str, found) -> None:

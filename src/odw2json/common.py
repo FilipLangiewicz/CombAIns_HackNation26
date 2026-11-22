@@ -77,10 +77,13 @@ AMOUNT_RE = re.compile(r"(?<![\d,.])(\d{1,3}(?:[ . ']\d{3})+|\d+)(?:[,.](\d{1,2
 
 
 def parse_amount(text: str) -> float | None:
-    """Read the first amount, for example "10 000,00 PLN" or "1.234,50 zł"."""
+    """Read the first amount, for example "10 000,00 PLN", "1.234,50 zł" or "15,000.00 PLN"."""
     m = AMOUNT_RE.search(text)
     if not m:
         return None
+    english = re.compile(r"(\d{1,3}(?:,\d{3})+)\.(\d{1,2})(?!\d)").match(text, m.start())
+    if english:
+        return float(f"{english.group(1).replace(',', '')}.{english.group(2)}")
     whole = re.sub(r"[ . ']", "", m.group(1))
     frac = m.group(2) or "0"
     return float(f"{whole}.{frac}")

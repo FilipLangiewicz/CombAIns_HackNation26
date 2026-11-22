@@ -1,5 +1,6 @@
 from odw2json.classify import load_types
 from odw2json.extractors.przelew import extract
+from odw2json.pipeline import process_text
 
 TYPE = next(t for t in load_types() if t.name == "przelew")
 
@@ -160,8 +161,6 @@ def test_table_with_a_title_in_more_lines():
 
 
 def test_domestic_transfer_printout():
-    from odw2json.pipeline import process_text
-
     text = (
         "B Bank Karpacki\nPrzelew krajowy\nDane zleceniodawcy\n11 1240 1111 9078 8570 5000 0455\n"
         "Dane kontrahenta\nRachunek kontrahenta 25 1030 1508 9486 5035 5622 1675\nKwota 17.00 PLN\n"
@@ -175,3 +174,15 @@ def test_domestic_transfer_printout():
 def test_label_with_the_second_word_on_the_next_line():
     box = run("Potwierdzenie przelewu\nKwota 10 000,00 PLN\nprzelewu\nNumer 305494\ntransakcji\n")
     assert (box["numer_transakcji"], box["kwota"]) == ("305494", 10000.0)
+
+
+def test_english_amount_and_header_row():
+    text = """POTWIERDZENIE TRANSAKCJI
+Data transakcji          Kwota            Waluta
+2026-07-21               15,000.00        PLN
+Rachunek obciążany: 61 1090 1014 0000 0712 1981 2874
+Rachunek uznawany: 60 1010 1010 0081 3622 3100 0000
+Opis transakcji: Wpis od odwołania, ZP/45/2026
+"""
+    box = process_text(text).data["przelew_bankowy"]
+    assert (box["data_operacji"], box["kwota"], box["tytul"]) == ("2026-07-21", 15000.0, "Wpis od odwołania, ZP/45/2026")

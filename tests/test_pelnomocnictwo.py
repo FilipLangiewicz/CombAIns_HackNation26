@@ -287,3 +287,24 @@ def test_title_split_into_three_parts():
         "PELNO MOCNI CTWO\nMedicor IT Solutions S.A., ul. Polna 1, 00-001 Warszawa, KRS: 0000123456, NIP: 5250001234\n"
     )
     assert run(text)["mocodawca"][0]["data"]["nazwa"] == "Medicor IT Solutions S.A."
+
+
+def test_sole_trader_firm_before_nip():
+    text = """PEŁNOMOCNICTWO
+Ja, niżej podpisany Jan Malinowski, prowadzący działalność gospodarczą pod firmą Eko-Bud Jan Malinowski, NIP 7770001111,
+udzielam pełnomocnictwa radcy prawnemu Katarzynie Zielińskiej (PESEL: 85120133547)
+do reprezentowania mnie przed Krajową Izbą Odwoławczą.
+Jan Malinowski
+"""
+    data = process_text(text).data["mocodawca"][0]["data"]
+    assert (data["nazwa"], data["typ"]) == ("Eko-Bud Jan Malinowski", "osoba_fizyczna")
+
+
+def test_signer_with_role_after_name_in_prose():
+    text = """PEŁNOMOCNICTWO
+1. Alfa sp. z o.o., ul. Legnicka 1, 54-203 Wrocław, KRS 0000111111 – reprezentowana przez Piotra Zająca, Prezesa Zarządu,
+2. Beta S.A., ul. Krakowska 2, 50-424 Wrocław, KRS 0000222222 – reprezentowana przez Marię Lis, Członka Zarządu,
+udzielamy pełnomocnictwa Pani Zofii Wójcik, PESEL 90020212345, do wniesienia odwołania.
+"""
+    principals = process_text(text).data["mocodawca"]
+    assert [p["podpisujacy"] for p in principals] == [[{"imie_nazwisko": "Piotr Zając"}], [{"imie_nazwisko": "Maria Lis"}]]

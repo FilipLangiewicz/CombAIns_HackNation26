@@ -2,6 +2,23 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (probe-sweep): new layouts of the power of attorney and of the bank transfer
+
+Five probe texts of the power of attorney and four probe texts of the bank transfer showed these errors.
+
+- `pelnomocnictwo.find_person_principal`: a NIP, a REGON or "z siedzibą" can follow the firm of a sole trader. Before, the name of the firm was lost.
+- `pelnomocnictwo.find_signers`: the role in another case can follow the name: "reprezentowana przez Piotra Zająca, Prezesa Zarządu".
+- `common.parse_amount`: the English form "15,000.00" gave 15.0. Now it gives 15000.0.
+- `przelew.unfold_header_rows`: a row of labels with a row of values below it. Before, the year of the date became the amount.
+- `config/types/przelew.yaml`: the label "Opis transakcji" of the title.
+- Three new tests.
+
+The results do not change on any test set:
+
+- organizer dev / holdout: 1.000 / 1.000
+- OCR train / val / test: 0.9876 / 0.9818 / 0.9673
+- the generators `synth` and `synth2`
+
 ## 2026-11-22 (probe-sweep): new layouts of the appeal
 
 Eight probe texts with new layouts of the appeal showed these errors. The fixes are in `extractors/odwolanie.py`.
