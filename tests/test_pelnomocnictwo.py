@@ -176,3 +176,19 @@ def test_list_of_attorneys_without_titles():
         {"imie_nazwisko": "Aleksandra Rybak", "pesel": None},
         {"imie_nazwisko": "Krzysztof Jodłowski", "pesel": "69102340858"},
     ]
+
+
+def test_role_under_the_attorney_in_two_ocr_columns():
+    # The OCR mixes the rows of two signature columns: the role of the signer stands under the attorney.
+    text = """PEŁNOMOCNICTWO
+Mocodawcą jest Belmoria Rozwiązania S.A., ul. Zaczarowana 78, 90-803 Łódź, KRS 9999405188, NIP 9999284065.
+Mocodawca ustanawia pełnomocnikiem r. pr. Aleksandra Marciniak (nr wpisu na listę: WA 93198).
+Mocodawcy:
+Oliwia Kaczmarek
+Pełnomocnictwo przyjmuję:
+r. pr. Aleksandra Marciniak
+Prezes Zarządu
+"""
+    data = run(text)
+    assert data["mocodawca"][0]["podpisujacy"] == [{"imie_nazwisko": "Oliwia Kaczmarek"}]
+    assert [p["imie_nazwisko"] for p in data["pelnomocnicy"]] == ["Aleksandra Marciniak"]

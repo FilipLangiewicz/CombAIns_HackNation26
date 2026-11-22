@@ -171,6 +171,9 @@ def find_person_principal(text: str, m: re.Match) -> dict:
     }
 
 
+PRINCIPAL_HEADING_RE = re.compile(r"[ \t]*(?:(?:Za|W\s+imieniu)\s+)?Mocodaw\w*[ \t]*:?[ \t]*", re.IGNORECASE)
+
+
 def find_signers(text: str, cfg: dict) -> list[tuple[int, str, str]]:
     """Find the persons who sign: a name with a role, or a name under a signature line."""
     role = rf"(?i:(?:(?:Funkcja|Stanowisko)\s*:\s*)?(?:{_alt(cfg['roles'])}))\b"
@@ -185,8 +188,14 @@ def find_signers(text: str, cfg: dict) -> list[tuple[int, str, str]]:
     accepted = re.search(r"przyjmuj", text)
     limit = accepted.start() if accepted else len(text)
 
+    titles = re.compile(rf"(?:{_alt(cfg['titles'])})\s*$", re.IGNORECASE)
+
     def valid(name: str) -> bool:
         return not re.match(role, name) and not re.search(r"\b(?:sp|S)\.", name)
+
+    def attorney(m: re.Match) -> bool:
+        # In two signature columns, the OCR can put the role of the signer under the name of the attorney.
+        return bool(titles.search(m.string[: m.start(1)]))
 
     found: list[tuple[int, str, str]] = []
     dots_before = False
@@ -206,11 +215,11 @@ def find_signers(text: str, cfg: dict) -> list[tuple[int, str, str]]:
             # A line can have more than one signer: "A B – Prezes oraz C D – Członek Zarządu".
             each = list(re.finditer(rf"({NAME})[ \t]*[,–—-][ \t]*{role}", line)) or [same]
             for m in each:
-                if valid(m.group(1)):
+                if valid(m.group(1)) and not attorney(m):
                     found.append((pos, common.to_nominative(m.group(1)), common.normalize_spaces(line)))
         else:
             m = split or alone
-            if m and valid(m.group(1)):
+            if m and valid(m.group(1)) and not attorney(m):
                 found.append(
                     (
                         pos,
@@ -220,6 +229,8 @@ def find_signers(text: str, cfg: dict) -> list[tuple[int, str, str]]:
                 )
         # Keep the flag over the line "Za <company>" that can stand between the dots and the name.
         dots_before = (has_dots and not line) or (has_dots and bool(re.match(r"(?:Za|W imieniu)\b", line)))
+        # A heading of the signature block of the principal: "Mocodawca:", "Za Mocodawcę:".
+        dots_before = dots_before or bool(PRINCIPAL_HEADING_RE.fullmatch(line))
     # The prose can name the signers: "my, Jan Nowak (Prezes Zarządu)" or "przez Prokurenta Jana Nowaka".
     before = _alt(cfg.get("roles_before_name", []))
     prose = [rf"({NAME})\s*\(\s*{role}\s*\)", rf"przez\s*:?\s+({NAME})\s*[–—-]\s*{role}"]

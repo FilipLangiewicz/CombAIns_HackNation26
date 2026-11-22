@@ -2,6 +2,22 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): the signer of a power of attorney in two OCR columns
+
+The OCR can mix the rows of two signature columns. Then the role of the signer ("Prezes Zarządu") stands under the name of the attorney. The extractor took the attorney as the signer.
+
+- `pelnomocnictwo.find_signers`: a name with a professional title before it (`titles` in the config) is not a signer.
+- A name under the heading "Mocodawca:" or "Za Mocodawcę:" is a signer.
+- New test in `tests/test_pelnomocnictwo.py`. It fails with the old code.
+
+| Test set | Before | After |
+|---|---|---|
+| Organizer dev / holdout (text) | 1.000 / 1.000 | 1.000 / 1.000 |
+| Generator 1 and 2, `pelnomocnictwo` | no change | no change |
+| OCR train, `pelnomocnictwo` | 0.9728 | 0.9781 |
+| OCR train / val | 0.9826 / 0.9742 | 0.9838 / 0.9742 |
+| OCR test, `pelnomocnictwo` (final check) | 0.9437 | 0.9464 |
+
 ## 2026-11-22 (main): more forms of the authorities and of the law firm in the appeal
 
 New probe texts showed these errors. The fixes are in `extractors/odwolanie.py`. Eight new tests in `tests/test_odwolanie.py` fail with the old code.
