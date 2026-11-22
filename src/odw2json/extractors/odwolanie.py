@@ -61,6 +61,47 @@ HEADING_DASH_RE = re.compile(
 )
 
 
+TABLE_HEADING_RE = re.compile(r"^\s*(?:Odwołując|Zamawiając)\w*\s*$", I)
+TABLE_LABELS = {
+    "nazwa": "Nazwa",
+    "adres": "Adres",
+    "krs": "KRS",
+    "nip": "NIP",
+    "regon": "REGON",
+    "rola w postępowaniu": "Rola",
+    "rola": "Rola",
+    "pełnomocnik": "Pełnomocnik",
+    "kancelaria": "Kancelaria",
+    "e-mail pełnomocnika": "e-mail",
+    "e-mail": "e-mail",
+}
+
+
+def unfold_tables(text: str) -> str:
+    """Give each value of a party table its label: "Nazwa", "KRS", ... in lines and then the values in lines."""
+    lines = text.split("\n")
+    out, i = [], 0
+    while i < len(lines):
+        out.append(lines[i])
+        if not TABLE_HEADING_RE.match(lines[i]):
+            i += 1
+            continue
+        j = i + 1
+        while j < len(lines) and lines[j].strip().lower() in TABLE_LABELS:
+            j += 1
+        labels = [TABLE_LABELS[x.strip().lower()] for x in lines[i + 1 : j]]
+        values = lines[j : j + len(labels)]
+        if len(labels) < 3 or len(values) < len(labels):
+            i += 1
+            continue
+        out[-1] = out[-1].strip() + ":"
+        for label, value in zip(labels, values):
+            if value.strip() not in ("", "-", "—", "–"):
+                out.append(f"{label}: {value.strip()}")
+        i = j + len(labels)
+    return "\n".join(out)
+
+
 def mark_headings(text: str) -> str:
     """Give each heading of a party a colon, because the text is flat after this step."""
     text = HEADING_LINE_RE.sub(r"\1:", text)
@@ -220,7 +261,8 @@ ANCHOR_RE = re.compile(
     I,
 )
 NAME_WORD = r"[A-ZŁŚŻŹĆ][a-ząćęłńóśźż\-]+"
-PERSON_RE = re.compile(rf"{NAME_WORD}(?:\s+(?!Kancelari|Biuro|Adres|Spółk){NAME_WORD}){{1,2}}")
+# A word before a colon is the label of the next line: "Jan Nowak Kontakt: ...".
+PERSON_RE = re.compile(rf"{NAME_WORD}(?:\s+(?!Kancelari|Biuro|Adres|Spółk){NAME_WORD}(?![\w\-])(?!\s*:)){{1,2}}")
 FIRM_AFTER_NAME_RE = re.compile(
     r"\s*(?:[–—-]|,|\(|\bz\b)\s*([^,()@]+?)\s*(?:,|\(|\)|$|\s+e-?mail\b|\s+tel\b|\s+adres\b|\s+\S+@)", I
 )
@@ -526,7 +568,7 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
     data = doc_type.empty()
     text = common.despace_caps(text)
     text = PAGE_LINE_RE.sub("", text)
-    text = flat(mark_headings(text))
+    text = flat(mark_headings(unfold_tables(text)))
     head = _head(text)
     sections, procurement = split_head(head)
     if not any(k == "odwolujacy" for k, _ in sections):

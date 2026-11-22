@@ -2,6 +2,25 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): party tables and more forms of the contested action
+
+The errors come from generator 2 with the new seeds 55 to 57. The final test seeds 1, 7 and 101 stay for the final check.
+
+- `odwolanie.unfold_tables`: a party table gives the labels ("Nazwa", "Adres", "KRS") in lines and then the values. Now each value gets its label. A value "-" is empty.
+- The name of the attorney does not take a label of the next line: "Katarzyna Michalak Kontakt:".
+- `config/types/odwolanie.yaml`, `action_rules`:
+  - "niewykluczeniu", "niedokonaniu odrzucenia" and "nieunieważnieniu" are omissions (codes 8, 7, 10).
+  - "zmiana SWZ" is a modification of the SWZ (code 5).
+  - "wzór umowy" at the start of an item is code 12. In a list after "SWZ w zakresie", it is a part of the SWZ (code 4).
+- Seven new tests in `tests/test_odwolanie.py`.
+
+| Test set | Before | After |
+|---|---|---|
+| Organizer dev / holdout (text) | 1.000 / 1.000 | 1.000 / 1.000 |
+| Generator 1, seeds 1 to 3 | no change | no change |
+| Generator 2, `odwolanie`, seeds 55 / 56 / 57 | 0.941 / 0.917 / 0.938 | 0.981 / 0.956 / 0.978 |
+| OCR train / val | 0.9849 / 0.9783 | 0.9852 / 0.9797 |
+
 ## 2026-11-22 (main): the title of the procurement after OCR errors
 
 The OCR loses quote marks and spaces near the title, and can change the label. The fixes are in `odwolanie.parse_procurement`.

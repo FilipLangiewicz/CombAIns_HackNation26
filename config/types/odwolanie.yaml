@@ -69,17 +69,18 @@ actions:
 # charge and gives the code of the first rule that has a matching pattern. Order matters:
 # a specific rule (a failure to act) must come before a general rule.
 action_rules:
-  - {code: 10, patterns: ['zaniecha\w*\s+(?:\w+\s+){0,2}unieważ', 'nie\s+unieważ']}
-  - {code: 7, patterns: ['zaniecha\w*\s+(?:\w+\s+){0,2}odrzuc', 'nie\s+odrzuc']}
-  - {code: 8, patterns: ['zaniecha\w*\s+(?:\w+\s+){0,2}wyklucz', 'nie\s+wyklucz']}
+  - {code: 10, patterns: ['zaniecha\w*\s+(?:\w+\s+){0,2}unieważ', 'nie\s+unieważ', 'nieunieważ']}
+  - {code: 7, patterns: ['zaniecha\w*\s+(?:\w+\s+){0,2}odrzuc', 'nie\s+odrzuc', 'nieodrzuc', 'niedokonani\w*\s+odrzuc']}
+  - {code: 8, patterns: ['zaniecha\w*\s+(?:\w+\s+){0,2}wyklucz', 'nie\s+wyklucz', 'niewyklucz', 'niedokonani\w*\s+wyklucz']}
   - {code: 9, patterns: ['unieważ']}
   - {code: 3, patterns: ['wyklucz']}
   - {code: 1, patterns: ['odrzu(?:c|ci)']}
   - {code: 2, patterns: ['\bwybór\b', '\bwyborze\b', '\bwyboru\b', 'wybrał', 'wybrano']}
   - {code: 6, patterns: ['odpowiedz', 'wyjaśnie']}
-  - {code: 5, patterns: ['zmodyfik', 'modyfikac']}
+  - {code: 5, patterns: ['zmodyfik', 'modyfikac', 'zmian\w*\s+(?:treści\s+)?(?:SWZ|specyfikacj)']}
   - {code: 11, patterns: ['opis\w*\s+przedmiotu', '\bOPZ\b']}
-  - {code: 12, patterns: ['projektowan\w+\s+postanowie', 'postanowie\w+\s+umow']}
+  - {code: 12, patterns: ['projektowan\w+\s+postanowie', 'postanowie\w+\s+(?:\w+\s+){0,2}umow', '^\W*(?:\d{1,2}[.)]|[a-h]\))?\s*wzor\w*\s+umowy']}
+  # "wzór umowy" is the object only at the start of an item. In a list after "SWZ w zakresie" it is a part of the SWZ.
   # The general rule is a fallback: a more specific object wins, also when it stands later in the text.
   - {code: 4, fallback: true, patterns: ['publik', 'opublik', 'specyfikacj', '\bSWZ\b', 'warunków zamówienia']}
 

@@ -403,3 +403,98 @@ def test_attorney_firm_forms(block, person, firm):
 def test_title_after_ocr_errors(block, title):
     # The OCR loses quote marks and spaces, and can change the label.
     assert odwolanie.parse_procurement(block, {})["tytul"] == title
+
+
+TABLE_HEAD = """Kielce 26.02.2026
+Prezes Krajowej Izby Odwoławczej
+ODWOŁANIE
+Dane stron postępowania odwoławczego
+Odwołujący
+Nazwa
+Adres
+KRS
+NIP
+REGON
+Pełnomocnik
+Kancelaria
+E-mail pełnomocnika
+Pol-Tech Energetyka sp. z o.o.
+ul. Polna 106, 70-786 Kraków
+-
+8131368471
+318996932
+adw. Ewa Michalak
+Kancelaria Prawa Zamówień Publicznych Michalak sp.k.
+zamowienia@michalak.eu
+Zamawiający
+Nazwa
+Adres
+KRS
+NIP
+REGON
+Rola w postępowaniu
+Gmina Alfa
+ul. Polna 119, 30-979 Lublin
+-
+3794510839
+149845728
+uczestnik
+Zamawiający
+Nazwa
+Adres
+KRS
+NIP
+REGON
+Rola w postępowaniu
+Wojewódzki Szpital Zespolony w Szczecin
+ul. Lipowa 91, 10-824 Warszawa
+0000554179
+6632377006
+908164548
+prowadzący postępowanie (lider)
+"""
+
+
+def test_party_tables():
+    # A table gives the labels in lines and then the values in the same order.
+    data = process_text(TABLE_HEAD + APPEAL_BODY).data
+    appellant = data["Odwolujacy"][0]
+    assert (appellant["nazwa"], appellant["krs"], appellant["nip"], appellant["regon"]) == (
+        "Pol-Tech Energetyka sp. z o.o.",
+        None,
+        "8131368471",
+        "318996932",
+    )
+    assert appellant["pelnomocnik"] == {
+        "imie_nazwisko": "Ewa Michalak",
+        "nazwa": "Kancelaria Prawa Zamówień Publicznych Michalak sp.k.",
+        "mail": "zamowienia@michalak.eu",
+    }
+    rows = [(z["nazwa"], z["krs"], z["nip"], z["prowadzacy_postepowanie"]) for z in data["Zamawiajacy"]]
+    assert rows == [
+        ("Gmina Alfa", None, "3794510839", 0),
+        ("Wojewódzki Szpital Zespolony w Szczecin", "0000554179", "6632377006", 1),
+    ]
+
+
+def test_attorney_before_label_line():
+    block = "Pełnomocnik: adwokat Katarzyna Michalak\nKontakt: Kancelaria Radcy Prawnego Katarzyna Michalak, ul. Kościuszki 34, 82-572 Kraków\n"
+    data = process_text(APPEAL_HEAD + ONE_AUTHORITY + PROBE_APPELLANT + block + APPEAL_BODY).data
+    assert data["Odwolujacy"][0]["pelnomocnik"]["imie_nazwisko"] == "Katarzyna Michalak"
+
+
+@pytest.mark.parametrize(
+    "item, code",
+    [
+        ("niewykluczeniu z postępowania Odra Budownictwo S.A. pomimo podstaw z art. 109 Pzp", 8),
+        ("niedokonaniu odrzucenia oferty złożonej przez Hydro-Sys Sp. z o.o.", 7),
+        ("zmianie SWZ ogłoszonej wykonawcom w dniu 17 listopada 2025 r.", 5),
+        ("wzorze umowy stanowiącym załącznik do SWZ, udostępnionym w dniu 22 września 2026 r.", 12),
+        ("publikacji SWZ w zakresie kryteriów oceny ofert i wzoru umowy z dnia 6 maja 2026 r.", 4),
+    ],
+)
+def test_action_forms(item, code):
+    text = APPEAL_HEAD + ONE_AUTHORITY + PROBE_APPELLANT + (
+        "\nODWOŁANIE\nwnoszę odwołanie wobec czynności Zamawiającego, polegających na:\n1) " + item + ";\n"
+    )
+    assert process_text(text).data["OdwolanieKIO"]["czynnosc_powod_id"] == code
