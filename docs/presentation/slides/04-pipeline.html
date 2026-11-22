@@ -9,11 +9,11 @@
     <h2>Przetwarzanie dokumentu w pięciu krokach</h2>
     <p class="lead">Każdy krok to osobny moduł w <span class="mono">src/odw2json/</span>. Każda wartość w wyniku ma zapisany fragment tekstu, z którego pochodzi.</p>
     <div class="flow" style="margin-top: 90px;">
-      <div class="st on"><div class="dot">1</div><h3>Odczyt</h3><p>Warstwa tekstowa PDF. Strona bez tekstu trafia do OCR.</p><div class="tech">pypdfium2 · RapidOCR</div></div>
-      <div class="st on"><div class="dot">2</div><h3>Klasyfikacja</h3><p>Reguły z wagami dla każdego typu. Wygrywa najwyższa suma powyżej progu.</p><div class="tech">config/types/*.yaml</div></div>
-      <div class="st on"><div class="dot">3</div><h3>Ekstrakcja</h3><p>Etykiety, wzorce i układ tabel. Imiona i nazwiska w mianowniku.</p><div class="tech">extractors/ + YAML</div></div>
-      <div class="st on"><div class="dot">4</div><h3>Walidacja</h3><p>NIP, REGON, PESEL, KRS, daty i kwoty. Zła wartość staje się <span class="mono">null</span>.</p><div class="tech">validate.py</div></div>
-      <div class="st on"><div class="dot">5</div><h3>JSON + źródło</h3><p>Plik zgodny ze strukturą organizatora i ślad każdej wartości dla GUI.</p><div class="tech">output/&lt;sprawa&gt;/*.json</div></div>
+      <div class="st on"><div class="dot">1</div><h3>Odczyt</h3><p>Czytamy warstwę tekstową PDF. Stronę bez tekstu wysyłamy do OCR.</p><div class="tech">pypdfium2 · RapidOCR</div></div>
+      <div class="st on"><div class="dot">2</div><h3>Klasyfikacja</h3><p>Reguły z wagami dają punkty każdemu typowi. Wygrywa najwyższa suma powyżej progu.</p><div class="tech">config/types/*.yaml</div></div>
+      <div class="st on"><div class="dot">3</div><h3>Ekstrakcja</h3><p>Szukamy etykiet, wzorców i układu tabel. Imiona i nazwiska zapisujemy w mianowniku.</p><div class="tech">extractors/ + YAML</div></div>
+      <div class="st on"><div class="dot">4</div><h3>Walidacja</h3><p>Sprawdzamy NIP, REGON, PESEL, KRS, daty i kwoty. Zła wartość staje się <span class="mono">null</span>.</p><div class="tech">validate.py</div></div>
+      <div class="st on"><div class="dot">5</div><h3>JSON + źródło</h3><p>Zapisujemy plik zgodny ze strukturą organizatora i ślad każdej wartości dla GUI.</p><div class="tech">output/&lt;sprawa&gt;/*.json</div></div>
     </div>
     <div class="safe">
       <h4>Braki i błędy</h4>

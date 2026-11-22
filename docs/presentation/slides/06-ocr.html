@@ -13,10 +13,10 @@
       <div class="col" style="flex: 1.15;">
         <h2>Odczyt skanów przez OCR</h2>
         <ol class="steps">
-          <li><b class="n">1</b><div><strong>Obraz strony w 200 DPI</strong><span>Tylko strona bez warstwy tekstowej, najwyżej 3 strony na start.</span></div></li>
-          <li><b class="n">2</b><div><strong>RapidOCR (PP-OCR, ONNX)</strong><span>Prostowanie, pola tekstu, linie i kolumny tabel.</span></div></li>
+          <li><b class="n">1</b><div><strong>Obraz strony w 200 DPI</strong><span>Do OCR trafia tylko strona bez warstwy tekstowej, najwyżej 3 strony na start.</span></div></li>
+          <li><b class="n">2</b><div><strong>RapidOCR (PP-OCR, ONNX)</strong><span>Prostuje stronę i znajduje pola tekstu, linie i kolumny tabel.</span></div></li>
           <li><b class="n">3</b><div><strong>Naprawa typowych błędów</strong><span><span class="mono">odwotanie → odwołanie</span>, <span class="mono">a,wrobel@ → a.wrobel@</span>, O → 0 w NIP.</span></div></li>
-          <li><b class="n">4</b><div><strong>Drugie podejście w 300 DPI</strong><span>Tylko gdy brakuje ważnego pola. Uzupełnia puste pola, nie zmienia gotowych.</span></div></li>
+          <li><b class="n">4</b><div><strong>Drugie podejście w 300 DPI</strong><span>Uruchamiamy go tylko, gdy brakuje ważnego pola. Uzupełnia puste pola, nie zmienia gotowych.</span></div></li>
         </ol>
         <div class="stats" style="margin-top: 56px;">
           <div><div class="num" style="font-size: 96px;">0,992</div><div class="lbl" style="font-size: 23px;">F1 na prawdziwych skanach</div></div>
