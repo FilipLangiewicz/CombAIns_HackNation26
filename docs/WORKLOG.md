@@ -2,6 +2,15 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): the name KIOsk
+
+The team selected the name "KIOsk" for the solution.
+
+- The pages `/`, `/graph` and `/rules` show "KIOsk" in the title and in the heading.
+- The main page shows "Odwołania2json" as a part of the subtitle.
+- The title of `README.md` is "KIOsk: Odwołania2json".
+- The page `/graph` has no remarks about the organizer now.
+
 ## 2026-11-22 (probe-sweep): new layouts of the power of attorney and of the bank transfer
 
 Five probe texts of the power of attorney and four probe texts of the bank transfer showed these errors.

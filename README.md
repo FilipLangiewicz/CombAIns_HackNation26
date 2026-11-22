@@ -1,6 +1,6 @@
-# CombAIns: Odwołania2json
+# KIOsk: Odwołania2json
 
-A solution for the challenge "Odwołania2json" of HackNation 2026. The application reads the PDF documents of a KIO appeal case and writes one JSON file for each document.
+KIOsk is the solution of the team CombAIns for the challenge "Odwołania2json" of HackNation 2026. The application reads the PDF documents of a KIO appeal case and writes one JSON file for each document.
 
 The application uses rules, not an LLM. It finds the type of each document and extracts the data with rules from the configuration in `config/types/`. A document of an unknown type gives `{}`.
 
