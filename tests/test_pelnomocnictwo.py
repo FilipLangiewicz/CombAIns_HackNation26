@@ -223,3 +223,18 @@ def test_principal_heading_forms(head, name):
 def test_title_split_by_ocr_is_not_a_part_of_the_name():
     text = "PELNOMOCNI CTWO\nOrbisol Budownictwo Sp. z o.o., ul. Polna 1, 00-001 Warszawa, KRS: 0000123456, NIP: 5250001234\n"
     assert run(text)["mocodawca"][0]["data"]["nazwa"] == "Orbisol Budownictwo Sp. z o.o."
+
+
+def test_signers_after_the_place_for_the_stamp():
+    text = (
+        "PEŁNOMOCNICTWO\nJa, niżej podpisany(a), działając jako osoba upoważniona do reprezentacji Umbria Serwis S.A. "
+        "(KRS 9995891101, NIP 9994524790), udzielam pełnomocnictwa adw. Cezary Szymański.\n"
+        "miejsce na pieczęć firmowa Marek Dobrowolski Ryszard Biernacki\nPrezes Zarządu Dyrektor\n"
+    )
+    signers = [s["imie_nazwisko"] for s in run(text)["mocodawca"][0]["podpisujacy"]]
+    assert signers == ["Marek Dobrowolski", "Ryszard Biernacki"]
+
+
+def test_stop_word_after_ocr_errors():
+    text = "MOCODAWCA· Kavendis Infrastruktura sp. z o.o., ul. Polna 1, 00-001 Warszawa, KRS: 0000123456, NIP: 5250001234\n"
+    assert run(text)["mocodawca"][0]["data"]["nazwa"] == "Kavendis Infrastruktura sp. z o.o."

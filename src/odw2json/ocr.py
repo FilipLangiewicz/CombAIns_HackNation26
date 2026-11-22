@@ -278,8 +278,16 @@ def repair_emails(text: str) -> str:
         joined = m.group(2) + m.group(3)
         return m.group(1) + joined if joined.lower() in TOP_DOMAINS else m.group(0)
 
+    # A space before the top domain: "biuro@firma .example".
+    text = re.sub(
+        r"(@[\w\-]+(?:\.[\w\-]+)*)[ \t]+\.([a-z]{2,10})\b",
+        lambda m: m.group(1) + "." + m.group(2) if m.group(2).lower() in TOP_DOMAINS else m.group(0),
+        text,
+    )
     # A broken top domain: "biuro@firma.exam ple".
-    return re.sub(r"(@[\w\-]+(?:\.[\w\-]+)*\.)([a-z]+) ([a-z]{1,5})\b", join_domain, text)
+    text = re.sub(r"(@[\w\-]+(?:\.[\w\-]+)*\.)([a-z]+) ([a-z]{1,5})\b", join_domain, text)
+    # An address has no Polish letters. The repair of the diacritics can add them: "wiśniewska@prawnik.pl".
+    return re.sub(r"[\w.+\-]+@[\w\-.]+", lambda m: fold(m.group(0)), text)
 
 
 def ocr_page(page) -> str:

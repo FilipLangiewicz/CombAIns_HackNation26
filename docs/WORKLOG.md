@@ -2,6 +2,21 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): e-mail addresses and signers after OCR errors
+
+The errors come from the OCR train split.
+
+- `ocr.repair_emails`: the OCR can put a space before the top domain: "biuro@firma .example". The repair also removes Polish letters from an address, because the repair of the diacritics can add them.
+- `pelnomocnictwo.find_signers`: a line "miejsce na pieczęć firmowa" between the name and the role is not a part of the signature. The text "miejsce na pieczęć firmowa" before the names is removed. A dot "·" before a role is removed.
+- `pelnomocnictwo.find_company_name`: a stop word with OCR errors ("MOCODAWCA·", "Pehnomocnictwo") also stops the name.
+- Three new tests.
+
+| Test set | Before | After |
+|---|---|---|
+| Organizer dev / holdout (text) | 1.000 / 1.000 | 1.000 / 1.000 |
+| Generator 1 and 2 | no change | no change |
+| OCR train / val | 0.9852 / 0.9797 | 0.9873 / 0.9797 |
+
 ## 2026-11-22 (main): final check of the changes of this night
 
 - `pelnomocnictwo.find_company_name`: a stop word that the OCR split ("PELNOMOCNI CTWO") also stops the name.

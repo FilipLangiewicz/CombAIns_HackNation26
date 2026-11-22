@@ -6,10 +6,12 @@ It finds the identifiers (KRS, NIP), the legal forms, the titles of the attorney
 
 from __future__ import annotations
 
+import difflib
 import re
 
 from odw2json import common
 from odw2json.classify import DocType
+from odw2json.ocr import fold
 
 UP = "A-ZĄĆĘŁŃÓŚŹŻ"
 LOW = "a-ząćęłńóśźż"
@@ -113,6 +115,14 @@ def clean_name(name: str) -> str:
     return re.sub(r"^(?:Wspólnicy\s+)?spółki\s+cywilnej\s+|^Spółka\s+cywilna\s+", "", name, flags=re.IGNORECASE)
 
 
+def is_stop_word(word: str, stop: set[str]) -> bool:
+    """A stop word after OCR errors: "MOCODAWCA·", "Pehnomocnictwo"."""
+    letters = fold(re.sub(rf"[^{LOW}{UP}a-zA-Z]", "", word)).lower()
+    if len(letters) < 6:
+        return False
+    return any(difflib.SequenceMatcher(None, letters, fold(s).lower()).ratio() >= 0.85 for s in stop if len(s) >= 6)
+
+
 def find_company_name(text: str, before: int, cfg: dict) -> tuple[str, int] | None:
     """Find the last company name that ends before the position. A name ends with a legal form."""
     forms = re.compile(rf"(?<![{LOW}{UP}])(?:{_alt(cfg['legal_forms'])})")
@@ -129,7 +139,12 @@ def find_company_name(text: str, before: int, cfg: dict) -> tuple[str, int] | No
         if word == "i" and name and k + 1 < len(words) and re.match(rf"^[{UP}]", words[-k - 2]):
             name.append(word)  # "Kowalski i Nowak s.c."
             continue
-        if word in stop or not re.match(rf"^[{UP}\d]", word) or re.search(r"[,:;)(.]$", word):
+        if (
+            word in stop
+            or is_stop_word(word, stop)
+            or not re.match(rf"^[{UP}\d]", word)
+            or re.search(r"[,:;)(.]$", word)
+        ):
             break
         # The OCR can split a stop word: "PELNOMOCNI CTWO".
         if k + 1 < len(words) and words[-k - 2] + word in stop:
@@ -184,9 +199,12 @@ def find_signers(text: str, cfg: dict) -> list[tuple[int, str, str]]:
     lines = []  # (position, text) of each line without the leading signature dots
     pos = 0
     for raw in text.split("\n"):
-        # A page footer can stand between the name and the role.
-        if not re.fullmatch(r"\s*(?:Strona\s+\d+\s*(?:z|/)\s*\d+|\(?podpis\)?)\s*", raw, re.IGNORECASE):
-            lines.append((pos, raw.lstrip(" \t._…-")))
+        # A page footer or a place for the stamp can stand between the name and the role.
+        footer = r"\s*(?:Strona\s+\d+\s*(?:z|/)\s*\d+|\(?podpis\)?|\(?(?:miejsce\s+na\s+)?piecz[ęe][ćc](?:\s+firmow\w*)?(?:\s+i\s+podpis)?\)?)\s*"
+        if not re.fullmatch(footer, raw, re.IGNORECASE):
+            stamp = re.match(r"\s*\(?(?:miejsce\s+na\s+)?piecz[ęe][ćc]\s+firmow\w*\)?\s+", raw, re.IGNORECASE)
+            cut = stamp.end() if stamp else 0
+            lines.append((pos + cut, raw[cut:].lstrip(" \t._…·•-")))
         pos += len(raw) + 1
     accepted = re.search(r"przyjmuj", text)
     limit = accepted.start() if accepted else len(text)

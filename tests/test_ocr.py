@@ -65,3 +65,13 @@ def test_split_points_only_in_gaps():
     gray[:, 400:420] = 255  # a gap between two words
     cuts = split_points(gray)
     assert len(cuts) == 3 and 400 <= cuts[1] <= 420
+
+
+def test_repair_emails_after_ocr():
+    from odw2json.ocr import repair_emails
+
+    assert (
+        repair_emails("e-mail: sekretariat@zawadzkakancelaria .example")
+        == "e-mail: sekretariat@zawadzkakancelaria.example"
+    )
+    assert repair_emails("wiśniewska@prawnik.pl") == "wisniewska@prawnik.pl"
