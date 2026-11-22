@@ -2,6 +2,16 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): the pages /graph and /rules in the web interface
+
+- New file `src/odw2json/static/graph.html`: an interactive graph of the path of a document, and a page with all rules of each type.
+- `/graph`: the nodes are the PDF file, the decision "text layer or OCR", the classification, each type and the unknown type, the extraction, the validation and the JSON file.
+- For an analysed document, `/graph` marks its path and gives the reason of each decision. Examples: the points of each type, the rules that matched, the OCR pages.
+- `/rules`: the classification rules, the rules of the contested action, the validation, the other parameters and the full YAML file of each type.
+- `gui.pipeline_info` and `/api/pipeline` read `config/types/*.yaml` and the constants of `pdftext`. Thus the pages have no copy of the rules.
+- `pipeline.Result` has the number of pages and the skipped pages. The web interface also gives the validation warnings.
+- New test in `tests/test_evidence.py`.
+
 ## 2026-11-22 (main): the name of the principal in a power of attorney
 
 - `config/types/pelnomocnictwo.yaml`: the legal forms "sp. z o.o.", "sp. k." and "sp. k.a." match without regard to the case. Before, "Sp. z o.o." did not match.

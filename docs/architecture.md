@@ -44,6 +44,7 @@ Result: type, data (the output JSON), evidence (the source text of each value), 
 | `src/odw2json/common.py` | Shared rules: dates, amounts, accounts, identifiers, names. |
 | `src/odw2json/extractors/` | One extractor for each known type, and `generic.py` for a type from the configuration. |
 | `src/odw2json/gui.py`, `static/index.html` | The web interface. It uses only the Python standard library. |
+| `src/odw2json/static/graph.html` | The pages `/graph` (the path of a document) and `/rules` (all rules). The data comes from `/api/pipeline`, which reads `config/types/*.yaml`. |
 | `src/odw2json/evaluate.py` | The F1 score with the rules of the organizer. |
 | `src/odw2json/perturb.py` | The robustness test: changed copies of the examples. |
 | `src/odw2json/synth.py` | Generator 1 of new layouts. The rules were tuned on seeds 1 and 2. |

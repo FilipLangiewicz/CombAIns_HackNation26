@@ -22,6 +22,8 @@ class Result:
     ocr_pages: list[int] = field(default_factory=list)
     ocr_missing: bool = False
     text: str = ""
+    page_count: int = 0
+    skipped_pages: list[int] = field(default_factory=list)
 
 
 def process_text(text: str, path: Path = Path("text")) -> Result:
@@ -74,4 +76,6 @@ def process_pdf(path: Path) -> Result:
             result.evidence = full.evidence | result.evidence
             doc.ocr_pages = sorted(set(doc.ocr_pages + doc.skipped_pages))
     result.ocr_pages, result.ocr_missing = doc.ocr_pages, doc.ocr_missing
+    result.page_count = len(doc.pages)
+    result.skipped_pages = [p for p in doc.skipped_pages if p not in doc.ocr_pages]
     return result

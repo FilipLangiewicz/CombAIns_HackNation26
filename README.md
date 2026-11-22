@@ -53,6 +53,13 @@ To see a document and its data side by side, do these steps:
 
 The page shows the source text of each value. You can correct a value and download the JSON file.
 
+Two more pages show how the application works:
+
+- http://127.0.0.1:8000/graph shows the path of each document as a graph: text layer or OCR, the points of the classification, the type or `{}`, the extraction and the validation. Click a node to see its rules and the reason for the decision.
+- http://127.0.0.1:8000/rules shows all rules of each document type.
+
+The two pages read the rules from `config/types/*.yaml` and from the code. Thus the configuration is the one source of the rules.
+
 ## Measure the quality
 
 The data of the organizer must be in `data/uzp/` (see `CLAUDE.md`, section "Data").

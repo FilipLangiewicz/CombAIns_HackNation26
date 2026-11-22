@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib
 import json
 import re
 import shutil
@@ -11,7 +12,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
 
-from odw2json.classify import classify, load_types
+from odw2json import ocr, pdftext
+from odw2json.classify import CONFIG_DIR, classify, load_types
 from odw2json.pipeline import process_pdf
 
 STATIC = Path(__file__).parent / "static"
@@ -21,6 +23,37 @@ MAX_UPLOAD = 100 * 1024 * 1024
 def type_info() -> dict[str, dict]:
     """The label and the minimum score of each type, read from config/types."""
     return {t.name: {"label": t.label, "min_score": t.min_score} for t in load_types()}
+
+
+def pipeline_info() -> dict:
+    """The steps of the pipeline and the rules of each type, read from the code and from config/types.
+
+    The page /graph shows only these values, so the configuration stays the one source of the rules.
+    """
+    types = []
+    for t in load_types():
+        module = importlib.import_module(f"odw2json.extractors.{t.extractor}")
+        path = CONFIG_DIR / f"{t.name}.yaml"
+        types.append(
+            {
+                "name": t.name,
+                "label": t.label,
+                "extractor": t.extractor,
+                "extractor_doc": (module.__doc__ or "").strip(),
+                "min_score": t.min_score,
+                "head_chars": t.head_chars,
+                "title_weight": t.title_weight,
+                "config": t.raw,
+                "yaml": path.read_text(encoding="utf-8") if path.exists() else "",
+                "file": f"config/types/{t.name}.yaml",
+            }
+        )
+    return {
+        "min_page_chars": pdftext.MIN_PAGE_CHARS,
+        "max_ocr_pages": pdftext.MAX_OCR_PAGES,
+        "ocr_available": ocr.available(),
+        "types": types,
+    }
 
 
 def normalize_path(key: str) -> str:
@@ -58,6 +91,9 @@ class Session:
                 "scores": result.scores,
                 "ocr_pages": result.ocr_pages,
                 "ocr_missing": result.ocr_missing,
+                "page_count": result.page_count,
+                "skipped_pages": result.skipped_pages,
+                "warnings": result.warnings,
                 "error": None,
             }
         except Exception as exc:  # noqa: BLE001 - a bad file must not stop the server.
@@ -72,6 +108,9 @@ class Session:
                 "scores": {},
                 "ocr_pages": [],
                 "ocr_missing": False,
+                "page_count": 0,
+                "skipped_pages": [],
+                "warnings": [],
                 "error": str(exc),
             }
         doc.update(id=doc_id, name=name, pdf_url=f"/pdf/{doc_id}")
@@ -104,6 +143,10 @@ def make_handler(session: Session) -> type[BaseHTTPRequestHandler]:
             path = urlparse(self.path).path
             if path in ("/", "/index.html"):
                 self.send_bytes(200, (STATIC / "index.html").read_bytes(), "text/html; charset=utf-8")
+            elif path in ("/graph", "/rules"):
+                self.send_bytes(200, (STATIC / "graph.html").read_bytes(), "text/html; charset=utf-8")
+            elif path == "/api/pipeline":
+                self.send_json(200, pipeline_info())
             elif path == "/api/docs":
                 self.send_json(200, list(session.docs.values()))
             elif match := re.fullmatch(r"/pdf/(\d+)", path):

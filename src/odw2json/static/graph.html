@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Odwołania2json – droga dokumentu</title>
+<style>
+:root {
+  --bg: #f4f6fa; --panel: #fff; --line: #dde3ec; --text: #1c2536; --muted: #667085;
+  --accent: #1f4eb4; --accent-soft: #e8efff; --ok: #1a7f4b; --ok-soft: #e3f5ec; --warn: #b54708; --warn-soft: #fff4e5;
+  --dim: #c4ccd8; --code-bg: #101828; --code-text: #e4e9f2;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+header { background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; position: sticky; top: 0; z-index: 5; }
+header h1 { font-size: 18px; margin: 0; color: var(--accent); }
+header nav { display: flex; gap: 4px; }
+header nav a { text-decoration: none; color: var(--text); padding: 6px 12px; border-radius: 6px; border: 1px solid transparent; }
+header nav a.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+header nav a:hover { border-color: var(--line); }
+header .sub { color: var(--muted); font-size: 12px; }
+#docs { display: flex; gap: 6px; padding: 8px 18px; overflow-x: auto; background: var(--panel); border-bottom: 1px solid var(--line); align-items: center; min-height: 44px; }
+.chip { border: 1px solid var(--line); border-radius: 16px; padding: 4px 12px; white-space: nowrap; cursor: pointer; background: var(--bg); font: inherit; color: inherit; }
+.chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.muted { color: var(--muted); }
+.view { display: none; }
+.view.on { display: block; }
+#graphview { display: none; grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr); gap: 0; }
+#graphview.on { display: grid; }
+#canvas { padding: 16px; overflow: auto; }
+#canvas svg { width: 100%; height: auto; max-width: 980px; display: block; margin: 0 auto; }
+#side { border-left: 1px solid var(--line); background: var(--panel); padding: 16px 20px 40px; min-height: calc(100vh - 100px); }
+#side h2 { margin: 0 0 4px; font-size: 17px; }
+#side h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 18px 0 6px; }
+.node rect { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; rx: 10; cursor: pointer; transition: fill .15s, stroke .15s, opacity .15s; }
+.node polygon { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; cursor: pointer; }
+.node text { pointer-events: none; font-size: 13px; fill: var(--text); }
+.node text.small { font-size: 11px; fill: var(--muted); }
+.node:hover rect, .node:hover polygon { stroke: var(--accent); }
+.node.selected rect, .node.selected polygon { stroke: var(--accent); stroke-width: 3; }
+.node.active rect, .node.active polygon { fill: var(--accent-soft); stroke: var(--accent); }
+.node.active text { fill: var(--accent); font-weight: 600; }
+.node.active text.small { font-weight: 400; }
+.node.empty.active rect { fill: var(--warn-soft); stroke: var(--warn); }
+.node.empty.active text { fill: var(--warn); }
+.node.dim { opacity: .45; }
+.edge { fill: none; stroke: var(--dim); stroke-width: 1.6; }
+.edge.active { stroke: var(--accent); stroke-width: 3; }
+.edge.dim { opacity: .5; }
+.edgelabel { font-size: 11px; fill: var(--muted); }
+.edgelabel.active { fill: var(--accent); font-weight: 600; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+td, th { text-align: left; vertical-align: top; padding: 5px 8px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; font-size: 12px; }
+code, .mono { font: 12px/1.45 ui-monospace, Consolas, monospace; word-break: break-word; }
+tr.hit td { background: var(--ok-soft); }
+.pill { display: inline-block; border-radius: 12px; padding: 1px 9px; font-size: 12px; font-weight: 600; background: var(--bg); border: 1px solid var(--line); }
+.pill.ok { background: var(--ok-soft); color: var(--ok); border-color: #b5e2c9; }
+.pill.no { background: var(--warn-soft); color: var(--warn); border-color: #f5d3a8; }
+.pill.acc { background: var(--accent-soft); color: var(--accent); border-color: #c4d4fb; }
+.reason { background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; margin: 10px 0; }
+.reason.no { background: var(--warn-soft); }
+pre { background: var(--code-bg); color: var(--code-text); padding: 12px; border-radius: 6px; overflow: auto; max-height: 460px; font-size: 12px; margin: 6px 0 0; }
+#rules { max-width: 1100px; margin: 0 auto; padding: 18px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; }
+.card h2 { margin: 0 0 4px; font-size: 18px; color: var(--accent); }
+.card h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 18px 0 6px; }
+details summary { cursor: pointer; font-weight: 600; margin-top: 10px; }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; font-size: 13px; }
+.kv div:nth-child(odd) { color: var(--muted); }
+ul.tree { margin: 4px 0; padding-left: 18px; }
+.toc { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.toc a { color: var(--accent); }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 0 auto 8px; max-width: 980px; }
+.legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -2px; border: 1.5px solid var(--line); background: var(--panel); }
+.legend .a::before { background: var(--accent-soft); border-color: var(--accent); }
+.legend .e::before { background: var(--warn-soft); border-color: var(--warn); }
+@media (max-width: 860px) { #graphview.on { display: block; } #side { border-left: 0; border-top: 1px solid var(--line); min-height: 0; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Odwołania2json</h1>
+  <nav>
+    <a href="/">Analiza</a>
+    <a href="/graph" id="nav-graph">Droga dokumentu</a>
+    <a href="/rules" id="nav-rules">Zasady</a>
+  </nav>
+  <span class="sub">Graf i zasady pochodzą z <code>config/types/*.yaml</code> i z kodu aplikacji. Zmiana konfiguracji zmienia tę stronę.</span>
+</header>
+<div id="docs"><span class="muted">Brak przeanalizowanych dokumentów. Dodaj PDF na stronie „Analiza”, aby zobaczyć jego drogę na grafie.</span></div>
+
+<section id="graphview" class="view">
+  <div id="canvas">
+    <div class="legend"><span>krok</span><span class="a">droga wybranego dokumentu</span><span class="e">wynik {} (nieznany typ)</span><em>kliknij węzeł, aby zobaczyć zasady i powód decyzji</em></div>
+    <svg id="svg" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+  <aside id="side"></aside>
+</section>
+
+<section id="rules" class="view"></section>
+
+<script>
+"use strict";
+const $ = (s) => document.querySelector(s);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let P = null, DOCS = [], DOC = null, SELECTED = "pdf";
+const NS = "http://www.w3.org/2000/svg";
+
+const WHERE = { start: "pierwsze 300 znaków", head: "początek tekstu (head_chars)", all: "cały tekst" };
+
+function fmt(n) { return Number.isInteger(n) ? String(n) : n.toFixed(1); }
+
+/* ---------- the path of the selected document ---------- */
+function docPath(doc) {
+  if (!doc) return null;
+  const ocr = doc.ocr_pages.length > 0, textPages = doc.page_count - doc.ocr_pages.length - doc.skipped_pages.length;
+  const read = [];
+  if (textPages > 0 || doc.page_count === 0) read.push("text");
+  if (ocr) read.push("ocr");
+  if (doc.ocr_missing) read.push("noocr");
+  const active = new Set(["pdf", "layer", "classify", ...read]);
+  if (doc.doc_type) { active.add("type:" + doc.doc_type); active.add("extract:" + doc.doc_type); active.add("validate"); active.add("json"); }
+  else { active.add("unknown"); active.add("json"); }
+  return active;
+}
+
+/* ---------- the graph ---------- */
+function buildGraph() {
+  const types = P.types, W = Math.max(900, 190 * (types.length + 1) + 40);
+  const cx = W / 2, nodes = [], edges = [];
+  const add = (id, x, y, w, h, title, sub, kind = "box", cls = "") => nodes.push({ id, x, y, w, h, title, sub, kind, cls });
+  add("pdf", cx, 40, 220, 50, "Plik PDF", "input/<sprawa>/<plik>.pdf");
+  add("layer", cx, 135, 300, 74, "Strona ma warstwę tekstową?", `≥ ${P.min_page_chars} znaków na stronie`, "diamond");
+  add("text", cx - 230, 250, 220, 54, "Tekst z PDF", "pypdfium2");
+  add("ocr", cx, 250, 220, 54, "OCR skanu", `RapidOCR, max ${P.max_ocr_pages} str. na start`);
+  add("noocr", cx + 230, 250, 200, 54, "Brak OCR", "pusta strona", "box", "empty");
+  add("classify", cx, 365, 320, 60, "Klasyfikacja", "punkty z reguł regex każdego typu");
+  const cols = types.length + 1, step = Math.min(200, (W - 60) / cols), x0 = cx - (step * (cols - 1)) / 2;
+  types.forEach((t, i) => {
+    const x = x0 + i * step;
+    add("type:" + t.name, x, 490, step - 16, 58, t.label, `próg ≥ ${fmt(t.min_score)} pkt`);
+    add("extract:" + t.name, x, 600, step - 16, 58, "Ekstrakcja", `${t.extractor}.py + YAML`);
+    edges.push(["classify", "type:" + t.name, "najwięcej pkt"]);
+    edges.push(["type:" + t.name, "extract:" + t.name]);
+    edges.push(["extract:" + t.name, "validate"]);
+  });
+  const ux = x0 + types.length * step;
+  add("unknown", ux, 490, step - 16, 58, "Nieznany typ", "żaden typ nie ma progu", "box", "empty");
+  add("validate", cx - step / 2, 710, 260, 54, "Walidacja pól", "klucz validate w YAML");
+  add("json", cx, 815, 260, 54, "Plik JSON", "output/<sprawa>/<plik>.json");
+  edges.push(["pdf", "layer"], ["layer", "text", "tak"], ["layer", "ocr", "nie"], ["layer", "noocr", "nie, brak OCR"],
+    ["text", "classify"], ["ocr", "classify"], ["noocr", "classify"], ["classify", "unknown", "poniżej progu"],
+    ["validate", "json"], ["unknown", "json", "{}"]);
+  return { W, H: 860, nodes, edges };
+}
+
+function drawGraph() {
+  const g = buildGraph(), svg = $("#svg"), active = docPath(DOC);
+  svg.setAttribute("viewBox", `0 0 ${g.W} ${g.H}`);
+  svg.innerHTML = `<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c4ccd8"/></marker>
+    <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f4eb4"/></marker></defs>`;
+  const byId = Object.fromEntries(g.nodes.map((n) => [n.id, n]));
+  for (const [a, b, label] of g.edges) {
+    const A = byId[a], B = byId[b];
+    const x1 = A.x, y1 = A.y + A.h / 2, x2 = B.x, y2 = B.y - B.h / 2 - 2, my = (y1 + y2) / 2;
+    const on = active && active.has(a) && active.has(b);
+    const path = document.createElementNS(NS, "path");
+    path.setAttribute("d", `M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}`);
+    path.setAttribute("class", "edge" + (on ? " active" : active ? " dim" : ""));
+    path.setAttribute("marker-end", on ? "url(#arrA)" : "url(#arr)");
+    svg.appendChild(path);
+    if (label) {
+      const t = document.createElementNS(NS, "text");
+      t.setAttribute("x", (x1 + x2) / 2 + (x2 >= x1 ? 6 : -6)); t.setAttribute("y", my - 4);
+      t.setAttribute("text-anchor", x2 >= x1 ? "start" : "end");
+      t.setAttribute("class", "edgelabel" + (on ? " active" : ""));
+      t.textContent = label; svg.appendChild(t);
+    }
+  }
+  for (const n of g.nodes) {
+    const el = document.createElementNS(NS, "g");
+    const on = active && active.has(n.id);
+    el.setAttribute("class", `node ${n.cls} ${on ? "active" : active ? "dim" : ""} ${SELECTED === n.id ? "selected" : ""}`);
+    el.setAttribute("tabindex", "0");
+    if (n.kind === "diamond") {
+      const p = document.createElementNS(NS, "polygon");
+      p.setAttribute("points", `${n.x},${n.y - n.h / 2} ${n.x + n.w / 2},${n.y} ${n.x},${n.y + n.h / 2} ${n.x - n.w / 2},${n.y}`);
+      el.appendChild(p);
+    } else {
+      const r = document.createElementNS(NS, "rect");
+      r.setAttribute("x", n.x - n.w / 2); r.setAttribute("y", n.y - n.h / 2); r.setAttribute("width", n.w); r.setAttribute("height", n.h);
+      el.appendChild(r);
+    }
+    const sub = DOC ? nodeBadge(n.id) || n.sub : n.sub;
+    for (const [txt, dy, cls] of [[n.title, -4, ""], [sub, 13, "small"]]) {
+      const t = document.createElementNS(NS, "text");
+      t.setAttribute("x", n.x); t.setAttribute("y", n.y + dy); t.setAttribute("text-anchor", "middle");
+      if (cls) t.setAttribute("class", cls);
+      t.textContent = txt; el.appendChild(t);
+    }
+    el.addEventListener("click", () => { SELECTED = n.id; drawGraph(); drawSide(); });
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter") { SELECTED = n.id; drawGraph(); drawSide(); } });
+    svg.appendChild(el);
+  }
+}
+
+/* A short value of the selected document under the title of a node. */
+function nodeBadge(id) {
+  const d = DOC;
+  if (id === "pdf") return d.name;
+  if (id === "layer") return `${d.page_count} str., OCR: ${d.ocr_pages.length}`;
+  if (id === "ocr" && d.ocr_pages.length) return "strony: " + d.ocr_pages.map((p) => p + 1).join(", ");
+  if (id === "classify") return d.doc_type ? `wynik: ${d.type_label}` : "wynik: brak typu";
+  if (id.startsWith("type:")) { const n = id.slice(5), t = P.types.find((x) => x.name === n); return `${fmt(d.scores[n] ?? 0)} / ${fmt(t.min_score)} pkt`; }
+  if (id.startsWith("extract:") && id.slice(8) === d.doc_type) { const [f, all] = countFields(d.data); return `${f} z ${all} pól z wartością`; }
+  if (id === "validate" && d.doc_type) return d.warnings.length ? `usunięto: ${d.warnings.length}` : "wszystkie poprawne";
+  if (id === "json") return d.doc_type ? d.doc_type + ".json" : "{}";
+  return null;
+}
+
+function countFields(v) {
+  if (v === null || v === undefined) return [0, 1];
+  if (Array.isArray(v)) return v.reduce((a, x) => { const [f, n] = countFields(x); return [a[0] + f, a[1] + n]; }, [0, 0]);
+  if (typeof v === "object") return Object.values(v).reduce((a, x) => { const [f, n] = countFields(x); return [a[0] + f, a[1] + n]; }, [0, 0]);
+  return [1, 1];
+}
+
+/* ---------- the side panel ---------- */
+function typeOf(id) { return P.types.find((t) => t.name === id.split(":")[1]); }
+
+function rulesTable(t, hits) {
+  const hitSet = new Set(hits || []);
+  const rows = (t.config.classify?.rules || []).map((r) => {
+    const w = Number(r.weight ?? 1), key = `${w >= 0 ? "+" : ""}${fmt(w)} ${r.pattern}`;
+    const hit = hitSet.has(key) || [...hitSet].some((h) => h.endsWith(" " + r.pattern));
+    return `<tr class="${hit ? "hit" : ""}"><td>${w > 0 ? "+" : ""}${fmt(w)}</td><td>${esc(WHERE[r.where || "all"] || r.where)}</td><td><code>${esc(r.pattern)}</code></td><td>${hits ? (hit ? '<span class="pill ok">trafiona</span>' : "") : ""}</td></tr>`;
+  }).join("");
+  const titles = t.config.classify?.titles || [];
+  const titleHit = (hits || []).find((h) => h.includes("title like"));
+  return `<table><tr><th>Pkt</th><th>Gdzie</th><th>Wzorzec</th><th></th></tr>${rows}
+    ${titles.length ? `<tr class="${titleHit ? "hit" : ""}"><td>+${fmt(t.title_weight)}</td><td>pierwsze linie</td><td>tytuł podobny do: ${titles.map((x) => `<code>${esc(x)}</code>`).join(", ")} (OCR może zmienić litery)</td><td>${titleHit ? '<span class="pill ok">trafiona</span>' : ""}</td></tr>` : ""}</table>`;
+}
+
+function drawSide() {
+  const d = DOC, id = SELECTED, side = $("#side");
+  let h = "";
+  if (id === "pdf") {
+    h = `<h2>Plik PDF</h2><p>Aplikacja czyta każdy plik <code>input/&lt;sprawa&gt;/&lt;plik&gt;.pdf</code> i zapisuje <code>output/&lt;sprawa&gt;/&lt;plik&gt;.json</code> o tej samej nazwie. Typ dokumentu wynika z treści, nie z nazwy pliku.</p>`;
+    if (d) h += `<h3>Wybrany dokument</h3><div class="kv"><div>Plik</div><div>${esc(d.name)}</div><div>Strony</div><div>${d.page_count}</div>${d.error ? `<div>Błąd</div><div>${esc(d.error)}</div>` : ""}</div>`;
+  } else if (id === "layer") {
+    h = `<h2>Decyzja: tekst czy OCR</h2><p>Dla każdej strony osobno: jeśli warstwa tekstowa ma co najmniej <b>${P.min_page_chars}</b> znaków, aplikacja bierze tekst z PDF. W przeciwnym razie strona jest skanem i idzie do OCR.</p>
+      <p>Na start OCR dostaje co najwyżej <b>${P.max_ocr_pages}</b> zeskanowane strony (zmienna <code>ODW2JSON_OCR_MAX_PAGES</code>). Dalsze strony aplikacja czyta tylko wtedy, gdy typ tego wymaga (<code>ocr_first_pages_only: false</code>) albo gdy kluczowe pole jest puste (<code>ocr_more_pages_if_empty</code>).</p>
+      <p>OCR w tym środowisku: ${P.ocr_available ? '<span class="pill ok">dostępny</span>' : '<span class="pill no">niedostępny</span>'}</p>`;
+    if (d) {
+      const pages = Array.from({ length: d.page_count }, (_, i) => i);
+      h += `<h3>Wybrany dokument</h3><table><tr><th>Strona</th><th>Źródło tekstu</th></tr>${pages.map((p) => `<tr><td>${p + 1}</td><td>${d.ocr_pages.includes(p) ? '<span class="pill acc">OCR</span>' : d.skipped_pages.includes(p) ? '<span class="pill no">pominięta (skan po limicie)</span>' : "warstwa tekstowa"}</td></tr>`).join("")}</table>`;
+      if (d.ocr_missing) h += `<div class="reason no">Dokument ma skany, ale OCR nie jest zainstalowany.</div>`;
+    }
+  } else if (id === "text") {
+    h = `<h2>Tekst z PDF</h2><p>Biblioteka pypdfium2 czyta warstwę tekstową strony. Aplikacja ujednolica spacje i znaki specjalne.</p>`;
+  } else if (id === "ocr") {
+    h = `<h2>OCR skanu</h2><p>RapidOCR (PP-OCR) działa lokalnie na CPU, bez internetu. Modele są w obrazie Docker. Aplikacja składa wykryte fragmenty w linie i kolumny oraz poprawia typowe błędy OCR (słownik <code>config/ocr_words.txt</code>).</p>`;
+    if (d && d.ocr_pages.length) h += `<h3>Wybrany dokument</h3><p>OCR na stronach: ${d.ocr_pages.map((p) => p + 1).join(", ")}</p>`;
+  } else if (id === "noocr") {
+    h = `<h2>Brak OCR</h2><p>Jeśli pakiet OCR nie jest dostępny, strona bez tekstu zostaje pusta. Dokument dostaje wtedy zwykle wynik <code>{}</code>.</p>`;
+  } else if (id === "classify") {
+    h = `<h2>Klasyfikacja</h2><p>Każdy typ z <code>config/types/</code> ma reguły z wagami. Aplikacja sumuje punkty trafionych reguł. Wygrywa typ z najwyższą sumą, ale tylko wtedy, gdy osiąga swój próg <code>min_score</code>. Reguły działają też na tekście bez polskich znaków, bo OCR może je zgubić.</p>
+      <table><tr><th>Typ</th><th>Próg</th>${d ? "<th>Punkty</th>" : ""}</tr>${P.types.map((t) => `<tr><td><a href="#" data-node="type:${t.name}">${esc(t.label)}</a></td><td>${fmt(t.min_score)}</td>${d ? `<td>${fmt(d.scores[t.name] ?? 0)} ${(d.scores[t.name] ?? 0) >= t.min_score ? '<span class="pill ok">≥ próg</span>' : '<span class="pill no">poniżej</span>'}</td>` : ""}</tr>`).join("")}</table>`;
+    if (d) h += d.doc_type ? `<div class="reason">Wynik: <b>${esc(d.type_label)}</b>, bo ma najwięcej punktów (${fmt(d.scores[d.doc_type])}) i osiąga próg.</div>` : `<div class="reason no">Wynik: <b>nieznany typ</b>, bo żaden typ nie osiąga swojego progu. Plik JSON zawiera tylko <code>{}</code>.</div>`;
+  } else if (id.startsWith("type:")) {
+    const t = typeOf(id), hits = d ? d.hits[t.name] || [] : null, score = d ? d.scores[t.name] ?? 0 : null;
+    h = `<h2>${esc(t.label)} <span class="pill">${esc(t.name)}</span></h2><p>Plik konfiguracji: <code>${esc(t.file)}</code>. Próg: <b>${fmt(t.min_score)}</b> pkt. Reguły typu <i>początek</i> sprawdzają pierwsze ${t.head_chars} znaków.</p>`;
+    if (d) h += `<div class="reason ${score >= t.min_score ? "" : "no"}">Ten dokument: <b>${fmt(score)}</b> pkt. ${d.doc_type === t.name ? "Ten typ wygrał." : score >= t.min_score ? "Próg osiągnięty, ale inny typ ma więcej punktów." : "Poniżej progu."}</div>`;
+    h += `<h3>Reguły klasyfikacji</h3>${rulesTable(t, hits)}<p><a href="/rules#${t.name}">Wszystkie zasady typu →</a></p>`;
+  } else if (id.startsWith("extract:")) {
+    const t = typeOf(id);
+    h = `<h2>Ekstrakcja: ${esc(t.label)}</h2><p>Moduł <code>extractors/${esc(t.extractor)}.py</code> z parametrami z <code>${esc(t.file)}</code>.</p><pre>${esc(t.extractor_doc)}</pre>
+      <h3>Struktura wyniku (template)</h3><pre>${esc(JSON.stringify(t.config.template, null, 2))}</pre>`;
+    if ((t.config.fields || []).length) h += `<h3>Dodatkowe pola z konfiguracji</h3><pre>${esc(JSON.stringify(t.config.fields, null, 2))}</pre>`;
+    if (d && d.doc_type === t.name) {
+      h += `<h3>Wybrany dokument: wartości i źródła</h3><table><tr><th>Pole</th><th>Wartość</th><th>Tekst źródłowy</th></tr>${flatten(d.data).map(([k, v]) => `<tr><td class="mono">${esc(k)}</td><td>${v === null ? '<span class="muted">null</span>' : esc(v)}</td><td class="muted">${esc(d.evidence[k] || "")}</td></tr>`).join("")}</table>`;
+    }
+    h += `<p><a href="/rules#${t.name}">Wszystkie zasady typu →</a></p>`;
+  } else if (id === "unknown") {
+    h = `<h2>Nieznany typ</h2><p>Jeśli żaden typ nie osiąga swojego progu punktów, aplikacja zapisuje plik JSON z treścią <code>{}</code>. Tak wymaga organizator.</p>`;
+    if (d && !d.doc_type) h += `<h3>Dlaczego ten dokument</h3><table><tr><th>Typ</th><th>Punkty</th><th>Próg</th></tr>${P.types.map((t) => `<tr><td>${esc(t.label)}</td><td>${fmt(d.scores[t.name] ?? 0)}</td><td>${fmt(t.min_score)}</td></tr>`).join("")}</table>`;
+  } else if (id === "validate") {
+    h = `<h2>Walidacja pól</h2><p>Klucz <code>validate</code> każdego typu podaje formę pola (data, kwota, liczba cyfr, wyrażenie regularne). Wartość, która nie ma poprawnej formy, staje się <code>null</code>: lepiej nie podać wartości niż podać błędną.</p>
+      ${P.types.map((t) => `<h3>${esc(t.label)}</h3><table><tr><th>Pole</th><th>Reguła</th></tr>${(t.config.validate || []).map((v) => `<tr><td class="mono">${esc(v.path)}</td><td class="mono">${esc(Object.entries(v).filter(([k]) => k !== "path").map(([k, x]) => `${k}: ${Array.isArray(x) ? x.join(", ") : x}`).join("; "))}</td></tr>`).join("")}</table>`).join("")}`;
+    if (d && d.doc_type) h += `<h3>Wybrany dokument</h3>${d.warnings.length ? `<ul>${d.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>` : "<p>Wszystkie wartości mają poprawną formę.</p>"}`;
+  } else if (id === "json") {
+    h = `<h2>Plik JSON</h2><p>Struktura dokładnie według organizatora: bez dodatkowych pól. Brak wartości to <code>null</code>.</p>`;
+    if (d) h += `<h3>Wynik wybranego dokumentu</h3><pre>${esc(JSON.stringify(d.doc_type ? d.data : {}, null, 2))}</pre>`;
+  }
+  side.innerHTML = h;
+  side.querySelectorAll("[data-node]").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); SELECTED = a.dataset.node; drawGraph(); drawSide(); }));
+}
+
+function flatten(v, prefix = "") {
+  if (v !== null && typeof v === "object") {
+    const out = [];
+    for (const [k, x] of Array.isArray(v) ? v.map((x, i) => [i, x]) : Object.entries(v)) out.push(...flatten(x, prefix ? `${prefix}.${k}` : String(k)));
+    return out;
+  }
+  return [[prefix, v]];
+}
+
+/* ---------- the rules ---------- */
+const KNOWN = new Set(["name", "label", "order", "extractor", "classify", "template", "validate", "actions", "action_rules"]);
+
+function tree(v) {
+  if (Array.isArray(v)) return `<ul class="tree">${v.map((x) => `<li>${tree(x)}</li>`).join("")}</ul>`;
+  if (v !== null && typeof v === "object") return `<ul class="tree">${Object.entries(v).map(([k, x]) => `<li><b>${esc(k)}</b>: ${tree(x)}</li>`).join("")}</ul>`;
+  return `<code>${esc(v)}</code>`;
+}
+
+function drawRules() {
+  let h = `<div class="card"><h2>Wspólne zasady</h2><div class="kv">
+    <div>Tekst czy OCR</div><div>strona z mniej niż ${P.min_page_chars} znakami warstwy tekstowej idzie do OCR</div>
+    <div>Limit OCR na start</div><div>${P.max_ocr_pages} zeskanowane strony (<code>ODW2JSON_OCR_MAX_PAGES</code>)</div>
+    <div>Wybór typu</div><div>najwyższa suma punktów reguł, jeśli osiąga próg typu</div>
+    <div>Nieznany typ</div><div>plik JSON z <code>{}</code></div>
+    <div>Walidacja</div><div>wartość w złej formie staje się <code>null</code></div>
+    <div>Nowy typ</div><div>nowy plik YAML w <code>config/types/</code>, bez zmiany kodu (ekstraktor <code>generic</code>)</div></div>
+    <div class="toc">${P.types.map((t) => `<a href="#${t.name}">${esc(t.label)}</a>`).join("")}</div></div>`;
+  for (const t of P.types) {
+    const c = t.config, actions = c.actions || {};
+    h += `<div class="card" id="${t.name}"><h2>${esc(t.label)}</h2><p class="muted">Plik <code>${esc(t.file)}</code>, ekstraktor <code>extractors/${esc(t.extractor)}.py</code>, próg klasyfikacji ${fmt(t.min_score)} pkt.</p>
+      <h3>Reguły klasyfikacji</h3>${rulesTable(t, null)}`;
+    if (c.action_rules) {
+      h += `<h3>Zaskarżona czynność (pierwszy zarzut)</h3><p class="muted">Pierwsze trafienie w tekście wygrywa. Reguła „rezerwowa” liczy się tylko, gdy żadna inna nie pasuje.</p>
+        <table><tr><th>Kod</th><th>Opis</th><th>Wzorce</th></tr>${c.action_rules.map((r) => `<tr><td>${r.code}</td><td>${esc(actions[r.code] || "")}${r.fallback ? ' <span class="pill">rezerwowa</span>' : ""}</td><td>${r.patterns.map((p) => `<code>${esc(p)}</code>`).join("<br>")}</td></tr>`).join("")}</table>`;
+    }
+    h += `<h3>Walidacja</h3><table><tr><th>Pole</th><th>Reguła</th></tr>${(c.validate || []).map((v) => `<tr><td class="mono">${esc(v.path)}</td><td class="mono">${esc(Object.entries(v).filter(([k]) => k !== "path").map(([k, x]) => `${k}: ${Array.isArray(x) ? x.join(", ") : x}`).join("; "))}</td></tr>`).join("")}</table>`;
+    const other = Object.entries(c).filter(([k]) => !KNOWN.has(k));
+    if (other.length) h += `<h3>Pozostałe parametry ekstrakcji</h3>${other.map(([k, v]) => `<details><summary>${esc(k)}</summary>${tree(v)}</details>`).join("")}`;
+    h += `<h3>Struktura wyniku</h3><pre>${esc(JSON.stringify(c.template, null, 2))}</pre>
+      <details><summary>Pełny plik YAML z komentarzami</summary><pre>${esc(t.yaml)}</pre></details></div>`;
+  }
+  $("#rules").innerHTML = h;
+  if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
+}
+
+/* ---------- the page ---------- */
+function drawDocs() {
+  if (!DOCS.length) return;
+  $("#docs").innerHTML = DOCS.map((d) => `<button class="chip ${DOC && DOC.id === d.id ? "active" : ""}" data-id="${d.id}">${esc(d.name)} <small class="muted">${esc(d.type_label)}</small></button>`).join("")
+    + `<button class="chip ${DOC ? "" : "active"}" data-id="">bez dokumentu</button>`;
+  $("#docs").querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => {
+    DOC = DOCS.find((d) => d.id === b.dataset.id) || null; drawDocs(); drawGraph(); drawSide();
+  }));
+}
+
+async function main() {
+  const rules = location.pathname === "/rules";
+  $(rules ? "#nav-rules" : "#nav-graph").classList.add("on");
+  $(rules ? "#rules" : "#graphview").classList.add("on");
+  if (rules) $("#docs").style.display = "none";
+  P = await (await fetch("/api/pipeline")).json();
+  if (rules) { drawRules(); return; }
+  DOCS = await (await fetch("/api/docs")).json();
+  const want = new URLSearchParams(location.search).get("doc");
+  DOC = DOCS.find((d) => d.id === want) || DOCS[DOCS.length - 1] || null;
+  if (DOC) SELECTED = DOC.doc_type ? "classify" : "unknown";
+  drawDocs(); drawGraph(); drawSide();
+}
+main();
+</script>
+</body>
+</html>

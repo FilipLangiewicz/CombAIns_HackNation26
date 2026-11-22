@@ -36,3 +36,13 @@ def test_each_value_has_evidence_from_the_text():
             elif normal(snippet).strip(" :") not in text:
                 problems.append(f"{pdf.parent.name}/{pdf.name}: {path}: snippet not in text: {snippet!r}")
     assert not problems, "\n".join(problems[:30])
+
+
+def test_pipeline_info_reads_the_configuration():
+    from odw2json.classify import load_types
+    from odw2json.gui import pipeline_info
+
+    info = pipeline_info()
+    assert [t["name"] for t in info["types"]] == [t.name for t in load_types()]
+    assert all(t["yaml"] and t["config"]["template"] for t in info["types"])
+    assert info["min_page_chars"] > 0
