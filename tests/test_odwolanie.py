@@ -579,3 +579,9 @@ def test_title_with_a_comma_for_the_first_quote():
     assert (
         odwolanie.parse_procurement(block, {})["tytul"] == "Dostawa sprzętu komputerowego dla jednostek Zamawiającego"
     )
+
+
+def test_town_and_date_without_a_space():
+    text = "Białystok,10.04.2026 r.\n" + ONE_AUTHORITY + PROBE_APPELLANT + APPEAL_BODY
+    kio = process_text(text).data["OdwolanieKIO"]
+    assert (kio["miejscowosc"], kio["data"]) == ("Białystok", "2026-04-10")

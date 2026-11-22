@@ -43,7 +43,7 @@ PAGE_LINE_RE = re.compile(
 )
 WORD = r"[A-ZŁŚŻŹĆ][a-ząćęłńóśźż\-]+"
 PLACE_DATE_RE = re.compile(
-    rf"(?P<city>{WORD}(?:\s+{WORD}){{0,2}}),?\s+(?:(?i:dnia)\s+)?(?P<date>(?i:{common.DATE_RE.pattern}))\s*(?i:r\.|roku)?"
+    rf"(?P<city>{WORD}(?:\s+{WORD}){{0,2}})(?:,\s*|\s+)(?:(?i:dnia)\s+)?(?P<date>(?i:{common.DATE_RE.pattern}))\s*(?i:r\.|roku)?"
 )
 
 

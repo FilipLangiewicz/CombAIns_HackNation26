@@ -251,6 +251,9 @@ def repair(text: str) -> str:
         text,
     )
     text = re.sub(r"(?<=[^\W\d_])I(?=[a-ząćęłńóśźż])", "l", text)
+    # The OCR reads "ł" as "t" in "odwołanie" and "Odwołujący". No Polish word starts with "odwot".
+    text = re.sub(r"\b([Oo]dwo)t(?=[a-ząę])", r"\1ł", text)
+    text = re.sub(r"\bODWOT(?=[A-ZĄĘ])", "ODWOŁ", text)
     return repair_emails(text)
 
 

@@ -2,6 +2,21 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): two OCR errors from the test of 300 DPI
+
+The test of 300 DPI (entry below) did not change the layout of the pages. It gave other letter errors, and two rules were not robust:
+
+- The town and the date without a space: "Białystok,10.04.2026 r.". `odwolanie.PLACE_DATE_RE` now accepts it.
+- "t" for "ł": "odwotanie", "Odwotujący". `ocr.repair` repairs the words that start with "odwot", because no Polish word starts so.
+- Two new tests.
+
+| Variant on the 30 real scans and the 12 negative files | Before | After |
+|---|---|---|
+| Current: 200 DPI, second OCR with 300 DPI | 0.992 | 0.992 |
+| 300 DPI for all scans | 0.977 | 0.989 |
+
+The other test sets do not change: organizer dev / holdout 1.000, OCR train / val 0.9874 / 0.9818.
+
 ## 2026-11-22 (main): OCR with 300 DPI for all scans is worse
 
 A test of the complete application on the 30 real scans and the 12 negative files, 4 processes:

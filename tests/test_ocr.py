@@ -85,3 +85,7 @@ def test_repair_legal_form_keeps_the_case():
 
 def test_repair_comma_in_email():
     assert repair_emails("e-mail: a,wrobel@wrobel-kancelaria.example") == "e-mail: a.wrobel@wrobel-kancelaria.example"
+
+
+def test_repair_t_for_l_with_stroke():
+    assert repair("wnoszę odwotanie wobec Odwotującego") == "wnoszę odwołanie wobec Odwołującego"
