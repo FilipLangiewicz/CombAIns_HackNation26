@@ -2,6 +2,13 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): the results and Docker in the README file
+
+- New section "Results" in `README.md`: the F1 score of each test set and the time for one document.
+- New section "Run in Docker" in `README.md`: how to start the web interface and how to process `input/` on a local machine.
+- New file `docs/presentation/CombAIns.pdf`: the final version of the slides.
+- A check before the deadline: the code on the VM and in its Docker image is the same as on `main`.
+
 ## 2026-11-22 (main): the presentation as a PPTX file
 
 - `docs/presentation/deck.pptx` has the slides with text boxes, shapes and pictures. PowerPoint, Google Slides and Canva can change it.

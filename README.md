@@ -6,6 +6,25 @@ The application uses rules, not an LLM. It finds the type of each document and e
 
 A page without a text layer (a scan) goes to OCR with RapidOCR. RapidOCR installs with `pip` and has its model files in the package, so no other program and no internet connection are necessary.
 
+## Results
+
+All measurements ran on a CPU without a GPU.
+
+| Test set | Files | F1 |
+|---|---|---|
+| All PDF files of the challenge: text layer, scans and other documents | 226 | 0.999 |
+| Documents with a text layer, dev / holdout | 135 / 45 | 1.000 / 1.000 |
+| Real scans without a text layer (OCR) | 30 | 0.992 |
+| Documents of an unknown type (expected `{}`) | 12 | 1.000 |
+
+The time for one document:
+
+- A PDF with a text layer: approximately 0.01 s.
+- A scan: approximately 11 s. The OCR uses almost all of this time.
+- All 226 files with 4 processes: 369 s.
+
+The slides of the final presentation are in `docs/presentation/CombAIns.pdf`.
+
 ## Install
 
 To install the application, do these steps:
@@ -35,6 +54,13 @@ To process the documents, do these steps:
 3. Read the JSON files in `output/<case>/`. Each JSON file has the name of its PDF file.
 
 Use `--input` and `--output` to select other folders. Use `--workers` to set the number of processes.
+
+## Run in Docker
+
+Docker needs no local Python. The image contains the OCR models, so the run needs no internet.
+
+- To start the web interface on http://127.0.0.1:8000, run `docker compose up`.
+- To process the PDF files in `input/`, run `docker compose run --rm cli`. The JSON files go to `output/`.
 
 On the VM of the jury, the application runs in Docker with the command in `RUN.md`. The procedure is in `docs/deployment.md`.
 
