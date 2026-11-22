@@ -238,3 +238,24 @@ def test_signers_after_the_place_for_the_stamp():
 def test_stop_word_after_ocr_errors():
     text = "MOCODAWCA· Kavendis Infrastruktura sp. z o.o., ul. Polna 1, 00-001 Warszawa, KRS: 0000123456, NIP: 5250001234\n"
     assert run(text)["mocodawca"][0]["data"]["nazwa"] == "Kavendis Infrastruktura sp. z o.o."
+
+
+def test_attorneys_with_profession_after_a_dash():
+    text = (
+        "PEŁNOMOCNICTWO\nNordenix Automatyka Sp. z o.o., KRS: 9997873010, NIP: 9991785572, reprezentowana przez: "
+        "Monika Kaczmarek - Prezes Zarządu, niniejszym udziela Pełnomocnictwo:\n"
+        "1. Sylwia Sikora – adwokat, nr wpisu WA-1233,\n2. Karolina Kaczmarek - adwokat, nr wpisu KR-10969,\n"
+        "do reprezentowania Mocodawcy.\n"
+    )
+    assert [p["imie_nazwisko"] for p in run(text)["pelnomocnicy"]] == ["Sylwia Sikora", "Karolina Kaczmarek"]
+
+
+def test_signer_belongs_to_the_company_that_names_him():
+    text = (
+        "PEŁNOMOCNICTWO\n1) Tervana Systemy sp. k., KRS: 9998767758, NIP: 999-343-70-59, reprezentowana przez: "
+        "Dorota Grabowska – Prezes Zarządu,\n2) Lumidor Budownictwo sp. z o.o., KRS: 9990349003, NIP: 999-98-82-984, "
+        "reprezentowana przez: Łukasz Sosnowski — Prezes Zarządu,\nniniejszym udzielają pełnomocnictwa adw. Dorota Kubiak.\n"
+        "Za Mocodawca:\nŁukasz Sosnowski – Prezes Zarządu Dorota Grabowska – Prezes Zarządu\n"
+    )
+    signers = [[s["imie_nazwisko"] for s in m["podpisujacy"]] for m in run(text)["mocodawca"]]
+    assert signers == [["Dorota Grabowska"], ["Łukasz Sosnowski"]]

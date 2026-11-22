@@ -34,7 +34,7 @@ def find_attorneys(text: str, cfg: dict, evidence: dict[str, str], signers: set[
         candidates.append((m.start(), m.end(), m.group(1), m.group(0)))
     # The title after the name: "Pani Annie Nowak, adwokat, PESEL ...".
     masc, fem = common.first_names()
-    for m in re.finditer(rf"({NAME})(?:,\s*| |\s*\(\s*)(?:{titles})(?![{LOW}])", text):
+    for m in re.finditer(rf"({NAME})(?:,\s*| |\s*\(\s*|[ \t]*[–—-][ \t]*)(?:{titles})(?![{LOW}])", text):
         known = common.to_nominative(m.group(1)).split()[0] in masc | fem  # not "Kancelaria Adwokacka adw."
         if known and not any(s <= m.start(1) < e for s, e, _, _ in candidates):
             candidates.append((m.start(), m.end(), m.group(1), m.group(0)))
@@ -48,7 +48,7 @@ def find_attorneys(text: str, cfg: dict, evidence: dict[str, str], signers: set[
     # A list of names after "udziela pełnomocnictwa:", one name on each line.
     for block in re.finditer(r"(?i:udziela\w*|ustanawia\w*)\s+(?i:pełnomocnictw\w*|pełnomocnik\w*)\s*:[ \t]*\n", text):
         for line in re.finditer(r"[ \t]*(?:\d+[.)]|[-–•])?[ \t]*([^\n]*)\n?", text[block.end() :]):
-            m = re.match(rf"({NAME})(?=[ \t]*(?:\(|,|$))", line.group(1))
+            m = re.match(rf"({NAME})(?=[ \t]*(?:\(|,|[–—-]|$))", line.group(1))
             if not m or not line.group(1):
                 break
             start = block.end() + line.start(1)
@@ -378,7 +378,26 @@ def assign_signers(text: str, principals: list[dict], signers: list[tuple[int, s
         return
     for pos, name, src in signers:
         owner = principals[0]
-        if len(principals) > 1:
+        # The description of a company can name its signer: "KRS ..., reprezentowana przez: Jan Nowak".
+        named = [
+            m
+            for m in re.finditer(re.escape(name).replace(r"\ ", r"\s+"), text)
+            if re.search(r"(?:reprezentowan\w*|przez)\s*:?[^.;]{0,80}$", text[max(m.start() - 100, 0) : m.start()])
+        ]
+        block_owner = None
+        if named and len(principals) > 1:
+            # The owner is the company that the text names last before "reprezentowana przez".
+            best = -1
+            for p in principals:
+                marks = [p["pos"]] if p["pos"] < named[0].start() else []
+                if p["data"]["nazwa"]:
+                    pattern = re.escape(p["data"]["nazwa"]).replace(r"\ ", r"\s+")
+                    marks += [m.start() for m in re.finditer(pattern, text[: named[0].start()])]
+                if marks and max(marks) > best:
+                    best, block_owner = max(marks), p
+        if block_owner is not None:
+            owner = block_owner
+        elif len(principals) > 1:
             best = -1
             for p in principals:
                 nazwa = p["data"]["nazwa"]

@@ -75,3 +75,9 @@ def test_repair_emails_after_ocr():
         == "e-mail: sekretariat@zawadzkakancelaria.example"
     )
     assert repair_emails("wiśniewska@prawnik.pl") == "wisniewska@prawnik.pl"
+
+
+def test_repair_legal_form_keeps_the_case():
+    assert repair("Nordenix Automatyka Sp. z 0.0.") == "Nordenix Automatyka Sp. z o.o."
+    assert repair("ALFA SP. Z 0.0.") == "ALFA SP. Z O.O."
+    assert repair("Beta sp.z o.0.") == "Beta sp. z o.o."

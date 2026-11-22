@@ -12,6 +12,8 @@ classify:
   rules:
     - {pattern: '(potwierdzenie|dowód|polecenie|realizacji|zlecenie|dyspozycja|szczegóły|confirmation|details|advice)[\s\S]{0,40}(przelewu|operacji|transakcji|płatności|transfer|payment|transaction)', weight: 4, where: head}
     - {pattern: 'potwierdzenie\s+(transakcji|operacji)', weight: 4, where: head}
+    # A bank printout can start with the kind of the transfer: "Przelew krajowy", "Przelew SEPA".
+    - {pattern: '^\s*przelew\s+(?:krajow\w*|zagraniczn\w*|wewnętrzn\w*|SEPA|natychmiastow\w*|ekspresow\w*|zwykł\w*|do\s+US|podatkow\w*)', weight: 4, where: start}
     - {pattern: 'przelew|transakcj|operacj|płatnoś|transfer|payment', weight: 1, where: head}
     # Two bank account numbers (26 digits, with spaces or hyphens).
     - {pattern: '(?<!\d)\d{2}(?:[\s-]?\d{4}){6}(?!\d)[\s\S]{1,2000}?(?<!\d)\d{2}(?:[\s-]?\d{4}){6}(?!\d)', weight: 2}
@@ -45,12 +47,13 @@ labels:
   tytul:
     - '(?<![\wąćęłńóśźż])tytuł(?:em|\s+przelewu|\s+operacji|\s+płatności)?(?![\wąćęłńóśźż])'
     - '(?<![\wąćęłńóśźż])opis(?:\s+przelewu|\s+operacji|\s+płatności)?(?![\wąćęłńóśźż])'
+    - '(?<![\wąćęłńóśźż])szczeg\w*\s+(?:płatności|przelewu|operacji)(?![\wąćęłńóśźż])'
     - '(?<![\wąćęłńóśźż])(?:payment\s+details|details\s+of\s+payment|remittance(?:\s+information)?|title|description)(?![\wąćęłńóśźż])'
   # A keyword before an account tells whose account it is. The nearest keyword wins.
   z_rachunku:
     - 'nadawc|zleceniodawc|zlecając|obciążan|obciążeni|płatnik|źródłow|z\s+rachunku|ze\s+rachunku|z\s+konta|ze\s+konta|debit|payer|sender|ordering|debtor|from\s+account'
   na_rachunek:
-    - 'odbiorc|beneficjent|odbierając|uznawan|uznani|adresat|docelow|na\s+rachunek|do\s+rachunku|na\s+konto|do\s+konta|credit|beneficiary|recipient|receiver|payee|creditor|to\s+account'
+    - 'odbiorc|beneficjent|kontrahent|odbierając|uznawan|uznani|adresat|docelow|na\s+rachunek|do\s+rachunku|na\s+konto|do\s+konta|credit|beneficiary|recipient|receiver|payee|creditor|to\s+account'
   # Other labels. They only help to find a table with labels in a column.
   other:
     - '^(?:status|typ|rodzaj|kanał|tryb|waluta|saldo|prowizja|nazwa|adres|data|currency|fee|balance|type)$'
@@ -60,7 +63,7 @@ labels:
          beneficjent, adresat, bank, dokument, potwierdzenie, z poważaniem, dział, w razie, dziękujemy,
          zrealizowano, wykonano, wykonany, saldo, wydrukowano, wygenerowano, dla,
          currency, fee, balance, execution, transaction, reference, debit, credit, sender, beneficiary, payer,
-         payee, amount, date, type, channel]
+         payee, amount, date, type, channel, 'sign\w*', 'podpisan\w*']
   # The same, but inside a line, when a PDF reader joins two lines.
   stop_inline: [status, typ, rodzaj, kanał, tryb, opłata, prowizja, waluta, godz, data, numer, nr, identyfikator,
                 rachunek, konto, kwota, wartość, nadawca, odbiorca, płatnik, zleceniodawca, beneficjent,

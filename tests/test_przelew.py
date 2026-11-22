@@ -157,3 +157,16 @@ def test_table_with_a_title_in_more_lines():
         == "opłata skarbowa od pełnomocnictwa - Podlasie Dostawy Medyczne S.A., postępowanie BZP/ZP/10/2026"
     )
     assert (box["numer_transakcji"], box["data_operacji"], box["kwota"]) == ("CEN29409124493", "2025-11-02", 34.0)
+
+
+def test_domestic_transfer_printout():
+    from odw2json.pipeline import process_text
+
+    text = (
+        "B Bank Karpacki\nPrzelew krajowy\nDane zleceniodawcy\n11 1240 1111 9078 8570 5000 0455\n"
+        "Dane kontrahenta\nRachunek kontrahenta 25 1030 1508 9486 5035 5622 1675\nKwota 17.00 PLN\n"
+        "Szczegóły płatności opłata skarbowa od pełnomocnictwa\nSignature Not Verified\n"
+    )
+    result = process_text(text)
+    assert result.doc_type == "przelew"
+    assert result.data["przelew_bankowy"]["tytul"] == "opłata skarbowa od pełnomocnictwa"

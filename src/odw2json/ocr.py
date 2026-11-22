@@ -242,7 +242,12 @@ def repair(text: str) -> str:
     text = re.sub(r"\b([zw])(siedzibą|[A-ZŁŚŻŹĆ][a-ząćęłńóśźż]+)", r"\1 \2", text)
     text = re.sub(r"(?<=[a-ząćęłńóśźż])(spółk[aąi]|sp\.)(?=\s)", r" \1", text)
     # Typical letter errors of the OCR: a zero in "sp. z o.o.", a capital I for a small l inside a word.
-    text = re.sub(r"\bsp\.\s?[zZ]\s?[oO0]\.\s?[oO0]\.", "sp. z o.o.", text)
+    text = re.sub(
+        r"\b([sS][pP])\.\s?([zZ])\s?([oO0])\.\s?([oO0])\.",
+        # The case follows "sp": "Sp. z o.o." or "SP. Z O.O.".
+        lambda m: f"{m.group(1)}. " + ("Z O.O." if m.group(1) == "SP" else "z o.o."),
+        text,
+    )
     text = re.sub(r"(?<=[^\W\d_])I(?=[a-ząćęłńóśźż])", "l", text)
     return repair_emails(text)
 
