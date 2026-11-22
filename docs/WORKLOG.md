@@ -2,6 +2,18 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): a title in more lines in the table of a bank confirmation
+
+- `przelew.merge_columns`: in a table with all labels first and then all values, the title can take more lines. The labels after the title select the number of lines: an amount, a date and a transaction number must have their form.
+- New test in `tests/test_przelew.py`.
+
+| Test set | Before | After |
+|---|---|---|
+| Organizer dev / holdout (text) | 1.000 / 1.000 | 1.000 / 1.000 |
+| Generator 1, seeds 1 to 3 | no change | no change |
+| Generator 2, `przelew`, seeds 55 / 56 / 57 | 0.977 / 0.991 / 0.979 | 1.000 / 1.000 / 1.000 |
+| OCR train / val | 0.9852 / 0.9797 | 0.9852 / 0.9797 |
+
 ## 2026-11-22 (main): joint authorities, a second attorney and the letterhead of the law firm
 
 The errors come from generator 2 with the seeds 55 to 57. The fixes are in `extractors/odwolanie.py`.

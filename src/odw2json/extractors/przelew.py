@@ -47,17 +47,47 @@ def is_label_only(line: str, patterns: list[str]) -> bool:
     return any(re.search(p, text, re.IGNORECASE) for p in patterns)
 
 
-def merge_columns(lines: list[str], patterns: list[str]) -> list[str]:
-    """Join a table where all labels come first and then all values: label i gets value i."""
+def label_kind(line: str, labels: dict) -> str | None:
+    for kind in ("data_operacji", "kwota", "numer_transakcji", "tytul"):
+        if any(re.search(p, line, re.IGNORECASE) for p in labels.get(kind, [])):
+            return kind
+    return None
+
+
+def fits(kind: str | None, value: str) -> bool:
+    """Check that a value of a table has the form of its label. A label without a fixed form fits all values."""
+    if kind == "kwota":
+        return parse_amount(value) is not None
+    if kind == "data_operacji":
+        return common.first_date(value) is not None
+    if kind == "numer_transakcji":
+        return parse_reference(value) is not None and common.first_date(value) is None
+    return True
+
+
+def merge_columns(lines: list[str], patterns: list[str], labels: dict) -> list[str]:
+    """Join a table where all labels come first and then all values: label i gets value i.
+
+    The title can take more than one line. Then the labels after the title select the number of its lines.
+    """
     result, i = [], 0
     while i < len(lines):
         k = 0
         while i + k < len(lines) and is_label_only(lines[i + k], patterns):
             k += 1
-        values = lines[i + k : i + 2 * k]
-        if k >= 2 and len(values) == k and not any(is_label_only(v, patterns) for v in values):
-            result += [f"{lines[i + j].rstrip(': ')}: {values[j]}" for j in range(k)]
-            i += 2 * k
+        kinds = [label_kind(lines[i + j], labels) for j in range(k)]
+        title = kinds.index("tytul") if "tytul" in kinds else None
+        checked = title is not None and any(kind for kind in kinds[title + 1 :])
+        for extra in range(6 if checked else 1):
+            values = lines[i + k : i + 2 * k + extra]
+            if k < 2 or len(values) != k + extra or any(is_label_only(v, patterns) for v in values):
+                continue
+            if extra:
+                values = values[:title] + [" ".join(values[title : title + 1 + extra])] + values[title + 1 + extra :]
+            if all(fits(kind, value) for j, (kind, value) in enumerate(zip(kinds, values)) if j != title):
+                result += [f"{lines[i + j].rstrip(': ')}: {values[j]}" for j in range(k)]
+                i += 2 * k + extra
+                break
         else:
             result += lines[i : i + max(k, 1)]
             i += max(k, 1)
@@ -223,7 +253,7 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
         for key in ("data_operacji", "kwota", "numer_transakcji", "tytul", "z_rachunku", "na_rachunek", "other")
         for p in (labels.get(key, []))
     ]
-    lines = merge_columns(prepare_lines(text), label_patterns)
+    lines = merge_columns(prepare_lines(text), label_patterns, labels)
 
     def put(name: str, found) -> None:
         if found:

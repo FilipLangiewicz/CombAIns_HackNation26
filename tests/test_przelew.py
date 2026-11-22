@@ -140,3 +140,17 @@ def test_account_with_a_dot_from_the_ocr():
 def test_damaged_account_of_the_uzp():
     box = _transfer("Dane odbiorcy\nNumer rachunku\nUrza a blich Pstep17A 60 101001362231000\nKwota\n7 500,00 PLN\n")
     assert box["na_rachunek"] == "60101010100081362231000000"
+
+
+def test_table_with_a_title_in_more_lines():
+    # The labels come first and then the values. The title takes two lines of the table.
+    text = (
+        "Bank Pekao S.A.\nPotwierdzenie przelewu\nZleceniodawca\nZ rachunku\nBeneficjent\nNa rachunek\nKwota\n"
+        "Tytuł płatności\nData realizacji\nNumer transakcji\nMedi-Serwis sp. k.\nPL17116012029682912440455846\n"
+        "Urząd Miasta Olsztyn\nPL 34 1050 1012 1775 5248 4800 9964\n34,00 PLN\n"
+        "opłata skarbowa od pełnomocnictwa - Podlasie Dostawy\nMedyczne S.A., postępowanie BZP/ZP/10/2026\n"
+        "02-11-2025\nCEN29409124493\n"
+    )
+    box = run(text)
+    assert box["tytul"] == "opłata skarbowa od pełnomocnictwa - Podlasie Dostawy Medyczne S.A., postępowanie BZP/ZP/10/2026"
+    assert (box["numer_transakcji"], box["data_operacji"], box["kwota"]) == ("CEN29409124493", "2025-11-02", 34.0)
