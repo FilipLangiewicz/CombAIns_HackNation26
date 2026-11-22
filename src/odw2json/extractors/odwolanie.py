@@ -485,15 +485,16 @@ def parse_procurement(block: str, evidence: dict[str, str]) -> dict:
     quotes = '„"“«'
     closing = '”"»'
     # The OCR can lose the first quote mark, so it is optional.
-    m = re.search(rf"pn\.?\s*[{quotes}]?(.+?)[{closing}]\s*(?:,|\.|$|\s+(?:nr|numer|znak))", block)
+    m = re.search(rf"pn\.?\s*[{quotes}]?(.+?)[{closing}]['’]?\s*(?:,|\.|$|(?:nr|numer|znak)\b)", block)
     if m:
         out["tytul"], sources["tytul"] = m.group(1).strip(), m.group(0).rstrip(" ,.")
     else:
         label = (
-            r"(?:Przedmiot\s+(?:zamówienia|odwołania)|Tytuł(?:\s+postępowania)?|Nazwa\s+(?:postępowania|zamówienia)"
-            r"|(?-i:Postępowanie))\s*:\s*"
+            r"(?:Przedmiot\s+(?:zamówienia|odwołani\w*)|Tytuł(?:\s+postępowania)?|Nazwa\s+(?:postępowania|zamówienia)"
+            r"|(?-i:Postępowanie)(?:\s+nr\s+[^\s:]+)?)\s*:\s*"
         )
-        m = re.search(label + rf"[{quotes}](.+?)[{closing}]", block, I)
+        # The OCR can lose the first quote. A colon means that the text after the label is not a quoted title.
+        m = re.search(label + rf"[{quotes}]?([^{quotes}{closing}:]{{4,200}}?)[{closing}]", block, I)
         if m:
             out["tytul"], sources["tytul"] = m.group(1).strip(), m.group(0).rstrip(" ,.")
             for key, value in out.items():
@@ -501,16 +502,17 @@ def parse_procurement(block: str, evidence: dict[str, str]) -> dict:
                     evidence[f"ZamowieniePubliczne.{key}"] = sources[key]
             return out
         m = re.search(
-            r"(?:Przedmiot\s+(?:zamówienia|odwołania)|Tytuł(?:\s+postępowania)?|Nazwa\s+(?:postępowania|zamówienia)"
-            r"|(?-i:Postępowanie))\s*:\s*(.+?)(?=\s*[.,;]?\s+(?:Numer|Znak|Nr|BZP|TED|Ogłoszenie|ogłoszenie|Zaskarżon|Dane|Wartość)\b"
+            r"(?:Przedmiot\s+(?:zamówienia|odwołani\w*)|Tytuł(?:\s+postępowania)?|Nazwa\s+(?:postępowania|zamówienia)"
+            r"|(?-i:Postępowanie)(?:\s+nr\s+[^\s:]+)?)\s*:\s*(.+?)(?=\s*[.,;]?\s+(?:Numer|Znak|Nr|BZP|TED|Ogłoszenie|ogłoszenie|Zaskarżon|Dane|Wartość)\b"
             r"|\s*\(\s*[^()\s]*\d|\s*$)",
             block,
             I,
         )
-        title = m.group(1).strip(" .,;") if m else None
+        title = m.group(1).strip(" .,;").rstrip(closing) if m else None
         quoted = re.match(rf"[{quotes}](.+?)[{closing}]", title) if title else None
         if not title:
-            m = re.search(rf"[{quotes}](.+?)[{closing}]", block)
+            m = re.search(rf"(?-i:Postępowanie)\s+[{quotes}]?((?-i:[A-ZŁŚŻŹĆ])[^{closing}]{{4,250}}?)[{closing}]", block)
+            m = m or re.search(rf"[{quotes}](.+?)[{closing}]", block)
             title = m.group(1).strip() if m else None
         out["tytul"] = quoted.group(1).strip() if quoted else title
         sources["tytul"] = m.group(0).rstrip(" ,.") if m else ""

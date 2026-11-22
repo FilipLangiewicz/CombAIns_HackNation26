@@ -328,7 +328,9 @@ def test_board_member_in_the_signature_is_not_an_attorney():
 
 APPEAL_HEAD = "Warszawa, dnia 14.04.2026 r.\nDo: Prezes Krajowej Izby Odwoławczej\n"
 PROBE_APPELLANT = "Odwołujący:\nAlfa Budowa sp. z o.o.\nul. Leśna 3, 00-950 Warszawa\nNIP: 5250001234\n"
-APPEAL_BODY = "\nODWOŁANIE\nNa podstawie art. 513 Pzp wnoszę odwołanie i zarzucam Zamawiającemu naruszenie art. 226 Pzp.\n"
+APPEAL_BODY = (
+    "\nODWOŁANIE\nNa podstawie art. 513 Pzp wnoszę odwołanie i zarzucam Zamawiającemu naruszenie art. 226 Pzp.\n"
+)
 ONE_AUTHORITY = "Zamawiający:\nGmina Miasto Kielce\nul. Rynek 1, 25-303 Kielce\nNIP: 6570000001\n"
 
 
@@ -380,3 +382,24 @@ def test_attorney_firm_forms(block, person, firm):
     data = process_text(APPEAL_HEAD + ONE_AUTHORITY + PROBE_APPELLANT + block + APPEAL_BODY).data
     attorney = data["Odwolujacy"][0]["pelnomocnik"]
     assert (attorney["imie_nazwisko"], attorney["nazwa"]) == (person, firm)
+
+
+@pytest.mark.parametrize(
+    "block, title",
+    [
+        (
+            'Postępowanie Odbiór i zagospodarowanie odpadów komunalnych" (ZP/101/2026).',
+            "Odbiór i zagospodarowanie odpadów komunalnych",
+        ),
+        ("Przedmiot Odwołanie: Usługi ochrony fizycznej mienia", "Usługi ochrony fizycznej mienia"),
+        ("pn. „Dostawa materiałów biurowych\"'nr referencyjny sprawy: DI.228.2026", "Dostawa materiałów biurowych"),
+        ('pn. „Świadczenie usług pocztowych"nr referencyjny sprawy: DI.579.2026', "Świadczenie usług pocztowych"),
+        (
+            'Postępowanie nr PN/244/2026: Termomodernizacja szkoły nr 56", ogłoszenie 2025/BZP 51132740',
+            "Termomodernizacja szkoły nr 56",
+        ),
+    ],
+)
+def test_title_after_ocr_errors(block, title):
+    # The OCR loses quote marks and spaces, and can change the label.
+    assert odwolanie.parse_procurement(block, {})["tytul"] == title

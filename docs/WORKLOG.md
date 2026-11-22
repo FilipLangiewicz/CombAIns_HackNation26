@@ -2,6 +2,23 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): the title of the procurement after OCR errors
+
+The OCR loses quote marks and spaces near the title, and can change the label. The fixes are in `odwolanie.parse_procurement`.
+
+- The first quote mark is optional after a label and after "Postępowanie": 'Postępowanie Odbiór odpadów" (ZP/101/2026)'.
+- "Przedmiot Odwołanie:" is a label, the same as "Przedmiot odwołania:".
+- "Postępowanie nr PN/244/2026:" is a label.
+- After the last quote mark, "nr" can follow without a space or after a stray mark: `biurowych"'nr referencyjny`.
+- Five new tests in `tests/test_odwolanie.py`. Three of them fail with the old code.
+
+| Test set | Before | After |
+|---|---|---|
+| Organizer dev / holdout (text), generator 1 and 2 | no change | no change |
+| OCR train | 0.9838 | 0.9849 |
+| OCR val | 0.9742 | 0.9783 |
+| OCR test (final check) | 0.9369 | 0.9369 |
+
 ## 2026-11-22 (main): the signer of a power of attorney in two OCR columns
 
 The OCR can mix the rows of two signature columns. Then the role of the signer ("Prezes Zarządu") stands under the name of the attorney. The extractor took the attorney as the signer.
