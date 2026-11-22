@@ -78,5 +78,7 @@ The deployed commit is `1ae7827`.
 | A file that is empty, truncated, random bytes, or text with the `.pdf` extension | `{}` for each file. The run continues. |
 | A `.txt` file | Ignored |
 | A file name with a space and the extension `.PDF` | Correct result |
+| The 233 output files of the VM against the output of the same image on the laptop, without network | All files are identical |
+| `sudo reboot`, then `sudo docker compose run --rm cli` on the 7 files | Docker started automatically. The output is the same as before the restart. |
 
 A PDF file with a text layer takes less than one second. A scan takes 10 to 15 s on the VM, because the OCR runs on 2 CPU cores.
