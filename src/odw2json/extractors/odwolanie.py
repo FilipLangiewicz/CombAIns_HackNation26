@@ -31,7 +31,7 @@ DOTYCZY_END_RE = re.compile(
 )
 # A number does not take the next list number: "NIP 9990000002 2) Gmina Beta".
 IDS_RE = re.compile(
-    r"(?:(?:\b(?:nr|numer)\s+)?\b(?:KRS|NIP|REGON)\b\s*:?\s*(?:PL\s*)?\d(?:[\d\-]|\s(?!\d{1,2}\s*[.)]))*\d\s*[,;]?\s*)+",
+    r"(?:(?:\b(?:nr|numer)\s+)?\b(?:KRS|NIP|REGON)\b\s*:?\s*(?:PL\s*)?\d(?:[\d\-]|\s(?!\d{1,2}\s*[.)]))*\d\s*[,;|]?\s*)+",
     I,
 )
 STREET_RE = re.compile(rf"(?<!\w){STREET}", I)
@@ -43,7 +43,7 @@ PAGE_LINE_RE = re.compile(
 )
 WORD = r"[A-ZŁŚŻŹĆ][a-ząćęłńóśźż\-]+"
 PLACE_DATE_RE = re.compile(
-    rf"(?P<city>{WORD}(?:\s+{WORD}){{0,2}})(?:,\s*|\s+)(?:(?i:dnia)\s+)?(?P<date>(?i:{common.DATE_RE.pattern}))\s*(?i:r\.|roku)?"
+    rf"(?P<city>{WORD}(?:\s+{WORD}){{0,2}})(?:,\s*|\s+)(?:(?i:dnia|dn\.)\s*)?(?P<date>(?i:{common.DATE_RE.pattern}))\s*(?i:r\.|roku)?"
 )
 
 
@@ -125,7 +125,7 @@ def _head(text: str) -> str:
 
 ROLE_TAG_RE = re.compile(
     r"\(\s*(?:zamawiając|lider|partner|uczestni|prowadząc|odwołując|wykonawc|pełnomocnik|koordynator|wiodąc)[^()]{0,80}\)"
-    r"|\s[–—-]\s(?:lider|partner)\w*(?:\s+zamawiając\w*)?(?:\s*,?\s*prowadząc\w+\s+postępowani\w+)?"
+    r"|\s[–—-]\s(?:lider|partner)\w*(?:\s+zamawiając\w*)?(?:\s+postępowani\w*)?(?:\s*,?\s*prowadząc\w+\s+postępowani\w+)?"
     r"|\s[–—-]\s(?:zamawiając\w*\s+)?(?:prowadząc|wiodąc)\w*(?:\s+postępowani\w*)?"
     r"|\s[–—-]\s(?:pełnomocnik\w*\s+zamawiając\w*)(?:\s+prowadząc\w*\s+postępowani\w*)?"
     r"|\s[–—-]\s(?:upoważnion\w*|prowadząc\w*)\s+(?:do\s+)?\w*\s*postępowani\w*"
@@ -198,6 +198,9 @@ def split_entities(section: str) -> list[dict]:
                 raw = segment[: postal.start()].rsplit(",", 1)[0]
             elif named:
                 raw = "Nazwa: " + named.group(1)
+            elif re.search(r":[^:]{3,150}\(\s*$", segment):
+                # A party in one line, with the identifiers in brackets: "Odwołujący: Firma S.A. (KRS ...)".
+                raw = segment.rstrip(" (")
             else:
                 continue
         mails = list(EMAIL_TOKEN_RE.finditer(raw))
@@ -217,7 +220,7 @@ def split_entities(section: str) -> list[dict]:
         role = (lead[marker[-1].end() :] if marker else lead) + " " + label_role
         name = LIST_MARK_RE.sub("", name.lstrip(" ,;.–-)"))
         name = re.sub(r"^(?:Działając\s+)?w\s+imieniu\s+(?:wykonawcy\s+)?", "", name.strip(), flags=I)
-        name = name.strip(" ,;-")
+        name = re.sub(r"\s+z\s+siedzibą\s+w\s+.*$", "", name.strip(" ,;-"), flags=I)
         # A sole trader: "Jan Nowak prowadzący działalność gospodarczą pod firmą NOWAK-BUD Jan Nowak".
         firm = re.search(r"\bpod\s+(?:firmą|nazwą)\s*:?\s*(.+)$", name, I)
         if firm:
@@ -434,6 +437,15 @@ def listed_first_action(text: str) -> str | None:
     return common.normalize_spaces(m.group(1)) if m else None
 
 
+# The title with the action in one sentence: "ODWOŁANIE od czynności Zamawiającego polegającej na odrzuceniu oferty".
+TITLE_ACTION_RE = re.compile(r"(?-i:ODWOŁANIE)\s+((?:od|wobec)\s.{0,400}?)(?=\s(?:Zarzu\w*|Uzasadnienie|Na\s+podstawie)\b|$)", I)
+
+
+def title_action(text: str) -> str | None:
+    m = TITLE_ACTION_RE.search(text)
+    return m.group(1) if m else None
+
+
 def first_charge_texts(text: str) -> list[str]:
     """Give the texts that describe the first charge, from the most to the least exact."""
     texts = []
@@ -544,6 +556,7 @@ def parse_procurement(block: str, evidence: dict[str, str]) -> dict:
     out["numer_ted"] = ted
     sources["numer_ted"] = m.group(0) if m else ""
     m = re.search(r"(?:nr|numer|znak)\s+(?:referencyjny|sprawy|postępowania)(?:\s+sprawy)?\s*:?\s*([^\s,;]+)", block, I)
+    m = m or re.search(r"\b(?:nr\s+ref\.|znak\s*:)\s*([^\s,;()]*\d[^\s,;()]*)", block, I)
     if not m:
         m = re.search(r"Postępowanie\s+nr\s+([^\s,;:]+)", block) or re.search(
             r"[”\"»]\s*\(([^()\s]*\d[^()\s]*)\)", block
@@ -625,6 +638,10 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
     if listed:
         code, source = classify_action([listed], rules)
         action_day, day_source = action_date([listed])
+    titled = None if code else title_action(text)
+    if titled:
+        code, source = classify_action([titled], rules)
+        action_day, day_source = action_date([titled]) if code else (None, "")
     if not code:
         code, source, action_day, day_source = locate_first_charge(text, rules)
     if not code:

@@ -633,3 +633,70 @@ def test_sender_is_not_the_appellant():
         + LETTERHEAD_BODY
     )
     assert process_text(text).data["Odwolujacy"][0]["nazwa"] == "Alfa Budowa sp. z o.o."
+
+
+def test_action_in_title_sentence():
+    text = """Warszawa, 14.05.2026 r.
+Odwołujący:
+Firma Alfa S.A.
+ul. Długa 9, 01-204 Warszawa
+KRS 0000001764
+Zamawiający:
+Gmina Beta
+ul. Krótka 1, 00-801 Warszawa
+ODWOŁANIE
+od czynności Zamawiającego polegającej na odrzuceniu oferty Odwołującego, o której Odwołujący powziął informację w dniu 9 maja 2026 r.
+Zarzucam Zamawiającemu naruszenie art. 226 ust. 1 pkt 5 ustawy Pzp.
+"""
+    kio = process_text(text).data["OdwolanieKIO"]
+    assert (kio["czynnosc_powod_id"], kio["czynnosc_dzien"]) == (1, "2026-05-09")
+
+
+def test_short_date_label_and_lead_role():
+    text = """Lublin, dn. 01.10.2026
+Zamawiający 1: Gmina Alfa – lider postępowania
+plac Wolności 1, 20-109 Lublin
+NIP 9990000001
+Zamawiający 2: Gmina Beta
+ul. Polna 12, 21-040 Świdnik
+Odwołujący: Firma Gamma S.A., ul. Fabryczna 3, 20-301 Lublin, KRS 0000654321
+Dotyczy: postępowania nr ZP.271.33.2026 pn. „Zakup autobusów”
+ODWOŁANIE
+od czynności unieważnienia postępowania z dnia 25 września 2026 r.
+"""
+    data = process_text(text).data
+    assert (data["OdwolanieKIO"]["data"], data["OdwolanieKIO"]["miejscowosc"]) == ("2026-10-01", "Lublin")
+    assert [(z["nazwa"], z["prowadzacy_postepowanie"]) for z in data["Zamawiajacy"]] == [("Gmina Alfa", 1), ("Gmina Beta", 0)]
+
+
+def test_parties_in_one_line_with_ids_in_brackets():
+    text = """Szczecin, dnia 15 kwietnia 2026 roku
+Odwołujący: Firma Alfa S.A. z siedzibą w Szczecinie (KRS 0000987654, NIP 8510009876)
+Zamawiający: Zakład Beta Sp. z o.o. (KRS 0000063704)
+Postępowanie: „Dostawa energii”, nr ZP/12/2026
+ODWOŁANIE
+wobec projektowanych postanowień umowy, opublikowanych w dniu 10 kwietnia 2026 r.
+"""
+    data = process_text(text).data
+    assert [(o["nazwa"], o["krs"]) for o in data["Odwolujacy"]] == [("Firma Alfa S.A.", "0000987654")]
+    assert [(z["nazwa"], z["krs"]) for z in data["Zamawiajacy"]] == [("Zakład Beta Sp. z o.o.", "0000063704")]
+    assert data["OdwolanieKIO"]["czynnosc_dzien"] == "2026-04-10"
+
+
+def test_reference_labels_and_pipe_separator():
+    text = """Katowice, 12.08.2026 r.
+ODWOŁUJĄCY
+Firma Alfa sp. z o.o.
+ul. Chorzowska 100, 40-101 Katowice
+NIP: 6340001234 | REGON: 240000111 | KRS: 0000111222
+ZAMAWIAJĄCY
+Szpital Beta
+ul. Ziołowa 45, 40-635 Katowice
+dot. postępowania o nazwie: „Dostawa tomografu” (nr ref. GCM/ZP/77/2026)
+ODWOŁANIE
+wobec opisu przedmiotu zamówienia zawartego w załączniku nr 1 do SWZ, opublikowanego dnia 7 sierpnia 2026 r.
+"""
+    data = process_text(text).data
+    row = data["Odwolujacy"][0]
+    assert (row["nip"], row["regon"], row["krs"]) == ("6340001234", "240000111", "0000111222")
+    assert data["ZamowieniePubliczne"]["numer_postepowania"] == "GCM/ZP/77/2026"

@@ -2,6 +2,25 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (probe-sweep): new layouts of the appeal
+
+Eight probe texts with new layouts of the appeal showed these errors. The fixes are in `extractors/odwolanie.py`.
+
+- The action only in the title sentence: "ODWOŁANIE od czynności ... polegającej na odrzuceniu oferty". `title_action` reads this sentence before the other rules.
+- The date label "dn.": "Lublin, dn. 01.10.2026".
+- The role "– lider postępowania" stayed in the name of the authority ("Zamawiający").
+- A party in one line, with the identifiers in brackets: "Odwołujący: Firma S.A. (KRS ...)".
+- The words "z siedzibą w ..." after a name do not go into the name.
+- The identifiers with "|" between them: "NIP: ... | REGON: ... | KRS: ...".
+- The labels "nr ref." and "znak:" of the procurement number.
+- Four new tests in `tests/test_odwolanie.py`.
+
+| Test set | Before | After |
+|---|---|---|
+| Organizer dev / holdout | 1.000 / 1.000 | 1.000 / 1.000 |
+| OCR train / val / test | 0.9874 / 0.9818 / 0.9673 | 0.9876 / 0.9818 / 0.9673 |
+| Generators `synth` and `synth2` (seeds for the tune of rules) | no change | no change |
+
 ## 2026-11-22 (main): the attorney in the letterhead of the appeal
 
 Probe texts with the attorney at the top of the appeal showed three errors. The fixes are in `extractors/odwolanie.py`.
