@@ -2,6 +2,12 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): the run on the VM of the organizer
+
+- `RUN.md`: the command for the jury, `docker compose run --rm cli`. The organizer runs it in `/opt/solution` on an Ubuntu VM.
+- `Dockerfile`: the build downloads the RapidOCR models. Without this step, the first OCR needs the internet.
+- A test with `docker run --network none` on example case 01, three real scans and one negative document gave correct results.
+
 ## 2026-11-22 (main): repairs for the OCR path
 
 - `pelnomocnictwo`: a list of names after "udziela Pełnomocnictwo:" gives the attorneys. A title in parentheses after the name also marks an attorney.
