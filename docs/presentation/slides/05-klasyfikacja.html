@@ -1,0 +1,35 @@
+<section class="slide">
+  <style>
+    .c5 .score { margin-top: 10px; }
+    .c5 .score td { font-size: 26px; padding: 22px 0; }
+    .c5 .score .pts { font-weight: 800; font-size: 30px; }
+  </style>
+  <div class="pad c5">
+    <h2>Klasyfikacja: <span>punkty, nie zgadywanie</span></h2>
+    <p class="lead">Każda reguła dodaje albo odejmuje punkty. Typ wygrywa, gdy ma najwięcej punktów i osiąga swój próg.</p>
+    <div class="row" style="margin-top: 70px;">
+      <div class="col">
+        <table class="score">
+          <tr><th>odwolanie.pdf</th><th class="r">Punkty</th><th class="r">Próg</th><th class="r">Wynik</th></tr>
+          <tr><td><b>Odwołanie do KIO</b></td><td class="r pts accent">15</td><td class="r">5</td><td class="r"><span class="tag ok">≥ próg</span></td></tr>
+          <tr><td>Pełnomocnictwo</td><td class="r pts">−4</td><td class="r">5</td><td class="r"><span class="tag warn">poniżej</span></td></tr>
+          <tr><td>Potwierdzenie przelewu</td><td class="r pts">−3</td><td class="r">5</td><td class="r"><span class="tag warn">poniżej</span></td></tr>
+        </table>
+        <p class="body" style="margin-top: 44px;">Reguły ujemne odrzucają podobne pisma: wyrok, postanowienie, odpowiedź na odwołanie. Dlatego dokument spoza trzech typów daje <span class="mono accent">{}</span>.</p>
+      </div>
+      <div class="col">
+<pre class="code"><span class="c"># config/types/odwolanie.yaml</span>
+<span class="k">classify</span>:
+  <span class="k">min_score</span>: 5
+  <span class="k">rules</span>:
+    - {<span class="k">pattern</span>: <span class="s">'^\s*ODWOŁANIE\b'</span>, <span class="k">weight</span>: 4}
+    - {<span class="k">pattern</span>: <span class="s">'Odwołując\w*'</span>,  <span class="k">weight</span>: 1}
+    - {<span class="k">pattern</span>: <span class="s">'Zamawiając\w*'</span>, <span class="k">weight</span>: 1}
+    - {<span class="k">pattern</span>: <span class="s">'Krajow\w+ Izb\w+'</span>, <span class="k">weight</span>: 1}
+    - {<span class="k">pattern</span>: <span class="s">'Sygn\.?\s*akt'</span>,  <span class="k">weight</span>: -10}
+    - {<span class="k">pattern</span>: <span class="s">'^\s*WYROK'</span>,    <span class="k">weight</span>: -10}</pre>
+        <p class="small" style="margin-top: 20px;">Fragment uproszczony. Pełne reguły są na stronie „Zasady” w GUI.</p>
+      </div>
+    </div>
+  </div>
+</section>

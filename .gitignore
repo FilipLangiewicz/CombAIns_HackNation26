@@ -35,3 +35,8 @@ input/*
 !input/.gitkeep
 output/*
 !output/.gitkeep
+
+# The tools and the temporary files of the presentation
+docs/presentation/node_modules/
+docs/presentation/preview/
+docs/presentation/deck.html

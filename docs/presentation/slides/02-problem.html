@@ -1,0 +1,30 @@
+<section class="slide">
+  <style>
+    .c2 .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-top: 70px; }
+    .c2 .card { background: var(--paper); border-radius: 16px; padding: 44px 44px 40px; }
+    .c2 .card .t { font-size: 17px; font-weight: 800; letter-spacing: .18em; color: var(--blue); }
+    .c2 .card h3 { font-size: 38px; font-weight: 800; margin: 18px 0 26px; letter-spacing: -.02em; }
+    .c2 .card ul { list-style: none; display: grid; gap: 12px; }
+    .c2 .card li { font-size: 22px; color: var(--ink); font-family: "JetBrains Mono", monospace; }
+    .c2 .hard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-top: 56px; }
+    .c2 .hard div { border-top: 2px solid var(--ink); padding-top: 22px; font-size: 24px; line-height: 1.4; }
+    .c2 .hard b { display: block; font-size: 27px; margin-bottom: 6px; }
+  </style>
+  <div class="pad c2">
+    <h2>Sprawa przed KIO to <span>kilka dokumentów</span>, nie jeden</h2>
+    <p class="lead">Każdy dokument ma inny zestaw danych. Aplikacja sama rozpoznaje typ i zapisuje jeden JSON na plik.</p>
+    <div class="cards">
+      <div class="card"><div class="t">01</div><h3>Odwołanie</h3>
+        <ul><li>Odwolujacy[]</li><li>Zamawiajacy</li><li>pelnomocnik</li><li>czynnosc_powod_id</li><li>numer_bzp · tytul</li></ul></div>
+      <div class="card"><div class="t">02</div><h3>Pełnomocnictwo</h3>
+        <ul><li>mocodawca</li><li>pelnomocnicy[] · pesel</li><li>podpisujacy</li><li>data</li></ul></div>
+      <div class="card"><div class="t">03</div><h3>Potwierdzenie przelewu</h3>
+        <ul><li>kwota · data_operacji</li><li>z_rachunku</li><li>na_rachunek</li><li>tytul · numer_transakcji</li></ul></div>
+    </div>
+    <div class="hard">
+      <div><b>Różne układy</b>każda kancelaria i każdy bank pisze inaczej</div>
+      <div><b>Skany bez tekstu</b>część dokumentów to obraz, potrzebny OCR</div>
+      <div><b>Inne pisma</b>dokument spoza trzech typów daje <span class="mono">{}</span></div>
+    </div>
+  </div>
+</section>

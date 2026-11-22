@@ -2,6 +2,13 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): the presentation for the final
+
+- New folder `docs/presentation/`: 15 slides for a talk of about 10 minutes, and `deck.pdf`.
+- Each slide is one HTML file in `slides/`. The shared colors and fonts are in `theme.css`.
+- `build.js` makes `deck.pdf` from the slides. The procedure to prepare the tools is at the top of this file.
+- The images in `img/` are screenshots of the web interface and samples of our synthetic scans.
+
 ## 2026-11-22 (gui-fixes): remove a document from the history, a larger decision shape
 
 - The list of documents on the pages `/` and `/graph` shows "×" on each document under the mouse. A click removes the document from the history.

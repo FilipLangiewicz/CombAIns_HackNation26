@@ -1,0 +1,33 @@
+<section class="slide paper">
+  <style>
+    .c9 .grp { margin-top: 44px; }
+    .c9 .grp h4 { font-size: 26px; font-weight: 800; margin-bottom: 18px; }
+    .c9 .legend2 { display: flex; gap: 36px; font-size: 20px; color: var(--muted); margin-top: 40px; }
+    .c9 .legend2 i { display: inline-block; width: 22px; height: 14px; border-radius: 3px; margin-right: 10px; vertical-align: 1px; }
+    .c9 .side p { font-size: 24px; line-height: 1.5; margin-bottom: 26px; }
+    .c9 .side b { color: var(--blue); }
+  </style>
+  <div class="pad c9">
+    <h2>Reguły, które działają <span>poza przykładami</span></h2>
+    <p class="lead">F1 na nowych układach z generatora 2. Tego generatora nie użyliśmy do strojenia reguł.</p>
+    <div class="row" style="margin-top: 20px; gap: 110px;">
+      <div class="col" style="flex: 1.4;">
+        <div class="legend2"><span><i style="background: var(--blue-2);"></i>pierwsza wersja reguł</span><span><i style="background: var(--blue);"></i>wersja końcowa</span></div>
+        <div class="grp"><h4>Odwołanie</h4><div class="bars">
+          <div class="bar-row"><span>pierwsza wersja</span><div class="track"><div class="fill soft" style="width: 83.2%;"></div></div><b>0,832</b></div>
+          <div class="bar-row"><span>wersja końcowa</span><div class="track"><div class="fill" style="width: 99.0%;"></div></div><b>0,990</b></div></div></div>
+        <div class="grp"><h4>Pełnomocnictwo</h4><div class="bars">
+          <div class="bar-row"><span>pierwsza wersja</span><div class="track"><div class="fill soft" style="width: 98.4%;"></div></div><b>0,984</b></div>
+          <div class="bar-row"><span>wersja końcowa</span><div class="track"><div class="fill" style="width: 100%;"></div></div><b>1,000</b></div></div></div>
+        <div class="grp"><h4>Potwierdzenie przelewu</h4><div class="bars">
+          <div class="bar-row"><span>pierwsza wersja</span><div class="track"><div class="fill soft" style="width: 96.7%;"></div></div><b>0,967</b></div>
+          <div class="bar-row"><span>wersja końcowa</span><div class="track"><div class="fill" style="width: 100%;"></div></div><b>1,000</b></div></div></div>
+      </div>
+      <div class="col side" style="padding-top: 70px;">
+        <p><b>Stały podział</b> przykładów na dev i holdout. Na holdout tylko mierzymy.</p>
+        <p><b>Poprawki</b> pochodzą z innych losowań i z nowych tekstów próbnych, nie z tych, na których mierzymy.</p>
+        <p><b>Każda zmiana</b> przechodzi wszystkie zbiory. Wynik na danych organizatora zostaje 1,000.</p>
+      </div>
+    </div>
+  </div>
+</section>

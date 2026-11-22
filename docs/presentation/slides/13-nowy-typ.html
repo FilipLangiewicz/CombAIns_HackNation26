@@ -1,0 +1,44 @@
+<section class="slide">
+  <style>
+    .c13 .steps { list-style: none; display: grid; gap: 28px; margin-top: 10px; }
+    .c13 .steps li { display: grid; grid-template-columns: 56px 1fr; gap: 18px; font-size: 24px; line-height: 1.4; }
+    .c13 .steps b.n { font-size: 36px; font-weight: 800; color: var(--blue); line-height: 1.1; }
+    .c13 .steps strong { display: block; font-size: 26px; }
+    .c13 .steps span { color: var(--muted); }
+    .c13 .callout { margin-top: 44px; background: var(--blue-soft); border-radius: 14px; padding: 28px 32px; font-size: 24px; line-height: 1.45; }
+    .c13 .callout b { color: var(--blue); }
+  </style>
+  <div class="pad c13">
+    <h2>Nowy typ dokumentu to <span>jeden plik YAML</span></h2>
+    <p class="lead">Bez zmiany kodu i bez przebudowy. Przykład: faktura VAT jako czwarty typ.</p>
+    <div class="row" style="margin-top: 56px; gap: 80px;">
+      <div style="flex: 0 0 960px;">
+<pre class="code" style="font-size: 20px;"><span class="c"># config/types/faktura.yaml</span>
+<span class="k">name</span>: faktura
+<span class="k">label</span>: Faktura VAT
+<span class="k">extractor</span>: generic
+
+<span class="k">classify</span>:
+  <span class="k">min_score</span>: 5
+  <span class="k">rules</span>:
+    - {<span class="k">pattern</span>: <span class="s">'^\s*FAKTURA(\s+VAT)?\b'</span>, <span class="k">weight</span>: 4}
+    - {<span class="k">pattern</span>: <span class="s">'sprzedawca'</span>, <span class="k">weight</span>: 1}
+
+<span class="k">template</span>:
+  <span class="k">faktura</span>: {<span class="k">numer</span>: null, <span class="k">kwota_brutto</span>: null, <span class="k">rachunek</span>: null}
+
+<span class="k">fields</span>:
+  - {<span class="k">path</span>: faktura.kwota_brutto, <span class="k">kind</span>: amount, <span class="k">labels</span>: [<span class="s">'do\s+zapłaty'</span>]}
+  - {<span class="k">path</span>: faktura.rachunek, <span class="k">kind</span>: account, <span class="k">labels</span>: [<span class="s">'rachunek'</span>]}</pre>
+      </div>
+      <div class="col">
+        <ol class="steps">
+          <li><b class="n">1</b><div><strong>Klasyfikacja</strong><span>reguły z wagami i próg</span></div></li>
+          <li><b class="n">2</b><div><strong>Struktura JSON</strong><span>szablon z wartościami null</span></div></li>
+          <li><b class="n">3</b><div><strong>Pola</strong><span>etykieta i rodzaj: data, kwota, NIP, IBAN, PESEL…</span></div></li>
+        </ol>
+        <div class="callout"><b>Nowe pole</b> w istniejącym typie to jedna linia w <span class="mono">fields</span>. GUI, graf i strona „Zasady” pokazują zmianę od razu. Test automatyczny sprawdza ten przykład.</div>
+      </div>
+    </div>
+  </div>
+</section>

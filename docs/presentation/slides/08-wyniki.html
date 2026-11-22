@@ -1,0 +1,17 @@
+<section class="slide">
+  <div class="pad">
+    <h2>F1 <span>0,999</span> na wszystkich danych organizatora</h2>
+    <p class="lead">Czysty przebieg całej aplikacji, bez pamięci podręcznej OCR. Ta sama komenda, którą uruchomi jury.</p>
+    <div class="stats" style="margin-top: 60px;">
+      <div><div class="num">1,000</div><div class="lbl">PDF z warstwą tekstową</div><div class="note">60 spraw, część dev i holdout, 180 plików</div></div>
+      <div><div class="num">0,992</div><div class="lbl">Prawdziwe skany</div><div class="note">30 dokumentów bez tekstu, przez OCR</div></div>
+      <div><div class="num">12<small>/12</small></div><div class="lbl">Dokumenty nieznane → {}</div><div class="note">pliki z folderu „negatywne”</div></div>
+    </div>
+    <table style="margin-top: 50px;">
+      <tr><th>Zbiór</th><th class="r">Plików</th><th class="r">F1</th></tr>
+      <tr><td>Przykłady organizatora, dev / holdout</td><td class="r">135 / 45</td><td class="r strong">1,000 / 1,000</td></tr>
+      <tr><td>Nowe układy z generatora 2, trzy losowania &nbsp;<span class="tag">test odporności</span></td><td class="r">180</td><td class="r strong">0,99–1,00</td></tr>
+      <tr><td>Wszystkie pliki organizatora, 4 procesy, 369 s</td><td class="r">226</td><td class="r strong">0,999</td></tr>
+    </table>
+  </div>
+</section>

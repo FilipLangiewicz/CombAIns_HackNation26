@@ -1,0 +1,29 @@
+<section class="slide">
+  <style>
+    .c7 .gal { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; margin-top: 56px; }
+    .c7 .gal figure { background: var(--paper); border-radius: 14px; padding: 18px; }
+    .c7 .gal img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; box-shadow: 0 0 0 1px var(--line); }
+    .c7 .gal figcaption { font-size: 20px; margin-top: 14px; line-height: 1.35; }
+    .c7 .gal figcaption b { display: block; font-size: 22px; }
+    .c7 .gal figcaption span { color: var(--muted); }
+    .c7 .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-top: 50px; }
+    .c7 .facts div { border-top: 2px solid var(--ink); padding-top: 20px; font-size: 22px; line-height: 1.4; color: var(--muted); }
+    .c7 .facts b { display: block; font-size: 44px; font-weight: 800; color: var(--blue); letter-spacing: -.02em; margin-bottom: 4px; }
+    .c7 .facts strong { color: var(--ink); }
+  </style>
+  <div class="pad c7">
+    <h2>60 przykładów to za mało. <span>Wygenerowaliśmy własne dane</span></h2>
+    <p class="lead" style="max-width: 1500px;">Każdy dokument z generatora ma oczekiwany JSON. Dzięki temu mierzymy F1 na układach, których reguły nigdy nie widziały.</p>
+    <div class="gal">
+      <figure><img src="img/gen_odw.jpg" alt=""><figcaption><b>Odwołanie</b><span>generator 1, nowy układ stron</span></figcaption></figure>
+      <figure><img src="img/gen_prz.jpg" alt=""><figcaption><b>Przelew mBank</b><span>generator 2, jako skan</span></figcaption></figure>
+      <figure><img src="img/gen_pel.jpg" alt=""><figcaption><b>Pełnomocnictwo</b><span>przykład organizatora jako skan</span></figcaption></figure>
+      <figure><img src="img/gen_neg.jpg" alt=""><figcaption><b>Wyrok KIO</b><span>podobne pismo, oczekiwane <span class="mono">{}</span></span></figcaption></figure>
+    </div>
+    <div class="facts">
+      <div><b>2 generatory</b><strong>Pierwszy</strong> do strojenia reguł. <strong>Drugi</strong> napisany bez znajomości reguł, tylko do testu.</div>
+      <div><b>832 skany</b>Sztuczne skany: obrót, rozmycie, szum, plamy i dziurki z segregatora. Osobny podział train / val / test.</div>
+      <div><b>Test zaburzeń</b>Kopie przykładów z innym zapisem, np. NIP z myślnikami albo inny format daty.</div>
+    </div>
+  </div>
+</section>

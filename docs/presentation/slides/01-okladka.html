@@ -1,0 +1,41 @@
+<section class="slide dark">
+  <style>
+    .c1 .band { position: absolute; right: 0; top: 0; bottom: 0; width: 720px; background: var(--paper); }
+    .c1 .left { position: absolute; left: 120px; top: 0; bottom: 0; width: 960px; display: flex; flex-direction: column; justify-content: center; }
+    .c1 .kicker { font-size: 24px; letter-spacing: .14em; text-transform: uppercase; color: #9db6ea; font-weight: 600; }
+    .c1 h1 { font-size: 200px; font-weight: 800; letter-spacing: -.04em; line-height: 1; margin: 28px 0 36px; }
+    .c1 h1 span { color: var(--blue-2); }
+    .c1 .lead { font-size: 38px; line-height: 1.35; color: #d6e0f5; max-width: 820px; margin: 0; }
+    .c1 .meta { position: absolute; left: 120px; bottom: 72px; font-size: 22px; color: #9db6ea; display: flex; gap: 56px; }
+    .c1 .meta b { color: #fff; font-weight: 600; display: block; font-size: 24px; margin-top: 6px; }
+    .c1 .docs { position: absolute; right: 150px; top: 250px; width: 420px; height: 560px; }
+    .c1 .doc { position: absolute; width: 360px; height: 480px; background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 40px 36px; box-shadow: 0 30px 60px -30px rgba(15,42,92,.35); color: var(--ink); }
+    .c1 .doc:nth-child(1) { left: -90px; top: -20px; transform: rotate(-8deg); }
+    .c1 .doc:nth-child(2) { left: -20px; top: 10px; transform: rotate(-3deg); }
+    .c1 .doc:nth-child(3) { left: 60px; top: 60px; }
+    .c1 .doc .t { font-size: 15px; font-weight: 800; letter-spacing: .2em; color: var(--blue); margin-bottom: 26px; }
+    .c1 .doc i { display: block; height: 10px; background: var(--line); border-radius: 5px; margin-bottom: 14px; }
+    .c1 .doc i.s { width: 60%; } .c1 .doc i.m { width: 80%; }
+    .c1 .json { position: absolute; left: 36px; right: 36px; bottom: 40px; background: var(--code); color: #e4e9f2; border-radius: 8px; padding: 18px 20px; font-size: 15px; line-height: 1.6; }
+    .c1 .json em { color: var(--blue-2); font-style: normal; }
+  </style>
+  <div class="c1">
+    <div class="band"></div>
+    <div class="left">
+      <div class="kicker">HackNation 2026 · Odwołania2json</div>
+      <h1>KIO<span>sk</span></h1>
+      <p class="lead">Sprawa odwoławcza z PDF do JSON. Bez modelu językowego, w&nbsp;całości na zwykłym laptopie.</p>
+    </div>
+    <div class="meta">
+      <div>Zespół<b>CombAIns</b></div>
+      <div>Wyzwanie<b>Urząd Zamówień Publicznych</b></div>
+    </div>
+    <div class="docs">
+      <div class="doc"><div class="t">PRZELEW</div><i></i><i class="m"></i><i class="s"></i></div>
+      <div class="doc"><div class="t">PEŁNOMOCNICTWO</div><i></i><i class="m"></i><i></i><i class="s"></i></div>
+      <div class="doc"><div class="t">ODWOŁANIE</div><i class="m"></i><i></i><i class="s"></i><i></i>
+        <div class="json mono">{<br>&nbsp;&nbsp;<em>"czynnosc_dzien"</em>: "…",<br>&nbsp;&nbsp;<em>"Odwolujacy"</em>: [ … ],<br>&nbsp;&nbsp;<em>"Zamawiajacy"</em>: { … }<br>}</div>
+      </div>
+    </div>
+  </div>
+</section>

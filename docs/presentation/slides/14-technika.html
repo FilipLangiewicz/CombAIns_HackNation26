@@ -1,0 +1,20 @@
+<section class="slide paper">
+  <style>
+    .c14 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin-top: 60px; }
+    .c14 .tile { background: #fff; border-radius: 16px; padding: 36px 38px; box-shadow: 0 0 0 1px var(--line); }
+    .c14 .tile h4 { font-size: 30px; font-weight: 800; letter-spacing: -.01em; }
+    .c14 .tile p { font-size: 21px; color: var(--muted); line-height: 1.45; margin-top: 12px; }
+    .c14 .tile code { display: block; margin-top: 18px; font-size: 18px; color: var(--blue); line-height: 1.6; }
+  </style>
+  <div class="pad c14">
+    <h2>Technicznie: <span>prosto, lokalnie, otwarcie</span></h2>
+    <div class="grid">
+      <div class="tile"><h4>Python 3.13</h4><p>Zablokowane wersje pakietów. Instalacja jednym poleceniem pip.</p><code>pip install -r requirements.txt<br>python main.py</code></div>
+      <div class="tile"><h4>Docker Compose</h4><p>Dwie usługi: GUI w przeglądarce i CLI dla folderu <span class="mono">input/</span>.</p><code>docker compose up<br>docker compose run --rm cli</code></div>
+      <div class="tile"><h4>Tylko open source</h4><p>pypdfium2, RapidOCR z ONNX Runtime, PyYAML, NumPy. GUI używa tylko biblioteki standardowej.</p></div>
+      <div class="tile"><h4>Lokalnie i bezpiecznie</h4><p>Bez API, bez klucza i bez internetu. Dane osobowe z dokumentów nie opuszczają komputera.</p></div>
+      <div class="tile"><h4>Moduły</h4><p>Odczyt, OCR, klasyfikacja, ekstraktory, walidacja, CLI i GUI. Każdy moduł ma jedno zadanie.</p><code>src/odw2json/ · config/types/</code></div>
+      <div class="tile"><h4>Jakość</h4><p>268 testów automatycznych. Dokumentacja architektury, reguł i dodania nowego typu. Dziennik pomiarów F1.</p></div>
+    </div>
+  </div>
+</section>

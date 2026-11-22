@@ -1,0 +1,25 @@
+<section class="slide">
+  <style>
+    .c4 .safe { margin-top: 90px; background: var(--paper); border-radius: 16px; padding: 36px 44px; display: grid; grid-template-columns: 300px repeat(3, 1fr); gap: 40px; align-items: center; }
+    .c4 .safe h4 { font-size: 28px; font-weight: 800; }
+    .c4 .safe div { font-size: 22px; line-height: 1.4; color: var(--ink); }
+    .c4 .safe code { color: var(--blue); font-weight: 600; }
+  </style>
+  <div class="pad c4">
+    <h2>Pipeline: <span>pięć kroków</span> od PDF do JSON</h2>
+    <p class="lead">Każdy krok to osobny moduł w <span class="mono">src/odw2json/</span>. Każda wartość w wyniku zachowuje swój fragment źródłowy.</p>
+    <div class="flow" style="margin-top: 90px;">
+      <div class="st on"><div class="dot">1</div><h3>Odczyt</h3><p>Warstwa tekstowa PDF. Strona bez tekstu trafia do OCR.</p><div class="tech">pypdfium2 · RapidOCR</div></div>
+      <div class="st on"><div class="dot">2</div><h3>Klasyfikacja</h3><p>Reguły z wagami dla każdego typu. Wygrywa najwyższa suma powyżej progu.</p><div class="tech">config/types/*.yaml</div></div>
+      <div class="st on"><div class="dot">3</div><h3>Ekstrakcja</h3><p>Etykiety, wzorce i układ tabel. Imiona i nazwiska w mianowniku.</p><div class="tech">extractors/ + YAML</div></div>
+      <div class="st on"><div class="dot">4</div><h3>Walidacja</h3><p>NIP, REGON, PESEL, KRS, daty i kwoty. Zła wartość staje się <span class="mono">null</span>.</p><div class="tech">validate.py</div></div>
+      <div class="st on"><div class="dot">5</div><h3>JSON + źródło</h3><p>Plik zgodny ze strukturą organizatora i ślad każdej wartości dla GUI.</p><div class="tech">output/&lt;sprawa&gt;/*.json</div></div>
+    </div>
+    <div class="safe">
+      <h4>Bezpieczna porażka</h4>
+      <div>Brak wartości w dokumencie → <code>null</code>, nic nie zmyślamy</div>
+      <div>Żaden typ nie osiąga progu → <code>{}</code></div>
+      <div>Błąd jednego pliku nie zatrzymuje pozostałych</div>
+    </div>
+  </div>
+</section>
