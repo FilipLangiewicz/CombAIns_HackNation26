@@ -69,7 +69,7 @@ Before the deadline, leave `input/` and `output/` empty.
 
 ## Tests
 
-The deployed commit is `1ae7827`.
+The tests below ran on commit `1ae7827`. Later deploys: `24d74bf`, then `5d8c86d` and the last commit of the night. After each deploy, the command from `RUN.md` on 7 files gave the same output as the laptop.
 
 | Test | Result |
 |---|---|
