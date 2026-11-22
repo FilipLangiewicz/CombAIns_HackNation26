@@ -152,5 +152,8 @@ def test_table_with_a_title_in_more_lines():
         "02-11-2025\nCEN29409124493\n"
     )
     box = run(text)
-    assert box["tytul"] == "opłata skarbowa od pełnomocnictwa - Podlasie Dostawy Medyczne S.A., postępowanie BZP/ZP/10/2026"
+    assert (
+        box["tytul"]
+        == "opłata skarbowa od pełnomocnictwa - Podlasie Dostawy Medyczne S.A., postępowanie BZP/ZP/10/2026"
+    )
     assert (box["numer_transakcji"], box["data_operacji"], box["kwota"]) == ("CEN29409124493", "2025-11-02", 34.0)

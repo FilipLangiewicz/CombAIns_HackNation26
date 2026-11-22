@@ -1,5 +1,8 @@
+import pytest
+
 from odw2json.classify import load_types
 from odw2json.extractors.pelnomocnictwo import extract
+from odw2json.pipeline import process_text
 
 DOC_TYPE = next(t for t in load_types() if t.name == "pelnomocnictwo")
 
@@ -192,3 +195,26 @@ Prezes Zarządu
     data = run(text)
     assert data["mocodawca"][0]["podpisujacy"] == [{"imie_nazwisko": "Oliwia Kaczmarek"}]
     assert [p["imie_nazwisko"] for p in data["pelnomocnicy"]] == ["Aleksandra Marciniak"]
+
+
+@pytest.mark.parametrize(
+    "head, name",
+    [
+        (
+            "§ 1. Mocodawca\nMocodawcą jest Karpaty Transport Sp. z o.o., ul. Długa 54, 48-579 Wrocław, KRS:\n"
+            "0000861670, NIP: 390 469 94 36, REGON: 678296758.\n",
+            "Karpaty Transport Sp. z o.o.",
+        ),
+        (
+            "Mocodawca 1: ALFA-NET Andrzej Wójcik\nAdres: ul. Lipowa 75, 54-851 Warszawa\nNIP: 982-385-54-38\n",
+            "ALFA-NET Andrzej Wójcik",
+        ),
+    ],
+)
+def test_principal_heading_forms(head, name):
+    text = (
+        "PEŁNOMOCNICTWO\n" + head + "Pełnomocnik 1: radca prawny Andrzej Nowak (PESEL 56262305539)\n"
+        "Osoby podpisujące w imieniu mocodawcy:\n............................\nAndrzej Wójcik\n"
+    )
+    data = process_text(text).data
+    assert data["mocodawca"][0]["data"]["nazwa"] == name

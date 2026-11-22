@@ -248,7 +248,11 @@ def find_signers(text: str, cfg: dict) -> list[tuple[int, str, str]]:
 def find_name_without_legal_form(text: str, before: int) -> tuple[str, int] | None:
     """Find a company name that has no known legal form. The name stands before the address or the KRS."""
     window_start = max(before - 250, 0)
-    anchor = r"(?:Mocodawc\w*:?\s+(?:jest\s+)?|Nazwa(?:\s+\w+)?:\s*|imieniu\s+|reprezentacji\s+|reprezentowania\s+|Za\s+|\d\)\s+|^(?!(?:Niniejszym|Działając|Ja|My|PEŁNOMOCNICTW\w*)\b))"
+    # The anchor "Mocodawca" stays on its line: a heading "§ 1. Mocodawca" is not a part of the name below it.
+    anchor = (
+        r"(?:Mocodawc\w*(?:[ \t]+\d{1,2})?:?[ \t]+(?:jest[ \t]+)?|Nazwa(?:\s+\w+)?:\s*|imieniu\s+|reprezentacji\s+"
+        r"|reprezentowania\s+|Za\s+|\d\)\s+|^(?!(?:Niniejszym|Działając|Ja|My|PEŁNOMOCNICTW\w*|Mocodaw\w*)\b))"
+    )
     pattern = re.compile(
         rf"{anchor}([{UP}\d][^\n,;:()|]*?)(?=\s*(?:,|\(|\||z\s+siedzibą|KRS\b|NIP\b|\n)|[ \t]{{3,}})", re.MULTILINE
     )

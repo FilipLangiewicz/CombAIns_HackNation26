@@ -61,9 +61,9 @@ extract:
   law_firm_words: ['Kancelari\w*', 'Adwokack\w*', 'Radc(?:y|ów)\s+Prawn\w+']
   # Legal forms that end the name of a company.
   legal_forms:
-    - 'sp\.\s?z\s?o\.\s?o\.(?:\s*sp\.\s?(?:k|j|p|komandytowa)\.)?'
-    - 'sp\.\s?(?:k|j|p|komandytowa|jawna|partnerska)\.'
-    - 'sp\.\s?k\.a\.'
+    - '(?i:sp\.\s?z\s?o\.\s?o\.(?:\s*sp\.\s?(?:k|j|p|komandytowa)\.)?)'
+    - '(?i:sp\.\s?(?:k|j|p|komandytowa|jawna|partnerska)\.)'
+    - '(?i:sp\.\s?k\.a\.)'
     - 'S\.\s?A\.'
     - '(?i:spółk[aąi]\s+(?:akcyjn\w+|cywiln\w+|jawn\w+|partnersk\w+|komandytow\w+(?:-akcyjn\w+)?))'
     - '(?i:spółk[aąi]\s+z\s+ograniczoną\s+odpowiedzialnością)'

@@ -376,7 +376,9 @@ def parse_attorney(
     return pn, m.group(0)
 
 
-LETTERHEAD_FIRM_RE = re.compile(rf"(?<![@.\w])(?-i:Kancelari)\w+\b.*?(?=\s*[,;(]|\s+{STREET}|\s+\d{{2}}-\d{{3}}|\s+tel\b|\s+e-?mail\b|$)", I)
+LETTERHEAD_FIRM_RE = re.compile(
+    rf"(?<![@.\w])(?-i:Kancelari)\w+\b.*?(?=\s*[,;(]|\s+{STREET}|\s+\d{{2}}-\d{{3}}|\s+tel\b|\s+e-?mail\b|$)", I
+)
 
 
 def letterhead_of_firm(top: str, attorney: dict, evidence: dict[str, str]) -> None:
@@ -574,7 +576,9 @@ def parse_procurement(block: str, evidence: dict[str, str]) -> dict:
         title = m.group(1).strip(" .,;").rstrip(closing) if m else None
         quoted = re.match(rf"[{quotes}](.+?)[{closing}]", title) if title else None
         if not title:
-            m = re.search(rf"(?-i:Postępowanie)\s+[{quotes}]?((?-i:[A-ZŁŚŻŹĆ])[^{closing}]{{4,250}}?)[{closing}]", block)
+            m = re.search(
+                rf"(?-i:Postępowanie)\s+[{quotes}]?((?-i:[A-ZŁŚŻŹĆ])[^{closing}]{{4,250}}?)[{closing}]", block
+            )
             m = m or re.search(rf"[{quotes}](.+?)[{closing}]", block)
             title = m.group(1).strip() if m else None
         out["tytul"] = quoted.group(1).strip() if quoted else title

@@ -494,8 +494,11 @@ def test_attorney_before_label_line():
     ],
 )
 def test_action_forms(item, code):
-    text = APPEAL_HEAD + ONE_AUTHORITY + PROBE_APPELLANT + (
-        "\nODWOŁANIE\nwnoszę odwołanie wobec czynności Zamawiającego, polegających na:\n1) " + item + ";\n"
+    text = (
+        APPEAL_HEAD
+        + ONE_AUTHORITY
+        + PROBE_APPELLANT
+        + ("\nODWOŁANIE\nwnoszę odwołanie wobec czynności Zamawiającego, polegających na:\n1) " + item + ";\n")
     )
     assert process_text(text).data["OdwolanieKIO"]["czynnosc_powod_id"] == code
 
