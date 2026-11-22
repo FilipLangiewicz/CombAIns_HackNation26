@@ -218,3 +218,8 @@ def test_principal_heading_forms(head, name):
     )
     data = process_text(text).data
     assert data["mocodawca"][0]["data"]["nazwa"] == name
+
+
+def test_title_split_by_ocr_is_not_a_part_of_the_name():
+    text = "PELNOMOCNI CTWO\nOrbisol Budownictwo Sp. z o.o., ul. Polna 1, 00-001 Warszawa, KRS: 0000123456, NIP: 5250001234\n"
+    assert run(text)["mocodawca"][0]["data"]["nazwa"] == "Orbisol Budownictwo Sp. z o.o."

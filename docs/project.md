@@ -159,16 +159,18 @@ The application uses rules, not an LLM. A solution without an LLM gets the maxim
 - `python -m odw2json.evaluate --split dev` gives the F1 score with the rules of the organizer. The tests in `tests/test_evaluate.py` check the score on cases with known results.
 - `python -m odw2json.perturb --split dev` changes the form of the text and keeps the expected values. It shows the rules that fail on other layouts.
 
-### Status (2026-11-22)
+### Status (2026-11-22, morning)
 
-The work of the first stage is in `main`. The results are in `docs/WORKLOG.md`. The final test results:
+The work is in `main`. The results are in `docs/WORKLOG.md`. The last measurement on the test split:
 
 | Path | Test set | F1 |
 |---|---|---|
 | text | organizer holdout cases | 1.000 |
-| text | generator 2 (new layouts) | odwolanie 0.84, pelnomocnictwo 0.98, przelew 0.98 |
-| OCR | all 30 real scans, complete application | 0.874 |
-| OCR | real scans 0005-0010 (test split) | 0.845 |
+| text | generator 2 (new layouts), seeds 1, 7, 101 | odwolanie 0.99, pelnomocnictwo 1.00, przelew 1.00 |
+| OCR | test split, all | 0.955 |
+| OCR | real scans 0005-0010 (test split) | 0.892 |
+
+The web interface has the pages `/graph` (the path of a document) and `/rules` (all rules of each type).
 
 ### Next steps
 

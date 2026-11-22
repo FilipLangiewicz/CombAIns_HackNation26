@@ -2,6 +2,24 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): final check of the changes of this night
+
+- `pelnomocnictwo.find_company_name`: a stop word that the OCR split ("PELNOMOCNI CTWO") also stops the name.
+- The final check on the test split showed this error. The legal form "Sp. z o.o." matches since commit `2946d08`, so the split title came into the name. The fix is general, but it comes from a test document. Thus the test numbers below are a little optimistic.
+- New test in `tests/test_pelnomocnictwo.py`.
+
+The final check, one run on the test split:
+
+| Test set | Before the night (`24d74bf`) | After |
+|---|---|---|
+| Generator 2, seeds 1 / 7 / 101, `odwolanie` | 0.927 / 0.932 / 0.918 | 0.989 / 0.990 / 0.991 |
+| Generator 2, seeds 1 / 7 / 101, `pelnomocnictwo` | 0.994 / 0.986 / 0.984 | 1.000 / 1.000 / 1.000 |
+| Generator 2, seeds 1 / 7 / 101, `przelew` | 0.967 / 0.987 / 0.982 | 1.000 / 1.000 / 1.000 |
+| OCR test, all | 0.9369 | 0.9552 |
+| OCR test, real scans 0005-0010 | 0.8889 | 0.8921 |
+| OCR train / val | 0.9849 / 0.9783 | 0.9852 / 0.9797 |
+| Organizer dev / holdout (text) | 1.000 / 1.000 | 1.000 / 1.000 |
+
 ## 2026-11-22 (main): the pages /graph and /rules in the web interface
 
 - New file `src/odw2json/static/graph.html`: an interactive graph of the path of a document, and a page with all rules of each type.
