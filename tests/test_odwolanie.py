@@ -572,3 +572,10 @@ def test_attorney_after_a_dot():
     block = "reprezentowany przez.pełnomocnika:\nradca prawny Andrzej Wróbel\n"
     data = process_text(APPEAL_HEAD + ONE_AUTHORITY + PROBE_APPELLANT + block + APPEAL_BODY).data
     assert data["Odwolujacy"][0]["pelnomocnik"]["imie_nazwisko"] == "Andrzej Wróbel"
+
+
+def test_title_with_a_comma_for_the_first_quote():
+    block = 'pn. ,Dostawa sprzętu komputerowego dla jednostek Zamawiającego"; nr referencyjny: PN/58/2026/DOS'
+    assert (
+        odwolanie.parse_procurement(block, {})["tytul"] == "Dostawa sprzętu komputerowego dla jednostek Zamawiającego"
+    )

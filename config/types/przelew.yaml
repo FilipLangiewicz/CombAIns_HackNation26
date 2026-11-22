@@ -27,6 +27,14 @@ classify:
     - {pattern: '^\s*(odwołanie|pełnomocnictwo|faktura|wyrok|postanowienie|wezwanie)', weight: -10, where: start}
     - {pattern: '\bNIP\b[\s\S]*\bNIP\b|faktur[ay]\s+(vat|nr)', weight: -3}
 
+# If one of these fields is empty after the OCR of a scan, the pipeline reads the scan again with a higher resolution.
+ocr_retry_if_empty:
+  - przelew_bankowy.kwota
+  - przelew_bankowy.data_operacji
+  - przelew_bankowy.tytul
+  - przelew_bankowy.z_rachunku
+  - przelew_bankowy.na_rachunek
+
 template:
   przelew_bankowy: {data_operacji: null, kwota: null, na_rachunek: null, numer_transakcji: null, tytul: null, z_rachunku: null}
 

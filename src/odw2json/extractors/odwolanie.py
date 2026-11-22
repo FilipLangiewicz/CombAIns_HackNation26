@@ -554,7 +554,8 @@ def parse_procurement(block: str, evidence: dict[str, str]) -> dict:
     quotes = '„"“«'
     closing = '”"»'
     # The OCR can lose the first quote mark, so it is optional.
-    m = re.search(rf"pn\.?\s*[{quotes}]?(.+?)[{closing}]['’]?\s*(?:,|\.|$|(?:nr|numer|znak)\b)", block)
+    # The OCR can read the first quote mark as a comma: "pn. ,Dostawa sprzętu"; nr ...".
+    m = re.search(rf"pn\.?\s*[{quotes},]?\s*(.+?)[{closing}]['’]?\s*(?:[,;.]|$|(?:nr|numer|znak)\b)", block)
     if m:
         out["tytul"], sources["tytul"] = m.group(1).strip(), m.group(0).rstrip(" ,.")
     else:

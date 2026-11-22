@@ -20,6 +20,11 @@ classify:
     - {pattern: '^\s*(WYROK|POSTANOWIENIE|UCHWAŁA|DECYZJA)\b', weight: -10, where: start}
     - {pattern: '^\s*ODWOŁANIE\s*$', weight: -4, where: head}
 
+# If one of these fields is empty after the OCR of a scan, the pipeline reads the scan again with a higher resolution.
+ocr_retry_if_empty:
+  - mocodawca[].data.nazwa
+  - pelnomocnicy[].imie_nazwisko
+
 template:
   mocodawca: []
   pelnomocnicy: []

@@ -38,7 +38,7 @@ def clean(text: str) -> str:
     return "\n".join(line.strip() for line in text.split("\n"))
 
 
-def read_pdf(path: Path, max_ocr_pages: int | None = MAX_OCR_PAGES) -> Document:
+def read_pdf(path: Path, max_ocr_pages: int | None = MAX_OCR_PAGES, dpi: int | None = None) -> Document:
     """Read all pages. Give OCR to the first max_ocr_pages scanned pages (None: all of them)."""
     pdf = pdfium.PdfDocument(str(path))
     doc = Document(Path(path), [])
@@ -51,7 +51,7 @@ def read_pdf(path: Path, max_ocr_pages: int | None = MAX_OCR_PAGES) -> Document:
                     text = ""
                     doc.skipped_pages.append(i)
                 elif ocr.available():
-                    text = ocr.ocr_page(page)
+                    text = ocr.ocr_page(page, dpi)
                     doc.ocr_pages.append(i)
                 else:
                     doc.ocr_missing = True

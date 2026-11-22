@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 from odw2json import common
 from odw2json.evaluate import dataset
@@ -46,3 +47,12 @@ def test_pipeline_info_reads_the_configuration():
     assert [t["name"] for t in info["types"]] == [t.name for t in load_types()]
     assert all(t["yaml"] and t["config"]["template"] for t in info["types"])
     assert info["min_page_chars"] > 0
+
+
+def test_weak_result_asks_for_a_second_ocr():
+    from odw2json.pipeline import Result, weak
+
+    unknown_far = Result(Path("x"), None, {}, scores={"odwolanie": -10, "pelnomocnictwo": -9, "przelew": 1})
+    unknown_near = Result(Path("x"), None, {}, scores={"odwolanie": 0, "pelnomocnictwo": 0, "przelew": 4})
+    assert not weak(unknown_far)
+    assert weak(unknown_near)

@@ -22,7 +22,9 @@ ROOT = Path(__file__).resolve().parents[2]
 CACHE_DIR = Path(os.environ.get("ODW2JSON_OCR_CACHE", ROOT / "data" / "cache" / "ocr"))
 # On the 30 real scans, the default model (PP-OCRv6) found more values than the model for Latin scripts.
 LANG = os.environ.get("ODW2JSON_OCR_LANG", "default")
-DPI = 200
+DPI = int(os.environ.get("ODW2JSON_OCR_DPI", "200"))
+# A second OCR with this resolution reads a bad scan better. The pipeline uses it only for a weak result, because it is slower.
+RETRY_DPI = int(os.environ.get("ODW2JSON_OCR_RETRY_DPI", "300"))
 # Change this number when the OCR steps change, so that the cache gives no old results.
 OCR_VERSION = 5
 
@@ -297,6 +299,6 @@ def repair_emails(text: str) -> str:
     return re.sub(r"[\w.+\-]+@[\w\-.]+", lambda m: fold(m.group(0)), text)
 
 
-def ocr_page(page) -> str:
+def ocr_page(page, dpi: int | None = None) -> str:
     """OCR of a pypdfium2 page, with the repair of the diacritics."""
-    return repair(ocr_image(page.render(scale=DPI / 72).to_pil()))
+    return repair(ocr_image(page.render(scale=(dpi or DPI) / 72).to_pil()))

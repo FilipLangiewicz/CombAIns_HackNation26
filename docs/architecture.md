@@ -23,6 +23,9 @@ extractors.extract ──► the extractor of the type (odwolanie, pelnomocnictw
   │                    then the field rules of the configuration
   ▼
 validate.apply ──► the checks of the key "validate": a value that is not valid becomes null
+  │
+  ├──► a scan without a type, or with an empty field of "ocr_retry_if_empty":
+  │    a second OCR with 300 DPI (the first OCR has 200 DPI). It fills only the empty fields.
   ▼
 Result: type, data (the output JSON), evidence (the source text of each value), scores
   │

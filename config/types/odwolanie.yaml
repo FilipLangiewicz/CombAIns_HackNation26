@@ -44,6 +44,15 @@ ocr_more_pages_if_empty:
   # The name of the attorney can be only in the signature on the last page.
   - Odwolujacy[].pelnomocnik.imie_nazwisko
 
+# If one of these fields is empty after the OCR of a scan, the pipeline reads the scan again with a higher resolution.
+ocr_retry_if_empty:
+  - OdwolanieKIO.czynnosc_powod_id
+  - OdwolanieKIO.czynnosc_dzien
+  - Odwolujacy[].nazwa
+  - Zamawiajacy[].nazwa
+  - ZamowieniePubliczne.tytul
+  - ZamowieniePubliczne.numer_postepowania
+
 template:
   OdwolanieKIO: {data: null, czynnosc_dzien: null, czynnosc_powod_id: null, czynnosc_opis: null, miejscowosc: null}
   Odwolujacy: []

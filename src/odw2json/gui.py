@@ -51,6 +51,8 @@ def pipeline_info() -> dict:
     return {
         "min_page_chars": pdftext.MIN_PAGE_CHARS,
         "max_ocr_pages": pdftext.MAX_OCR_PAGES,
+        "ocr_dpi": ocr.DPI,
+        "ocr_retry_dpi": ocr.RETRY_DPI,
         "ocr_available": ocr.available(),
         "types": types,
     }
@@ -92,6 +94,7 @@ class Session:
                 "ocr_pages": result.ocr_pages,
                 "ocr_missing": result.ocr_missing,
                 "page_count": result.page_count,
+                "ocr_retry": result.ocr_retry,
                 "skipped_pages": result.skipped_pages,
                 "warnings": result.warnings,
                 "error": None,
@@ -109,6 +112,7 @@ class Session:
                 "ocr_pages": [],
                 "ocr_missing": False,
                 "page_count": 0,
+                "ocr_retry": False,
                 "skipped_pages": [],
                 "warnings": [],
                 "error": str(exc),

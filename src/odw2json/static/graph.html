@@ -211,7 +211,7 @@ function nodeBadge(id) {
   const d = DOC;
   if (id === "pdf") return d.name;
   if (id === "layer") return `${d.page_count} str., OCR: ${d.ocr_pages.length}`;
-  if (id === "ocr" && d.ocr_pages.length) return "strony: " + d.ocr_pages.map((p) => p + 1).join(", ");
+  if (id === "ocr" && d.ocr_pages.length) return "strony: " + d.ocr_pages.map((p) => p + 1).join(", ") + (d.ocr_retry ? ", 2. odczyt" : "");
   if (id === "classify") return d.doc_type ? `wynik: ${d.type_label}` : "wynik: brak typu";
   if (id.startsWith("type:")) { const n = id.slice(5), t = P.types.find((x) => x.name === n); return `${fmt(d.scores[n] ?? 0)} / ${fmt(t.min_score)} pkt`; }
   if (id.startsWith("extract:") && id.slice(8) === d.doc_type) { const [f, all] = countFields(d.data); return `${f} z ${all} pól z wartością`; }
@@ -262,7 +262,8 @@ function drawSide() {
     h = `<h2>Tekst z PDF</h2><p>Biblioteka pypdfium2 czyta warstwę tekstową strony. Aplikacja ujednolica spacje i znaki specjalne.</p>`;
   } else if (id === "ocr") {
     h = `<h2>OCR skanu</h2><p>RapidOCR (PP-OCR) działa lokalnie na CPU, bez internetu. Modele są w obrazie Docker. Aplikacja składa wykryte fragmenty w linie i kolumny oraz poprawia typowe błędy OCR (słownik <code>config/ocr_words.txt</code>).</p>`;
-    if (d && d.ocr_pages.length) h += `<h3>Wybrany dokument</h3><p>OCR na stronach: ${d.ocr_pages.map((p) => p + 1).join(", ")}</p>`;
+    h += `<p>Pierwszy odczyt: <b>${P.ocr_dpi} DPI</b>. Jeśli dokument nie ma typu albo kluczowe pole jest puste (klucz <code>ocr_retry_if_empty</code> w YAML typu), aplikacja czyta skan drugi raz w <b>${P.ocr_retry_dpi} DPI</b> i uzupełnia tylko puste pola.</p>`;
+    if (d && d.ocr_pages.length) h += `<h3>Wybrany dokument</h3><p>OCR na stronach: ${d.ocr_pages.map((p) => p + 1).join(", ")}</p><p>Drugi odczyt w wyższej rozdzielczości: ${d.ocr_retry ? '<span class="pill acc">tak</span>' : "nie"}</p>`;
   } else if (id === "noocr") {
     h = `<h2>Brak OCR</h2><p>Jeśli pakiet OCR nie jest dostępny, strona bez tekstu zostaje pusta. Dokument dostaje wtedy zwykle wynik <code>{}</code>.</p>`;
   } else if (id === "classify") {

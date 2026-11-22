@@ -2,6 +2,30 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): a second OCR with 300 DPI for a weak result
+
+The real scan 0009 (appeal) gave unreadable text at 200 DPI. At 300 DPI, the OCR read it almost without errors. The OCR at 300 DPI is slower, so the pipeline uses it only for a weak result.
+
+- `pipeline.weak`: a scan is weak if it has no type, or if a field of the key `ocr_retry_if_empty` of its type is empty.
+- A document without a type gets the second OCR only if one type has at least half of its minimum score. A negative document is far below each minimum score.
+- `pipeline.process_pdf`: the second OCR fills only the empty fields. It does not change a value of the first OCR.
+- `config/types/*.yaml`: new key `ocr_retry_if_empty`. `numer_transakcji` is not in the list, because many confirmations have no transaction number.
+- `ocr.DPI` and `ocr.RETRY_DPI` come from the environment variables `ODW2JSON_OCR_DPI` (200) and `ODW2JSON_OCR_RETRY_DPI` (300).
+- The page `/graph` shows the second OCR.
+- `odwolanie.parse_procurement`: the OCR can read the first quote mark of the title as a comma, and a semicolon can follow the last quote mark. The real scan 0003 (val split) showed this error.
+- New tests in `tests/test_evidence.py` and `tests/test_odwolanie.py`.
+
+The complete application on the 30 real scans and the 12 negative files, 4 processes:
+
+| Test set | 200 DPI only | With the second OCR |
+|---|---|---|
+| Real scans 0001-0004 (val) | 0.992 | 0.992 |
+| Real scans 0005-0010 (test, not independent now) | 0.984 | 0.992 |
+| Negative files | 1.000 | 1.000 |
+| Documents with a second OCR | 0 | 1 (appeal 0009) |
+
+A wider rule (all documents without a type, and `numer_transakcji`) gave a second OCR to 10 documents and the same F1. The text path does not change: organizer dev / holdout 1.000, OCR train / val 0.9874 / 0.9818.
+
 ## 2026-11-22 (main): more edge cases from the real scans
 
 The errors come from the real scans of the test split (see the entry below). All fixes are general.
