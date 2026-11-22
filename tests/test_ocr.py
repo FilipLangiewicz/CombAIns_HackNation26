@@ -48,6 +48,16 @@ def test_lines_and_two_columns():
     ]
 
 
+def test_label_value_table_keeps_rows():
+    boxes = [
+        [100, 100, 400, 130, "Data operacji"],
+        [900, 102, 1200, 132, "2026-04-20"],
+        [100, 140, 400, 170, "Kwota"],
+        [900, 142, 1200, 172, "17,00 PLN"],
+    ]
+    assert boxes_to_lines(boxes).split("\n") == ["Data operacji  2026-04-20", "Kwota  17,00 PLN"]
+
+
 def test_split_points_only_in_gaps():
     gray = np.full((10, 1200), 255, dtype=np.uint8)
     gray[:, :1200] = 0  # one long word without a gap

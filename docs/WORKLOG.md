@@ -2,6 +2,20 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): tables with a label and a value in the OCR text
+
+- `ocr.boxes_to_lines`: two or more rows with two parts are two columns, for example two signature blocks. Now a table with a label without digits at the left and a value with digits at the right stays in rows. Bank confirmations have such tables.
+- New test in `tests/test_ocr.py`. It fails with the old code.
+- The OCR cache keeps the boxes, not the lines. Thus `OCR_VERSION` stays 5.
+
+| Test set | Before | After |
+|---|---|---|
+| Organizer dev (text) | 1.000 | 1.000 |
+| OCR train | 0.9815 | 0.9826 |
+| OCR train, `przelew` | 0.9843 | 0.9903 |
+| OCR val | 0.9735 | 0.9735 |
+| OCR test (final check) | 0.9363 | 0.9363 |
+
 ## 2026-11-22 (main): tests for the classification of similar documents
 
 - New file `tests/test_classify.py`: 20 short texts that look like an appeal, a power of attorney or a bank confirmation, but are of no known type. Also 6 known documents in other forms.

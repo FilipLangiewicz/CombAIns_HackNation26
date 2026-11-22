@@ -72,7 +72,7 @@ def boxes_to_lines(boxes: list[list]) -> str:
         j = i
         while j < len(rows) and len(rows[j]) == 2 and abs(rows[j][1][0][0] - rows[i][1][0][0]) < COLUMN_ALIGN * width:
             j += 1
-        if COLUMNS and j - i >= 2:
+        if COLUMNS and j - i >= 2 and not label_value_table(rows[i:j]):
             out += [text_of(r[0]) for r in rows[i:j]] + [text_of(r[1]) for r in rows[i:j]]
             i = j
         else:
@@ -84,6 +84,17 @@ def boxes_to_lines(boxes: list[list]) -> str:
 COLUMNS = os.environ.get("ODW2JSON_OCR_COLUMNS", "1") == "1"
 COLUMN_GAP = 0.05  # a gap wider than this part of the page width splits a row into parts
 COLUMN_ALIGN = 0.06
+
+
+def label_value_table(rows: list[list[list[list]]]) -> bool:
+    """A table with a label at the left and a value at the right of each row, for example in a bank confirmation.
+
+    A label has no digits. Two parties or two signatures side by side have digits (an address, a number) or no
+    digits at all.
+    """
+    left = [text_of(r[0]) for r in rows]
+    right = [text_of(r[1]) for r in rows]
+    return not any(re.search(r"\d", t) for t in left) and any(re.search(r"\d", t) for t in right)
 
 
 def segments(line: list[list], width: float) -> list[list[list]]:
