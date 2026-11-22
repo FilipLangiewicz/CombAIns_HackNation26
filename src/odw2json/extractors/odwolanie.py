@@ -168,7 +168,10 @@ def split_head(head: str) -> tuple[list[tuple[str, str]], str]:
         else:
             kind = "inny"
         end = marks[i + 1].start() if i + 1 < len(marks) else len(head)
-        sections.append((kind, head[mark.start() : end]))
+        sections.append((kind if not mark.group("odw2") else "od", head[mark.start() : end]))
+    # "Od:" is the sender. It is the appellant only if the appeal has no section "Odwołujący".
+    has_appellant = any(k == "odwolujacy" for k, _ in sections)
+    sections = [(("inny" if has_appellant else "odwolujacy") if k == "od" else k, s) for k, s in sections]
     return sections, procurement
 
 
@@ -384,10 +387,13 @@ LETTERHEAD_FIRM_RE = re.compile(
 def letterhead_of_firm(top: str, attorney: dict, evidence: dict[str, str]) -> None:
     """The law firm can write the appeal on its letterhead, above the town and the date."""
     m = LETTERHEAD_FIRM_RE.search(top)
-    if not m:
+    if m:
+        attorney["nazwa"] = evidence["Odwolujacy[0].pelnomocnik.nazwa"] = m.group(0).strip()
+    # Without a firm, the letterhead gives the e-mail only if it names the attorney. Else it can be the appellant's.
+    surname = (attorney["imie_nazwisko"] or "").split()[-1:]
+    if not m and not (surname and re.search(rf"\b{re.escape(surname[0])}\b", top, I)):
         return
-    attorney["nazwa"] = evidence["Odwolujacy[0].pelnomocnik.nazwa"] = m.group(0).strip()
-    mail = common.EMAIL_RE.search(top, m.end())
+    mail = common.EMAIL_RE.search(top, m.end() if m else 0)
     if mail and not attorney["mail"]:
         attorney["mail"] = mail.group(0).rstrip(".")
         evidence["Odwolujacy[0].pelnomocnik.mail"] = mail.group(0)
@@ -655,8 +661,13 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
         if attorney is None:
             # Only an attorney signs with a professional title: "adw. Jan Nowak" under the appeal.
             signature = text[-700:]
-            title = TITLES_RE.search(signature)
-            person = find_person(signature[title.start() :]) if title else None
+            # The last title with a name is the signature. In a short appeal, the window also has the letterhead.
+            title, person = None, None
+            for t in reversed(list(TITLES_RE.finditer(signature))):
+                person = find_person(signature[t.start() :])
+                if person:
+                    title = t
+                    break
             if person:
                 attorney = {"imie_nazwisko": common.to_nominative(person[0]), "nazwa": None, "mail": None}
                 attorney_text = common.normalize_spaces(signature[title.start() : title.start() + person[1]])

@@ -585,3 +585,51 @@ def test_town_and_date_without_a_space():
     text = "Białystok,10.04.2026 r.\n" + ONE_AUTHORITY + PROBE_APPELLANT + APPEAL_BODY
     kio = process_text(text).data["OdwolanieKIO"]
     assert (kio["miejscowosc"], kio["data"]) == ("Białystok", "2026-04-10")
+
+
+LETTERHEAD_BODY = (
+    "Zamawiający: Gmina Miasto Kielce, ul. Rynek 1, 25-303 Kielce, NIP: 6570000001\n"
+    "ODWOŁANIE\nwnoszę odwołanie wobec: 1. czynności odrzucenia oferty Odwołującego z dnia 2 czerwca 2026 r.; 2. innych.\n"
+)
+LETTERHEAD_APPELLANT = "Odwołujący: Alfa Budowa sp. z o.o., ul. Leśna 3, 00-950 Warszawa, NIP: 5250001234\n"
+
+
+@pytest.mark.parametrize(
+    "text, attorney",
+    [
+        (
+            "KANCELARIA ADWOKACKA ADW. JAN NOWAK\nul. Polna 5, 00-001 Warszawa, biuro@nowak.pl\nWarszawa, dnia 10.06.2026 r.\n"
+            + LETTERHEAD_APPELLANT
+            + LETTERHEAD_BODY
+            + "\nadw. Jan Nowak\n",
+            {"imie_nazwisko": "Jan Nowak", "nazwa": None, "mail": "biuro@nowak.pl"},
+        ),
+        (
+            "adw. Marta Zielińska\nul. Polna 5, 00-001 Warszawa\nm.zielinska@adwokat.pl\nWarszawa, dnia 10.06.2026 r.\n"
+            + LETTERHEAD_APPELLANT
+            + LETTERHEAD_BODY
+            + "\nadw. Marta Zielińska\n",
+            {"imie_nazwisko": "Marta Zielińska", "nazwa": None, "mail": "m.zielinska@adwokat.pl"},
+        ),
+        (
+            "ALFA BUDOWA SP. Z O.O.\nul. Leśna 3, 00-950 Warszawa, biuro@alfa.pl\nWarszawa, dnia 10.06.2026 r.\n"
+            + LETTERHEAD_APPELLANT
+            + "reprezentowany przez: adw. Piotr Lis\n"
+            + LETTERHEAD_BODY,
+            {"imie_nazwisko": "Piotr Lis", "nazwa": None, "mail": None},
+        ),
+    ],
+)
+def test_letterhead_and_signature_of_the_attorney(text, attorney):
+    appellant = process_text(text).data["Odwolujacy"][0]
+    assert (appellant["nazwa"], appellant["pelnomocnik"]) == ("Alfa Budowa sp. z o.o.", attorney)
+
+
+def test_sender_is_not_the_appellant():
+    text = (
+        "Warszawa, dnia 10.06.2026 r.\nOd: Kancelaria Prawna Lex sp.k., ul. Polna 5, 00-001 Warszawa\n"
+        + LETTERHEAD_APPELLANT
+        + "reprezentowany przez: adw. Piotr Lis\n"
+        + LETTERHEAD_BODY
+    )
+    assert process_text(text).data["Odwolujacy"][0]["nazwa"] == "Alfa Budowa sp. z o.o."

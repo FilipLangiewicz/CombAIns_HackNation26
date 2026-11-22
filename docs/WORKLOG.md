@@ -2,6 +2,26 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): the attorney in the letterhead of the appeal
+
+Probe texts with the attorney at the top of the appeal showed three errors. The fixes are in `extractors/odwolanie.py`.
+
+- The signature: in a short appeal, the last 700 characters also have the letterhead. The code took the first title ("ADW. JAN NOWAK" in capitals) and found no name. Now the last title with a name is the signature.
+- "Od: Kancelaria Prawna Lex sp.k." is the sender. It is the appellant only if the appeal has no section "Odwołujący". Before, the law firm became the appellant.
+- A letterhead without the word "Kancelaria" gives the e-mail of the attorney only if it has the surname of the attorney. The letterhead of the appellant does not give an e-mail to the attorney.
+- Four new tests in `tests/test_odwolanie.py`.
+
+The clean test of the complete application (no OCR cache) on the VM and on the laptop gave the same results:
+
+| Test set | Files | F1 |
+|---|---|---|
+| Organizer dev / holdout | 135 / 45 | 1.000 / 1.000 |
+| Organizer negative files | 12 | 1.000 |
+| Real scans val / test | 12 / 18 | 0.992 / 0.992 |
+| All, on the VM with the command of `RUN.md` | 226 | 0.999, in 369 s |
+
+After the fixes, the results do not change on any test set.
+
 ## 2026-11-22 (main): two OCR errors from the test of 300 DPI
 
 The test of 300 DPI (entry below) did not change the layout of the pages. It gave other letter errors, and two rules were not robust:
