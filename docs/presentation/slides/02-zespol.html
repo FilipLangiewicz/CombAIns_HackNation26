@@ -1,0 +1,28 @@
+<section class="slide">
+  <!-- Photos: put a square image into img/team/ with the name from src. Without a file, the circle shows the initials.
+       LinkedIn: put the profile address into href and into the visible text. -->
+  <style>
+    .c2t .team { display: grid; grid-template-columns: repeat(4, 1fr); gap: 48px; margin-top: 110px; }
+    .c2t .person { text-align: center; }
+    .c2t .ph { width: 300px; height: 300px; margin: 0 auto; border-radius: 50%; overflow: hidden; position: relative;
+               background: var(--blue-soft); box-shadow: 0 0 0 10px #fff, 0 0 0 12px var(--line); display: grid; place-items: center; }
+    .c2t .ph span { font-size: 96px; font-weight: 800; color: var(--blue); letter-spacing: -.03em; }
+    .c2t .ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .c2t h3 { font-size: 36px; font-weight: 800; letter-spacing: -.02em; margin-top: 44px; line-height: 1.15; }
+    .c2t a { display: inline-block; margin-top: 14px; font-size: 19px; color: var(--blue); text-decoration: none; font-family: "JetBrains Mono", monospace; }
+    .c2t a:empty { display: none; }
+  </style>
+  <div class="pad c2t">
+    <h2>Zespół <span>CombAIns</span></h2>
+    <div class="team">
+      <div class="person"><div class="ph"><span>FL</span><img src="img/team/filip.jpg" alt="" onerror="this.remove()"></div>
+        <h3>Filip<br>Langiewicz</h3><a href=""></a></div>
+      <div class="person"><div class="ph"><span>MR</span><img src="img/team/mikolaj.jpg" alt="" onerror="this.remove()"></div>
+        <h3>Mikołaj<br>Rowicki</h3><a href=""></a></div>
+      <div class="person"><div class="ph"><span>JP</span><img src="img/team/jakub.jpg" alt="" onerror="this.remove()"></div>
+        <h3>Jakub<br>Półtorak</h3><a href=""></a></div>
+      <div class="person"><div class="ph"><span>MM</span><img src="img/team/maciej.jpg" alt="" onerror="this.remove()"></div>
+        <h3>Maciej<br>Momot</h3><a href=""></a></div>
+    </div>
+  </div>
+</section>
