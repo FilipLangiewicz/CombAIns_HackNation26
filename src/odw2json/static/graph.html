@@ -23,6 +23,9 @@ header .sub { color: var(--muted); font-size: 12px; }
 #docs { display: flex; gap: 6px; padding: 8px 18px; overflow-x: auto; background: var(--panel); border-bottom: 1px solid var(--line); align-items: center; min-height: 44px; }
 .chip { border: 1px solid var(--line); border-radius: 16px; padding: 4px 12px; white-space: nowrap; cursor: pointer; background: var(--bg); font: inherit; color: inherit; }
 .chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.chip .x { margin-left: 6px; padding: 0 4px; border-radius: 8px; color: var(--muted); visibility: hidden; font-weight: 400; }
+.chip:hover .x { visibility: visible; }
+.chip .x:hover { background: var(--line); color: inherit; }
 .muted { color: var(--muted); }
 .view { display: none; }
 .view.on { display: block; }
@@ -132,7 +135,7 @@ function buildGraph() {
   const cx = W / 2, nodes = [], edges = [];
   const add = (id, x, y, w, h, title, sub, kind = "box", cls = "") => nodes.push({ id, x, y, w, h, title, sub, kind, cls });
   add("pdf", cx, 40, 220, 50, "Plik PDF", "input/<sprawa>/<plik>.pdf");
-  add("layer", cx, 135, 300, 74, "Strona ma warstwę tekstową?", `≥ ${P.min_page_chars} znaków na stronie`, "diamond");
+  add("layer", cx, 135, 380, 100, "Strona ma warstwę tekstową?", `≥ ${P.min_page_chars} znaków na stronie`, "diamond");
   add("text", cx - 230, 250, 220, 54, "Tekst z PDF", "pypdfium2");
   add("ocr", cx, 250, 220, 54, "OCR skanu", `RapidOCR, max ${P.max_ocr_pages} str. na start`);
   add("noocr", cx + 230, 250, 200, 54, "Brak OCR", "pusta strona", "box", "empty");
@@ -346,11 +349,22 @@ function drawRules() {
 
 /* ---------- the page ---------- */
 function drawDocs() {
-  if (!DOCS.length) return;
-  $("#docs").innerHTML = DOCS.map((d) => `<button class="chip ${DOC && DOC.id === d.id ? "active" : ""}" data-id="${d.id}">${esc(d.name)} <small class="muted">${esc(d.type_label)}</small></button>`).join("")
+  if (!DOCS.length) {
+    $("#docs").innerHTML = `<span class="muted">Brak przeanalizowanych dokumentów. Dodaj PDF na stronie „Analiza”, aby zobaczyć jego drogę na grafie.</span>`;
+    return;
+  }
+  $("#docs").innerHTML = DOCS.map((d) => `<button class="chip ${DOC && DOC.id === d.id ? "active" : ""}" data-id="${d.id}">${esc(d.name)} <small class="muted">${esc(d.type_label)}</small><span class="x" title="Usuń z historii">×</span></button>`).join("")
     + `<button class="chip ${DOC ? "" : "active"}" data-id="">bez dokumentu</button>`;
   $("#docs").querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => {
     DOC = DOCS.find((d) => d.id === b.dataset.id) || null; drawDocs(); drawGraph(); drawSide();
+  }));
+  $("#docs").querySelectorAll(".chip .x").forEach((x) => x.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    const id = x.parentElement.dataset.id;
+    await fetch("/api/docs/" + id, {method: "DELETE"});
+    DOCS = DOCS.filter((d) => d.id !== id);
+    if (DOC && DOC.id === id) DOC = DOCS[DOCS.length - 1] || null;
+    drawDocs(); drawGraph(); drawSide();
   }));
 }
 

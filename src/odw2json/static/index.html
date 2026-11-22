@@ -25,6 +25,9 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 .chip { border: 1px solid var(--line); border-radius: 16px; padding: 4px 12px; white-space: nowrap; cursor: pointer; background: var(--bg); }
 .chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
 .chip small { color: var(--muted); margin-left: 6px; font-weight: 400; }
+.chip .x { margin-left: 6px; padding: 0 4px; border-radius: 8px; color: var(--muted); visibility: hidden; font-weight: 400; }
+.chip:hover .x { visibility: visible; }
+.chip .x:hover { background: var(--line); color: inherit; }
 main { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; }
 .pane { min-height: 0; overflow: auto; position: relative; }
 #left { border-right: 1px solid var(--line); background: #e9edf3; }
@@ -133,11 +136,28 @@ function addFiles(files) {
 
 function renderDocs() {
   const box = $("docs");
-  if (!docs.length && !pending) return;
+  if (!docs.length && !pending) {
+    box.innerHTML = `<span class="empty">Przeciągnij pliki PDF na stronę lub użyj przycisku.</span>`;
+    return;
+  }
   box.innerHTML = docs.map((d) =>
-    `<div class="chip ${d.id === current ? "active" : ""}" data-id="${d.id}">${esc(d.name)}<small>${esc(d.type_label)}</small></div>`
+    `<div class="chip ${d.id === current ? "active" : ""}" data-id="${d.id}">${esc(d.name)}<small>${esc(d.type_label)}</small><span class="x" title="Usuń z historii">×</span></div>`
   ).join("") + (pending ? `<span class="spin">Analizuję (${pending})… skan z OCR może trwać do minuty</span>` : "");
   box.querySelectorAll(".chip").forEach((c) => c.onclick = () => select(c.dataset.id));
+  box.querySelectorAll(".chip .x").forEach((x) => x.onclick = (e) => { e.stopPropagation(); removeDoc(x.parentElement.dataset.id); });
+}
+
+async function removeDoc(id) {
+  await fetch("/api/docs/" + id, {method: "DELETE"});
+  const i = docs.findIndex((d) => d.id === id);
+  if (i >= 0) docs.splice(i, 1);
+  if (current === id) {
+    current = null;
+    if (docs.length) { select(docs[Math.min(i, docs.length - 1)].id); return; }
+    $("left").innerHTML = `<div class="placeholder">Podgląd dokumentu PDF</div>`;
+    $("right").innerHTML = `<div class="placeholder">Wynik analizy pojawi się tutaj.</div>`;
+  }
+  renderDocs();
 }
 
 function select(id) {

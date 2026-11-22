@@ -121,6 +121,10 @@ class Session:
         self.docs[doc_id] = doc
         return doc
 
+    def remove(self, doc_id: str) -> bool:
+        (self.folder / f"{doc_id}.pdf").unlink(missing_ok=True)
+        return self.docs.pop(doc_id, None) is not None
+
     def close(self) -> None:
         shutil.rmtree(self.folder, ignore_errors=True)
 
@@ -177,6 +181,13 @@ def make_handler(session: Session) -> type[BaseHTTPRequestHandler]:
                 self.send_json(400, {"error": "To nie jest plik PDF"})
                 return
             self.send_json(200, session.add(Path(name).name, content))
+
+        def do_DELETE(self) -> None:
+            match = re.fullmatch(r"/api/docs/(\d+)", urlparse(self.path).path)
+            if match and session.remove(match.group(1)):
+                self.send_json(200, {"ok": True})
+            else:
+                self.send_json(404, {"error": "Nie znaleziono"})
 
     return Handler
 

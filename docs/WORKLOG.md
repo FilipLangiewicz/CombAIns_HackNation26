@@ -2,6 +2,12 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (gui-fixes): remove a document from the history, a larger decision shape
+
+- The list of documents on the pages `/` and `/graph` shows "×" on each document under the mouse. A click removes the document from the history.
+- New request `DELETE /api/docs/<id>` in `gui.py`. It also deletes the PDF file from the temporary folder.
+- The decision shape "Strona ma warstwę tekstową?" on the page `/graph` is larger (380 × 100). Before, it cut the text.
+
 ## 2026-11-22 (main): the name KIOsk
 
 The team selected the name "KIOsk" for the solution.
