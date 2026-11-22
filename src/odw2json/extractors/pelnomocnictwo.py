@@ -151,8 +151,9 @@ def find_company_name(text: str, before: int, cfg: dict) -> tuple[str, int] | No
             or re.search(r"[,:;)(.]$", word)
         ):
             break
-        # The OCR can split a stop word: "PELNOMOCNI CTWO".
-        if k + 1 < len(words) and words[-k - 2] + word in stop:
+        # The OCR can split a stop word into two or three parts: "PELNOMOCNI CTWO", "PELNO MOCNIC TWO".
+        before = words[: len(words) - k - 1]
+        if any("".join(before[len(before) - n :]) + word in stop for n in (1, 2) if len(before) >= n):
             break
         name.append(word)
     if not name:

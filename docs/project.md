@@ -161,14 +161,17 @@ The application uses rules, not an LLM. A solution without an LLM gets the maxim
 
 ### Status (2026-11-22, morning)
 
-The work is in `main`. The results are in `docs/WORKLOG.md`. The last measurement on the test split:
+The work is in `main`. The results are in `docs/WORKLOG.md`. The last measurements:
 
 | Path | Test set | F1 |
 |---|---|---|
-| text | organizer holdout cases | 1.000 |
+| text | organizer dev / holdout cases | 1.000 / 1.000 |
 | text | generator 2 (new layouts), seeds 1, 7, 101 | odwolanie 0.99, pelnomocnictwo 1.00, przelew 1.00 |
-| OCR | test split, all | 0.955 |
-| OCR | real scans 0005-0010 (test split) | 0.892 |
+| OCR | OCR data set, train / val | 0.987 / 0.982 |
+| OCR | complete application, real scans 0001-0004 (val) | 0.992 |
+| OCR | complete application, real scans 0005-0010 (test) | 0.992 |
+
+The team read the errors of the real scans of the test split on 2026-11-22. Thus the test numbers of the real scans are not independent now.
 
 The web interface has the pages `/graph` (the path of a document) and `/rules` (all rules of each type).
 

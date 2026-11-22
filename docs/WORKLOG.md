@@ -2,6 +2,20 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): OCR with 300 DPI for all scans is worse
+
+A test of the complete application on the 30 real scans and the 12 negative files, 4 processes:
+
+| Variant | Real scans val | Real scans test | All |
+|---|---|---|---|
+| 200 DPI, a second OCR with 300 DPI for a weak result (current) | 0.992 | 0.992 | 0.992 |
+| 300 DPI for all scans | 0.966 | 0.984 | 0.977 |
+
+A higher resolution repairs some letters, but it changes the layout of other pages. Example: the appeal 0002 lost the date, the town and the contested action. Thus the current variant stays.
+
+- The run at 300 DPI showed the title "PEŁNOMOCNICTWO" in three parts: "PELNO MOCNIC TWO". `pelnomocnictwo.find_company_name` now joins two or three parts of a stop word.
+- New test in `tests/test_pelnomocnictwo.py`. The other results do not change.
+
 ## 2026-11-22 (main): a second OCR with 300 DPI for a weak result
 
 The real scan 0009 (appeal) gave unreadable text at 200 DPI. At 300 DPI, the OCR read it almost without errors. The OCR at 300 DPI is slower, so the pipeline uses it only for a weak result.

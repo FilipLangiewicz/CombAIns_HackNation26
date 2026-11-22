@@ -280,3 +280,10 @@ def test_declarant_with_both_genders():
     )
     principal = run(text)["mocodawca"][0]
     assert (principal["data"]["imie_nazwisko"], principal["data"]["typ"]) == ("Paweł Brzozowski", "osoba_fizyczna")
+
+
+def test_title_split_into_three_parts():
+    text = (
+        "PELNO MOCNI CTWO\nMedicor IT Solutions S.A., ul. Polna 1, 00-001 Warszawa, KRS: 0000123456, NIP: 5250001234\n"
+    )
+    assert run(text)["mocodawca"][0]["data"]["nazwa"] == "Medicor IT Solutions S.A."
