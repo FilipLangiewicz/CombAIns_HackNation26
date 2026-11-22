@@ -2,6 +2,7 @@ import pytest
 
 from odw2json.classify import load_types
 from odw2json.extractors import odwolanie
+from odw2json.pipeline import process_text
 
 HEADER = """Gdańsk, dnia 3 września 2026 roku
 Prezes Krajowej Izby Odwoławczej
@@ -323,3 +324,59 @@ def test_board_member_in_the_signature_is_not_an_attorney():
     text = ROLE_HEAD + APPELLANT + ROLE_TAIL + "............\nJan Kowalski\nPrezes Zarządu\n"
     row = odwolanie.extract(text, doc_type, {})["Odwolujacy"][0]
     assert row["przez-pelnomocnika"] == 0
+
+
+APPEAL_HEAD = "Warszawa, dnia 14.04.2026 r.\nDo: Prezes Krajowej Izby Odwoławczej\n"
+PROBE_APPELLANT = "Odwołujący:\nAlfa Budowa sp. z o.o.\nul. Leśna 3, 00-950 Warszawa\nNIP: 5250001234\n"
+APPEAL_BODY = "\nODWOŁANIE\nNa podstawie art. 513 Pzp wnoszę odwołanie i zarzucam Zamawiającemu naruszenie art. 226 Pzp.\n"
+ONE_AUTHORITY = "Zamawiający:\nGmina Miasto Kielce\nul. Rynek 1, 25-303 Kielce\nNIP: 6570000001\n"
+
+
+@pytest.mark.parametrize(
+    "block",
+    [
+        "Zamawiający:\n1. Gmina Alfa (Lider), ul. Długa 1, 80-001 Gdańsk, NIP: 9990000002\n"
+        "2. Gmina Beta, ul. Krótka 2, 80-002 Gdańsk, NIP: 9990000004\n",
+        "Zamawiający wspólnie udzielający zamówienia:\nGmina Alfa – Zamawiający prowadzący postępowanie\n"
+        "ul. Długa 1, 80-001 Gdańsk\nNIP: 9990000002\noraz\nGmina Beta\nul. Krótka 2, 80-002 Gdańsk\nNIP: 9990000004\n",
+        "Zamawiający 1: Gmina Alfa, ul. Długa 1, 80-001 Gdańsk, NIP 9990000002 – pełnomocnik Zamawiających"
+        " prowadzący postępowanie\nZamawiający 2: Gmina Beta, ul. Krótka 2, 80-002 Gdańsk, NIP 9990000004\n",
+        "Zamawiający:\na) Gmina Alfa – Lider Zamawiających\nul. Długa 1, 80-001 Gdańsk, NIP: 9990000002\n"
+        "b) Gmina Beta – Partner\nul. Krótka 2, 80-002 Gdańsk, NIP: 9990000004\n",
+        "Zamawiający:\n- Gmina Alfa, ul. Długa 1, 80-001 Gdańsk, NIP: 9990000002\n"
+        "- Gmina Beta, ul. Krótka 2, 80-002 Gdańsk, NIP: 9990000004\nPostępowanie prowadzi Gmina Alfa.\n",
+    ],
+)
+def test_lead_authority_forms(block):
+    data = process_text(APPEAL_HEAD + block + PROBE_APPELLANT + APPEAL_BODY).data
+    assert [(z["nazwa"], z["prowadzacy_postepowanie"]) for z in data["Zamawiajacy"]] == [
+        ("Gmina Alfa", 1),
+        ("Gmina Beta", 0),
+    ]
+
+
+@pytest.mark.parametrize(
+    "block, person, firm",
+    [
+        (
+            "reprezentowany przez:\nadw. Ewa Wójcik – Kancelaria Adwokacka Ewa Wójcik\nul. Mostowa 3, 61-001 Poznań\n",
+            "Ewa Wójcik",
+            "Kancelaria Adwokacka Ewa Wójcik",
+        ),
+        (
+            "Pełnomocnik:\nr.pr. Michał Szymański\nSzymański Dąbrowski Kancelaria Prawna sp.p.\nul. Ogrodowa 8, 90-001 Łódź\n",
+            "Michał Szymański",
+            "Szymański Dąbrowski Kancelaria Prawna sp.p.",
+        ),
+        (
+            "reprezentowany przez pełnomocnika radcę prawnego Krzysztofa Kozłowskiego z Kancelarii Radcy Prawnego"
+            " Krzysztof Kozłowski, ul. Lipowa 6, 20-001 Lublin\n",
+            "Krzysztof Kozłowski",
+            "Kancelaria Radcy Prawnego Krzysztof Kozłowski",
+        ),
+    ],
+)
+def test_attorney_firm_forms(block, person, firm):
+    data = process_text(APPEAL_HEAD + ONE_AUTHORITY + PROBE_APPELLANT + block + APPEAL_BODY).data
+    attorney = data["Odwolujacy"][0]["pelnomocnik"]
+    assert (attorney["imie_nazwisko"], attorney["nazwa"]) == (person, firm)

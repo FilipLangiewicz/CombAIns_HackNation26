@@ -84,15 +84,22 @@ def _head(text: str) -> str:
 
 ROLE_TAG_RE = re.compile(
     r"\(\s*(?:zamawiając|lider|partner|uczestni|prowadząc|odwołując|wykonawc|pełnomocnik|koordynator|wiodąc)[^()]{0,80}\)"
-    r"|\s[–—-]\s(?:lider|partner)\w*(?:\s*,\s*prowadząc\w+\s+postępowani\w+)?"
+    r"|\s[–—-]\s(?:lider|partner)\w*(?:\s+zamawiając\w*)?(?:\s*,?\s*prowadząc\w+\s+postępowani\w+)?"
+    r"|\s[–—-]\s(?:zamawiając\w*\s+)?(?:prowadząc|wiodąc)\w*(?:\s+postępowani\w*)?"
+    r"|\s[–—-]\s(?:pełnomocnik\w*\s+zamawiając\w*)(?:\s+prowadząc\w*\s+postępowani\w*)?"
     r"|\s[–—-]\s(?:upoważnion\w*|prowadząc\w*)\s+(?:do\s+)?\w*\s*postępowani\w*"
     r"|\bRola\s*:\s*.*?(?=\s(?:NIP|KRS|REGON|Adres)\s*:|$)",
     I,
 )
 NAME_LABEL_RE = re.compile(r"\b(?:Adres(?:\s+siedziby)?|Siedziba)\s*:\s*$", I)
+# A list number or a joining word before the name of a party: "1.", "2)", "a)", "•", "oraz".
+LIST_MARK_RE = re.compile(r"^\s*(?:(?:\d{1,2}[.)]|[a-h]\)|[•·])\s*|oraz\s+|i\s+(?=[A-ZŁŚŻŹĆ]))+")
 LEAD_WORD_RE = re.compile(
     r"\b(?:lider\w*|prowadząc\w+|wiodąc\w*|koordynator\w*|pełnomocnik\w*\s+zamawiając\w*|upoważnion\w*)\b", I
 )
+
+
+LEAD_SENTENCE_RE = re.compile(r"\bpostępowanie\s+prowadzi\s*:?\s*(.{5,120})", I)
 
 
 # --- sections of the header ------------------------------------------------------
@@ -164,7 +171,7 @@ def split_entities(section: str) -> list[dict]:
         lead, _, name = raw.rpartition(":") if ":" in raw else ("", "", raw)
         marker = list(re.finditer(r"\d+\)", lead))
         role = (lead[marker[-1].end() :] if marker else lead) + " " + label_role
-        name = re.sub(r"^\s*\d+\)\s*", "", name.lstrip(" ,;.–-"))
+        name = LIST_MARK_RE.sub("", name.lstrip(" ,;.–-"))
         name = re.sub(r"^(?:Działając\s+)?w\s+imieniu\s+(?:wykonawcy\s+)?", "", name.strip(), flags=I)
         name = name.strip(" ,;-")
         # A sole trader: "Jan Nowak prowadzący działalność gospodarczą pod firmą NOWAK-BUD Jan Nowak".
@@ -231,7 +238,9 @@ def find_person(after: str) -> tuple[str, int] | None:
     if not person:
         return None
     words = person.group(0).split()
-    if len(words) == 3 and FIRM_START_RE.match(after, person.end()):
+    # The surnames of the partners can stand before the firm word: "Szymański Dąbrowski Kancelaria".
+    partners = re.compile(rf"(?-i:(?:\s+{NAME_WORD}){{0,2}})(?:{FIRM_START_RE.pattern})", I)
+    if len(words) == 3 and partners.match(after, person.end()):
         # The flat text joins the name and the next line: the third word is the start of the firm.
         end = pos + person.group(0).rindex(words[2])
         return " ".join(words[:2]), end - 1
@@ -253,7 +262,9 @@ def find_firm(region: str, name_end: int) -> str | None:
             and cand[0].isupper()
             and not re.match(rf"{TITLE}|ul\.|al\.|e-?mail|tel|ustanow", cand, I)
         ):
-            return cand
+            # The flat text joins the firm and the address of the next line.
+            street = STREET_RE.search(cand)
+            return cand[: street.start()].strip() if street else cand
     m = re.search(
         rf"(?<![@.\w])(?-i:Kancelari)\w+(?!\s*:)\b.*?(?=\s*(?:,|\(|;)|\s+e-?mail\b|\s+tel\b|\s+adres\b|\s+[\w.\-]+@|\s+{STREET}|$)",
         region,
@@ -265,6 +276,7 @@ def find_firm(region: str, name_end: int) -> str | None:
         before = re.search(rf"(?:(?<=[\s,])|^)((?:(?:{NAME_WORD}|i|&)\s+){{1,4}})$", gap)
         names = before.group(1) if before and not TITLES_RE.search(before.group(1)) else ""
         names = "" if re.search(r"\b(?:Pełnomocnik|Odwołując|Wykonawc)", names, I) else names
+        # "z Kancelarii Radcy Prawnego ..." gives the name in the nominative: "Kancelaria Radcy Prawnego ...".
         return (names + m.group(0)).strip(" ,;")
     return None
 
@@ -305,6 +317,8 @@ def parse_attorney(
     # The text of the attorney ends where the next attorney or the text of the next section starts.
     firm = find_firm(after, person[1] if person else 0)
     if firm:
+        # "z Kancelarii Radcy Prawnego ..." gives the name in the nominative: "Kancelaria Radcy Prawnego ...".
+        firm = re.sub(r"^(?-i:Kancelari)(?:i|ą|ę)\b", "Kancelaria", firm)
         pn["nazwa"] = firm
         evidence["Odwolujacy[0].pelnomocnik.nazwa"] = firm
     mail = common.EMAIL_RE.search(after)
@@ -581,6 +595,10 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
 
     authorities = unique([e for k, s in sections if k == "zamawiajacy" for e in split_entities(s)])
     many = len(authorities) > 1
+    lead_sentence = LEAD_SENTENCE_RE.search(head)
+    for entity in authorities if many and lead_sentence else ():
+        if entity["name"][:15].lower() in lead_sentence.group(1).lower():
+            entity["role"] += " prowadzący"
     for i, entity in enumerate(authorities):
         row = entity_fields(entity, f"Zamawiajacy[{i}]", evidence)
         row["prowadzacy_postepowanie"] = None

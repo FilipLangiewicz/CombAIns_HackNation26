@@ -2,6 +2,26 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): more forms of the authorities and of the law firm in the appeal
+
+New probe texts showed these errors. The fixes are in `extractors/odwolanie.py`. Eight new tests in `tests/test_odwolanie.py` fail with the old code.
+
+- A list mark before the name of a party ("1.", "a)", "-", "oraz") is not a part of the name.
+- New role tags after a dash: "– Lider Zamawiających", "– Zamawiający prowadzący postępowanie", "– pełnomocnik Zamawiających prowadzący postępowanie".
+- The sentence "Postępowanie prowadzi Gmina Alfa." marks the lead authority.
+- The name of a law firm does not take the address of the next line.
+- The surnames of the partners before "Kancelaria" are not a part of the name of the attorney.
+- "z Kancelarii ..." gives the firm in the nominative: "Kancelaria ...".
+
+| Test set | Before | After |
+|---|---|---|
+| Organizer dev / holdout (text) | 1.000 / 1.000 | 1.000 / 1.000 |
+| Generator 1, seeds 1 to 3, `odwolanie` | 1.000 / 0.999 / 0.992 | 1.000 / 0.999 / 0.992 |
+| OCR train / val | 0.9826 / 0.9735 | 0.9826 / 0.9742 |
+| Generator 2, `odwolanie`, seeds 1, 7, 101 (final test) | 0.927 / 0.932 / 0.918 | 0.927 / 0.932 / 0.918 |
+
+Generator 2 does not change. Its errors come from other layouts than the probe texts.
+
 ## 2026-11-22 (main): tables with a label and a value in the OCR text
 
 - `ocr.boxes_to_lines`: two or more rows with two parts are two columns, for example two signature blocks. Now a table with a label without digits at the left and a value with digits at the right stays in rows. Bank confirmations have such tables.
