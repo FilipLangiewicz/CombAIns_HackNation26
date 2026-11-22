@@ -18,6 +18,8 @@
 @page { size: 1920px 1080px; margin: 0; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: "Plus Jakarta Sans", sans-serif; color: var(--ink); background: #fff; }
+/* Even line lengths: no single word on the last line of a short text. */
+p, li, td, figcaption, .note, .lbl, .small, h2, h3, h4 { text-wrap: pretty; }
 .mono, code, pre { font-family: "JetBrains Mono", monospace; }
 
 .slide { width: 1920px; height: 1080px; position: relative; overflow: hidden; page-break-after: always; background: #fff; }
@@ -34,7 +36,7 @@ body { font-family: "Plus Jakarta Sans", sans-serif; color: var(--ink); backgrou
 h2 { font-size: 72px; font-weight: 800; letter-spacing: -.03em; line-height: 1.05; }
 h2 span, .accent { color: var(--blue); }
 .dark h2 span { color: var(--blue-2); }
-.lead { font-size: 30px; color: var(--muted); margin-top: 24px; line-height: 1.4; max-width: 1250px; }
+.lead { font-size: 30px; color: var(--muted); margin-top: 24px; line-height: 1.4; max-width: 1560px; text-wrap: balance; }
 .dark .lead { color: #c9d6f0; }
 p.body { font-size: 26px; line-height: 1.5; color: var(--ink); }
 .small { font-size: 19px; color: var(--muted); line-height: 1.45; }

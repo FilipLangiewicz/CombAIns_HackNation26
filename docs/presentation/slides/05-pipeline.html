@@ -6,8 +6,8 @@
     .c4 .safe code { color: var(--blue); font-weight: 600; }
   </style>
   <div class="pad c4">
-    <h2>Pipeline: <span>pięć kroków</span> od PDF do JSON</h2>
-    <p class="lead">Każdy krok to osobny moduł w <span class="mono">src/odw2json/</span>. Każda wartość w wyniku zachowuje swój fragment źródłowy.</p>
+    <h2>Przetwarzanie dokumentu w pięciu krokach</h2>
+    <p class="lead">Każdy krok to osobny moduł w <span class="mono">src/odw2json/</span>. Każda wartość w wyniku ma zapisany fragment tekstu, z którego pochodzi.</p>
     <div class="flow" style="margin-top: 90px;">
       <div class="st on"><div class="dot">1</div><h3>Odczyt</h3><p>Warstwa tekstowa PDF. Strona bez tekstu trafia do OCR.</p><div class="tech">pypdfium2 · RapidOCR</div></div>
       <div class="st on"><div class="dot">2</div><h3>Klasyfikacja</h3><p>Reguły z wagami dla każdego typu. Wygrywa najwyższa suma powyżej progu.</p><div class="tech">config/types/*.yaml</div></div>
@@ -16,7 +16,7 @@
       <div class="st on"><div class="dot">5</div><h3>JSON + źródło</h3><p>Plik zgodny ze strukturą organizatora i ślad każdej wartości dla GUI.</p><div class="tech">output/&lt;sprawa&gt;/*.json</div></div>
     </div>
     <div class="safe">
-      <h4>Bezpieczna porażka</h4>
+      <h4>Braki i błędy</h4>
       <div>Brak wartości w dokumencie → <code>null</code>, nic nie zmyślamy</div>
       <div>Żaden typ nie osiąga progu → <code>{}</code></div>
       <div>Błąd jednego pliku nie zatrzymuje pozostałych</div>
