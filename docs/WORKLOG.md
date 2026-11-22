@@ -2,6 +2,20 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): tests for the classification of similar documents
+
+- New file `tests/test_classify.py`: 20 short texts that look like an appeal, a power of attorney or a bank confirmation, but are of no known type. Also 6 known documents in other forms.
+- `config/types/odwolanie.yaml`: two new rules. A title in a sentence ("Odwołanie od czynności ...") and "wnoszę odwołanie" count for an appeal.
+- Before the change, an appeal with the title in a sentence had no type.
+
+| Test set | Before | After |
+|---|---|---|
+| Organizer dev / holdout (text) | 1.000 / 1.000 | 1.000 / 1.000 |
+| 12 negative documents of the organizer | 0 with a type | 0 with a type |
+| Generator 1, seeds 1 to 3 | no change | no change |
+| OCR report, all splits | no change | no change |
+| Generator 2, seed 1, `odwolanie` | 0.927 | 0.927 |
+
 ## 2026-11-22 (main): the deployment on the VM
 
 - New file `docs/deployment.md`: the rules of the organizer, the VM, the update procedure and the test results.

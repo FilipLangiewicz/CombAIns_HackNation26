@@ -23,6 +23,9 @@ classify:
     - {pattern: '^\s*Do\s*:\s*(?:Prezes\w*\s+)?Krajow\w+\s+Izb', weight: 2, where: head}
     - {pattern: '^\s*Przeciwko\s*:', weight: 2, where: head}
     - {pattern: 'Zaskarżon\w+\s+czynnoś|Przedmiot\s+odwołania', weight: 1, where: head}
+    # A title in a sentence: "Odwołanie od czynności Zamawiającego w postępowaniu ...".
+    - {pattern: '(?-i:^\s*Odwołanie\s+(?:od|wobec|na)\s+(?:czynnoś|zaniechan|niezgodn))', weight: 3, where: head}
+    - {pattern: '\bwnosz\w*\s+(?:niniejsze\s+)?odwołanie\b', weight: 2, where: head}
     # The answer of the contracting authority and other letters also contain these words.
     - {pattern: 'odpowiedź\s+na\s+odwołanie', weight: -10, where: head}
     - {pattern: '^\s*(?:ODPOWIEDŹ|ZAWIADOMIENIE|WEZWANIE|PRZYSTĄPIENIE|STANOWISKO)\b', weight: -10, where: start}
