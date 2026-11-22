@@ -285,14 +285,14 @@ function drawSide() {
     }
     h += `<p><a href="/rules#${t.name}">Wszystkie zasady typu →</a></p>`;
   } else if (id === "unknown") {
-    h = `<h2>Nieznany typ</h2><p>Jeśli żaden typ nie osiąga swojego progu punktów, aplikacja zapisuje plik JSON z treścią <code>{}</code>. Tak wymaga organizator.</p>`;
+    h = `<h2>Nieznany typ</h2><p>Jeśli żaden typ nie osiąga swojego progu punktów, aplikacja zapisuje plik JSON z treścią <code>{}</code>.</p>`;
     if (d && !d.doc_type) h += `<h3>Dlaczego ten dokument</h3><table><tr><th>Typ</th><th>Punkty</th><th>Próg</th></tr>${P.types.map((t) => `<tr><td>${esc(t.label)}</td><td>${fmt(d.scores[t.name] ?? 0)}</td><td>${fmt(t.min_score)}</td></tr>`).join("")}</table>`;
   } else if (id === "validate") {
     h = `<h2>Walidacja pól</h2><p>Klucz <code>validate</code> każdego typu podaje formę pola (data, kwota, liczba cyfr, wyrażenie regularne). Wartość, która nie ma poprawnej formy, staje się <code>null</code>: lepiej nie podać wartości niż podać błędną.</p>
       ${P.types.map((t) => `<h3>${esc(t.label)}</h3><table><tr><th>Pole</th><th>Reguła</th></tr>${(t.config.validate || []).map((v) => `<tr><td class="mono">${esc(v.path)}</td><td class="mono">${esc(Object.entries(v).filter(([k]) => k !== "path").map(([k, x]) => `${k}: ${Array.isArray(x) ? x.join(", ") : x}`).join("; "))}</td></tr>`).join("")}</table>`).join("")}`;
     if (d && d.doc_type) h += `<h3>Wybrany dokument</h3>${d.warnings.length ? `<ul>${d.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>` : "<p>Wszystkie wartości mają poprawną formę.</p>"}`;
   } else if (id === "json") {
-    h = `<h2>Plik JSON</h2><p>Struktura dokładnie według organizatora: bez dodatkowych pól. Brak wartości to <code>null</code>.</p>`;
+    h = `<h2>Plik JSON</h2><p>Plik ma tylko pola ze struktury typu. Brak wartości to <code>null</code>.</p>`;
     if (d) h += `<h3>Wynik wybranego dokumentu</h3><pre>${esc(JSON.stringify(d.doc_type ? d.data : {}, null, 2))}</pre>`;
   }
   side.innerHTML = h;
