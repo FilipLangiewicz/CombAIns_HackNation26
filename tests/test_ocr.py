@@ -81,3 +81,7 @@ def test_repair_legal_form_keeps_the_case():
     assert repair("Nordenix Automatyka Sp. z 0.0.") == "Nordenix Automatyka Sp. z o.o."
     assert repair("ALFA SP. Z 0.0.") == "ALFA SP. Z O.O."
     assert repair("Beta sp.z o.0.") == "Beta sp. z o.o."
+
+
+def test_repair_comma_in_email():
+    assert repair_emails("e-mail: a,wrobel@wrobel-kancelaria.example") == "e-mail: a.wrobel@wrobel-kancelaria.example"

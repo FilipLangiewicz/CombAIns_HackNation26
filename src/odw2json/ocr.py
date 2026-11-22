@@ -276,6 +276,8 @@ TOP_DOMAINS = {"pl", "com", "eu", "org", "net", "info", "biz", "gov", "edu", "ex
 def repair_emails(text: str) -> str:
     """Remove the spaces that the OCR puts into an e-mail address."""
     text = re.sub(r"(?<=\w)[ \t]*@[ \t]*(?=\w)", "@", text)
+    # A comma for a dot in the first part: "a,wrobel@firma.pl".
+    text = re.sub(r"(?<=\b[a-z]),(?=[a-z][\w.\-]*@)", ".", text)
     # A short part before the address: "bi uro@firma.pl".
     text = re.sub(r"(?<=[\s,:])([a-z]{1,3}) (?=[\w.\-]+@[\w\-]+\.)", r"\1", text)
 

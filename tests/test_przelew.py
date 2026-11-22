@@ -170,3 +170,8 @@ def test_domestic_transfer_printout():
     result = process_text(text)
     assert result.doc_type == "przelew"
     assert result.data["przelew_bankowy"]["tytul"] == "opłata skarbowa od pełnomocnictwa"
+
+
+def test_label_with_the_second_word_on_the_next_line():
+    box = run("Potwierdzenie przelewu\nKwota 10 000,00 PLN\nprzelewu\nNumer 305494\ntransakcji\n")
+    assert (box["numer_transakcji"], box["kwota"]) == ("305494", 10000.0)

@@ -549,3 +549,26 @@ def test_firm_in_letterhead():
         "nazwa": "Kancelaria Prawa Zamówień Publicznych Kamiński sp.k.",
         "mail": "kaminski@adwokat.pl",
     }
+
+
+def test_bzp_number_without_slash():
+    assert odwolanie.parse_procurement("ogłoszenie o zamówieniu nr 2026 BZP 00239965/01", {})["numer_bzp"] == (
+        "2026/BZP00239965/01"
+    )
+
+
+def test_listed_action_after_a_page_footer():
+    text = (
+        APPEAL_HEAD + ONE_AUTHORITY + PROBE_APPELLANT + "\nODWOŁANIE\nwnoszę odwołanie wobec:\n"
+        "Siedziba: ul. Leśna 106A, 15-715 Białystok\nWPŁYNĘŁO\n1\n"
+        "1. czynności wykluczenia Odwołującego z postępowania, o której Zamawiający zawiadomił w dniu 10.04.2026 r.;\n"
+        "2. dokonania oceny ofert;\nZarzucam naruszenie:\n1) art. 226 Pzp poprzez zaniechanie odrzucenia oferty;\n"
+    )
+    kio = process_text(text).data["OdwolanieKIO"]
+    assert (kio["czynnosc_powod_id"], kio["czynnosc_dzien"]) == (3, "2026-04-10")
+
+
+def test_attorney_after_a_dot():
+    block = "reprezentowany przez.pełnomocnika:\nradca prawny Andrzej Wróbel\n"
+    data = process_text(APPEAL_HEAD + ONE_AUTHORITY + PROBE_APPELLANT + block + APPEAL_BODY).data
+    assert data["Odwolujacy"][0]["pelnomocnik"]["imie_nazwisko"] == "Andrzej Wróbel"

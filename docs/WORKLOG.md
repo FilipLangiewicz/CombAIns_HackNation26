@@ -2,6 +2,27 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-22 (main): more edge cases from the real scans
+
+The errors come from the real scans of the test split (see the entry below). All fixes are general.
+
+- `odwolanie.LISTED_ACTION_RE`: a page footer or a stamp can stand between "wnoszę odwołanie wobec:" and the first item. Example: "Siedziba: ... WPŁYNĘŁO 1 1. czynności ...".
+- `odwolanie.parse_procurement`: the OCR can lose the slash in the BZP number: "2026 BZP 00239965/01".
+- `odwolanie.ANCHOR_RE`: "reprezentowany przez.pełnomocnika:" with a dot.
+- `ocr.repair_emails`: a comma for a dot before "@": "a,wrobel@...".
+- `pelnomocnictwo.find_attorneys`: a name with a PESEL in parentheses is an attorney: "Anna Nowak (pracownik Mocodawcy, PESEL: ...) oraz Piotr Wróbel (...)".
+- `pelnomocnictwo.find_declarant`: "niżej podpisany/a Jan Nowak".
+- `przelew.join_label_tails`: the second word of a label can stand on the next line, in small letters: "Numer 305494" and then "transakcji".
+- New tests for each case.
+
+| Test set | Before | After |
+|---|---|---|
+| Organizer dev / holdout (text) | 1.000 / 1.000 | 1.000 / 1.000 |
+| Generator 1 and 2 | no change | no change |
+| OCR train / val | 0.9873 / 0.9804 | 0.9874 / 0.9811 |
+| OCR test, all (not independent now) | 0.9612 | 0.9666 |
+| OCR real scans 0005-0010 (not independent now) | 0.935 | 0.984 |
+
 ## 2026-11-22 (main): edge cases from the real scans of the test split
 
 The team decided to read the errors of the real scans 0005-0010 (test split). The hidden test set of the jury has documents of the same kind. From now on, the test split is not an independent measurement. Each fix must be general and must not change the results of the other test sets.

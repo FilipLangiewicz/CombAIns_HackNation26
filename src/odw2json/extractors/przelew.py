@@ -39,6 +39,24 @@ def prepare_lines(text: str) -> list[str]:
     return lines
 
 
+# The second word of a label can stand on the next line: "Numer 305494" and then "transakcji".
+LABEL_TAIL = re.compile(
+    r"(?:transakcji|operacji|przelewu|wykonania|realizacji|księgowania|nadawcy|odbiorcy|zleceniodawcy|płatności)",
+)
+
+
+def join_label_tails(lines: list[str]) -> list[str]:
+    out: list[str] = []
+    for line in lines:
+        # Only a tail in small letters after a line without a colon. "Odbiorcy:" is a heading of its own.
+        if out and LABEL_TAIL.fullmatch(line) and re.match(r"[A-ZŁŚŻŹĆ][a-ząćęłńóśźż]+\b(?!.*:)", out[-1]):
+            first, _, rest = out[-1].partition(" ")
+            out[-1] = f"{first} {line} {rest}".strip()
+        else:
+            out.append(line)
+    return out
+
+
 def is_label_only(line: str, patterns: list[str]) -> bool:
     """A short line with a label and without a value."""
     text = line.rstrip(": ")
@@ -253,7 +271,7 @@ def extract(text: str, doc_type: DocType, evidence: dict[str, str]) -> dict:
         for key in ("data_operacji", "kwota", "numer_transakcji", "tytul", "z_rachunku", "na_rachunek", "other")
         for p in (labels.get(key, []))
     ]
-    lines = merge_columns(prepare_lines(text), label_patterns, labels)
+    lines = merge_columns(join_label_tails(prepare_lines(text)), label_patterns, labels)
 
     def put(name: str, found) -> None:
         if found:

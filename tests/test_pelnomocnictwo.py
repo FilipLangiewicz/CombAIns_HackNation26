@@ -259,3 +259,24 @@ def test_signer_belongs_to_the_company_that_names_him():
     )
     signers = [[s["imie_nazwisko"] for s in m["podpisujacy"]] for m in run(text)["mocodawca"]]
     assert signers == [["Dorota Grabowska"], ["Łukasz Sosnowski"]]
+
+
+def test_employees_with_pesel_are_attorneys():
+    text = (
+        "PEŁNOMOCNICTWO\nAsterion Drogi i Mosty sp. z o.o., KRS: 9996316141, NIP: 999-429-54-20, niniejszym udziela "
+        "Pełnomocnictwo:\nAnna Topolska (pracownik Mocodawcy, PESEL: 68091502944) oraz Piotr Wróbel (pracownik\n"
+        "Mocodawcy, PESEL: 82070226436),\ndo reprezentowania Mocodawcy.\n"
+    )
+    assert run(text)["pelnomocnicy"] == [
+        {"imie_nazwisko": "Anna Topolska", "pesel": "68091502944"},
+        {"imie_nazwisko": "Piotr Wróbel", "pesel": "82070226436"},
+    ]
+
+
+def test_declarant_with_both_genders():
+    text = (
+        "PEŁNOMOCNICTWO\nJa, niżej podpisany/a Paweł Brzozowski, prowadzący/a działalność gospodarczą pod firmą Paweł "
+        "Brzozowski Asterion, ul. Łąkowa 45B, 80-822 Gdańsk, NIP: 999-663-55-12, udziela pełnomocnictwa adw. Monika Zawadzka.\n"
+    )
+    principal = run(text)["mocodawca"][0]
+    assert (principal["data"]["imie_nazwisko"], principal["data"]["typ"]) == ("Paweł Brzozowski", "osoba_fizyczna")

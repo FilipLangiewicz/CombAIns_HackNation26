@@ -256,7 +256,7 @@ def entity_fields(entity: dict, path: str, evidence: dict[str, str]) -> dict:
 TITLE = r"(?:adw\.|r\.\s*pr\.|radc\w*\s+prawn\w+|adwokat\w*|mec\.|apl\.\s*(?:radc\.|adw\.)?)"
 TITLES_RE = re.compile(rf"(?:{TITLE}\s+)+", I)
 ANCHOR_RE = re.compile(
-    r"(?P<rep>reprezentowan\w*\s+przez(?:\s+(?:swo\w+\s+)?pełnomocnik\w*\s*:?)?)|działa\w*\s+(?:przez|jako)\s+(?:ustanowion\w+\s+)?pełnomocnik\w*"
+    r"(?P<rep>reprezentowan\w*\s+przez(?:[\s.]+(?:swo\w+\s+)?pełnomocnik\w*\s*:?)?)|działa\w*\s+(?:przez|jako)\s+(?:ustanowion\w+\s+)?pełnomocnik\w*"
     r"|(?<!bez )pełnomocnik\w*(?:\s+(?:wykonawcy|Odwołującego))?",
     I,
 )
@@ -416,7 +416,10 @@ def find_place_and_date(head: str) -> tuple[str | None, str | None, str | None]:
 # --- the contested action ----------------------------------------------------------
 
 
-LISTED_ACTION_RE = re.compile(r"wnoszę\s+odwołanie\s+(?:wobec|od)\s*:?\s*1\s*[.)]\s*(.*?)(?=;|\s2\s*[.)]\s)", I)
+# A page footer or a stamp can stand between "wobec:" and the first item: "wobec: Siedziba: ... WPŁYNĘŁO 1 1. czynności".
+LISTED_ACTION_RE = re.compile(
+    r"wnoszę\s+odwołanie\s+(?:wobec|od)\s*:?(?:\s*|:\s.{0,300}?\s)(?<!\d\.)1\s*[.)]\s*(.*?)(?=;|\s2\s*[.)]\s)", I
+)
 
 
 def listed_first_action(text: str) -> str | None:
@@ -517,7 +520,8 @@ def parse_procurement(block: str, evidence: dict[str, str]) -> dict:
     block = common.normalize_spaces(block)
     out: dict = {}
     sources: dict[str, str] = {}
-    m = re.search(r"(\d{4})\s*/\s*BZP\s*(\d{8})(\s*/\s*\d{1,3})?", block, I)
+    # The OCR can lose the slash after the year: "2026 BZP 00239965/01".
+    m = re.search(r"(20\d{2})\s*/?\s*BZP\s*(\d{8})(\s*/\s*\d{1,3})?", block, I)
     out["numer_bzp"] = f"{m.group(1)}/BZP{m.group(2)}{(m.group(3) or '').replace(' ', '')}" if m else None
     sources["numer_bzp"] = m.group(0) if m else ""
     m = re.search(r"(\d{4})\s*/\s*S\s*(\d{3})\s*-\s*(\d{6})", block)

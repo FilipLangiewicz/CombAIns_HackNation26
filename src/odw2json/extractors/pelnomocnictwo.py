@@ -38,6 +38,11 @@ def find_attorneys(text: str, cfg: dict, evidence: dict[str, str], signers: set[
         known = common.to_nominative(m.group(1)).split()[0] in masc | fem  # not "Kancelaria Adwokacka adw."
         if known and not any(s <= m.start(1) < e for s, e, _, _ in candidates):
             candidates.append((m.start(), m.end(), m.group(1), m.group(0)))
+    # A PESEL in parentheses after the name: "Anna Nowak (pracownik Mocodawcy, PESEL: 68091502944)".
+    for m in re.finditer(rf"({NAME})\s*\([^()]{{0,60}}PESEL", text):
+        known = common.to_nominative(m.group(1)).split()[0] in masc | fem
+        if known and not any(s <= m.start(1) < e for s, e, _, _ in candidates):
+            candidates.append((m.start(), m.end(1), m.group(1), m.group(0)))
     # A form: the name on one line and the profession on the next line.
     for m in re.finditer(rf"({NAME})[ \t]*\n[ \t]*(?:Zawód|Tytuł zawodowy)\s*:", text):
         candidates.append((m.start(), m.end(), m.group(1), m.group(0)))
@@ -157,7 +162,7 @@ def find_company_name(text: str, before: int, cfg: dict) -> tuple[str, int] | No
 
 
 def find_declarant(text: str) -> re.Match | None:
-    return re.search(rf"niżej\s+podpisan\w*\s+({NAME})\s*,", text)
+    return re.search(rf"niżej\s+podpisan\w*(?:\s*/\s*\w{{1,3}}|\(\w{{1,3}}\))?\s+({NAME})\s*,", text)
 
 
 def declarant_is_legal(text: str, m: re.Match, cfg: dict) -> bool:
