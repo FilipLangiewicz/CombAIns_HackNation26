@@ -35,7 +35,3 @@ To process a case with Docker, do these steps:
 3. Read the JSON files in `output/<case>/`.
 
 To start the web interface on http://127.0.0.1:8000, run `docker compose up`.
-
-## License
-
-[MIT](LICENSE)
