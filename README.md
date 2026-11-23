@@ -60,25 +60,6 @@ To run the application with Python 3.13, do these steps:
 
 Use `--input`, `--output` and `--workers` to change the folders and the number of processes.
 
-## Development
-
-To run the tests, do these steps:
-
-1. Make the environment with [uv](https://docs.astral.sh/uv/):
-
-   ```bash
-   uv venv --python 3.13 .venv
-   uv pip sync --python .venv requirements-dev.txt
-   ```
-
-2. Run the tests:
-
-   ```bash
-   .venv/bin/python -m pytest
-   ```
-
-The documentation is in `docs/`. The slides are in [`docs/presentation/CombAIns.pdf`](docs/presentation/CombAIns.pdf).
-
 ## License
 
 [MIT](LICENSE)
