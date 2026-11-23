@@ -1,6 +1,6 @@
 # KIOsk
 
-KIOsk reads the PDF documents of a KIO appeal case and writes one JSON file for each document. It was made for the challenge "Odwołania2json" of HackNation 2026.
+KIOsk reads the PDF documents of a KIO appeal case and writes one JSON file for each document.
 
 ![The analysis page: the PDF file and the extracted fields with their source text](docs/presentation/img/analiza.png)
 
@@ -19,7 +19,7 @@ All measurements ran on a CPU without a GPU.
 
 | Test set | Files | F1 |
 |---|---|---|
-| All PDF files of the challenge | 226 | 0.999 |
+| All test PDF files | 226 | 0.999 |
 | Documents with a text layer, dev / holdout | 135 / 45 | 1.000 / 1.000 |
 | Real scans (OCR) | 30 | 0.992 |
 | Documents of an unknown type (expected `{}`) | 12 | 1.000 |
@@ -62,7 +62,7 @@ Use `--input`, `--output` and `--workers` to change the folders and the number o
 
 ## Development
 
-To measure the quality, do these steps:
+To run the tests, do these steps:
 
 1. Make the environment with [uv](https://docs.astral.sh/uv/):
 
@@ -71,17 +71,10 @@ To measure the quality, do these steps:
    uv pip sync --python .venv requirements-dev.txt
    ```
 
-2. Get the data of the organizer:
-
-   ```bash
-   git clone https://github.com/Urzad-Zamowien-Publicznych/hacknation-2026.git data/uzp
-   ```
-
-3. Run the tests and the evaluation:
+2. Run the tests:
 
    ```bash
    .venv/bin/python -m pytest
-   PYTHONPATH=src .venv/bin/python -m odw2json.evaluate --split dev --errors
    ```
 
 The documentation is in `docs/`. The slides are in [`docs/presentation/CombAIns.pdf`](docs/presentation/CombAIns.pdf).
