@@ -6,6 +6,7 @@ Add new entries at the top. Each entry has the date, the branch and the changes.
 
 - New file `LICENSE`: the MIT license.
 - New `README.md`: a short English text with badges and screenshots. It has no links to `CLAUDE.md`.
+- A new screenshot in `docs/presentation/img/analiza.png`: the PDF file is larger and easier to read.
 - Removed `docs/presentation/deck.pdf` and `deck.pptx`. The final slides are in `CombAIns.pdf`. Git ignores the two generated files.
 
 ## 2026-11-22 (main): the results and Docker in the README file

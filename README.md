@@ -1,9 +1,4 @@
-# ⚖️ KIOsk
-
-![Python 3.13](https://img.shields.io/badge/python-3.13-blue)
-![F1 0.999](https://img.shields.io/badge/F1-0.999-brightgreen)
-![No LLM](https://img.shields.io/badge/LLM-not%20used-lightgrey)
-![License MIT](https://img.shields.io/badge/license-MIT-green)
+# KIOsk
 
 KIOsk reads the PDF documents of a KIO appeal case and writes one JSON file for each document. It was made for the challenge "Odwołania2json" of HackNation 2026.
 
