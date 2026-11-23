@@ -36,30 +36,6 @@ To process a case with Docker, do these steps:
 
 To start the web interface on http://127.0.0.1:8000, run `docker compose up`.
 
-## Run without Docker
-
-To run the application with Python 3.13, do these steps:
-
-1. Install the packages:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. Process the files in `input/`:
-
-   ```bash
-   python main.py
-   ```
-
-3. Or start the web interface:
-
-   ```bash
-   python main.py --gui
-   ```
-
-Use `--input`, `--output` and `--workers` to change the folders and the number of processes.
-
 ## License
 
 [MIT](LICENSE)
