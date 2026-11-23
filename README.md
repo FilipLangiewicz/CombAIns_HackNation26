@@ -1,10 +1,22 @@
-# KIOsk: Odwołania2json
+# ⚖️ KIOsk
 
-KIOsk is the solution of the team CombAIns for the challenge "Odwołania2json" of HackNation 2026. The application reads the PDF documents of a KIO appeal case and writes one JSON file for each document.
+![Python 3.13](https://img.shields.io/badge/python-3.13-blue)
+![F1 0.999](https://img.shields.io/badge/F1-0.999-brightgreen)
+![No LLM](https://img.shields.io/badge/LLM-not%20used-lightgrey)
+![License MIT](https://img.shields.io/badge/license-MIT-green)
 
-The application uses rules, not an LLM. It finds the type of each document and extracts the data with rules from the configuration in `config/types/`. A document of an unknown type gives `{}`.
+KIOsk reads the PDF documents of a KIO appeal case and writes one JSON file for each document. It was made for the challenge "Odwołania2json" of HackNation 2026.
 
-A page without a text layer (a scan) goes to OCR with RapidOCR. RapidOCR installs with `pip` and has its model files in the package, so no other program and no internet connection are necessary.
+![The analysis page: the PDF file and the extracted fields with their source text](docs/presentation/img/analiza.png)
+
+## How it works
+
+- **Rules, not an LLM.** Each document type has weighted rules in `config/types/*.yaml`. The type with the most points wins if it reaches its threshold. A document of an unknown type gives `{}`.
+- **OCR for scans.** A page without a text layer goes to RapidOCR. The models are in the `pip` package, so the run needs no internet.
+- **New type without code.** To add a document type, add a YAML file.
+- **Explained decisions.** The web interface shows the source text of each value and the path of each document.
+
+![The path of a scanned document: OCR, classification, extraction and validation](docs/presentation/img/graph_scan.png)
 
 ## Results
 
@@ -12,87 +24,73 @@ All measurements ran on a CPU without a GPU.
 
 | Test set | Files | F1 |
 |---|---|---|
-| All PDF files of the challenge: text layer, scans and other documents | 226 | 0.999 |
+| All PDF files of the challenge | 226 | 0.999 |
 | Documents with a text layer, dev / holdout | 135 / 45 | 1.000 / 1.000 |
-| Real scans without a text layer (OCR) | 30 | 0.992 |
+| Real scans (OCR) | 30 | 0.992 |
 | Documents of an unknown type (expected `{}`) | 12 | 1.000 |
 
-The time for one document:
+A PDF with a text layer takes approximately 0.01 s. A scan takes approximately 11 s.
 
-- A PDF with a text layer: approximately 0.01 s.
-- A scan: approximately 11 s. The OCR uses almost all of this time.
-- All 226 files with 4 processes: 369 s.
+## Quick start
 
-The slides of the final presentation are in `docs/presentation/CombAIns.pdf`.
+To process a case with Docker, do these steps:
 
-## Install
+1. Put the PDF files into `input/<case>/`.
+2. Run `docker compose run --rm cli`.
+3. Read the JSON files in `output/<case>/`.
 
-To install the application, do these steps:
+To start the web interface on http://127.0.0.1:8000, run `docker compose up`.
 
-1. Install Python 3.13 or a newer version.
-2. Install the packages:
+## Run without Docker
+
+To run the application with Python 3.13, do these steps:
+
+1. Install the packages:
 
    ```bash
    pip install -r requirements.txt
    ```
 
-For development, use the procedure in `CLAUDE.md`, section "Environment".
-
-## Run
-
-To process the documents, do these steps:
-
-1. Put the PDF files into `input/<case>/`.
-2. Start the application:
+2. Process the files in `input/`:
 
    ```bash
    python main.py
    ```
 
-   On Windows, you can also start `start.bat`. On Linux, you can start `./start.sh`.
-
-3. Read the JSON files in `output/<case>/`. Each JSON file has the name of its PDF file.
-
-Use `--input` and `--output` to select other folders. Use `--workers` to set the number of processes.
-
-## Run in Docker
-
-Docker needs no local Python. The image contains the OCR models, so the run needs no internet.
-
-- To start the web interface on http://127.0.0.1:8000, run `docker compose up`.
-- To process the PDF files in `input/`, run `docker compose run --rm cli`. The JSON files go to `output/`.
-
-On the VM of the jury, the application runs in Docker with the command in `RUN.md`. The procedure is in `docs/deployment.md`.
-
-## Web interface
-
-To see a document and its data side by side, do these steps:
-
-1. Start the web interface:
+3. Or start the web interface:
 
    ```bash
    python main.py --gui
    ```
 
-2. Open http://127.0.0.1:8000 in a browser.
-3. Select one or more PDF files.
+Use `--input`, `--output` and `--workers` to change the folders and the number of processes.
 
-The page shows the source text of each value. You can correct a value and download the JSON file.
+## Development
 
-Two more pages show how the application works:
+To measure the quality, do these steps:
 
-- http://127.0.0.1:8000/graph shows the path of each document as a graph: text layer or OCR, the points of the classification, the type or `{}`, the extraction and the validation. Click a node to see its rules and the reason for the decision.
-- http://127.0.0.1:8000/rules shows all rules of each document type.
+1. Make the environment with [uv](https://docs.astral.sh/uv/):
 
-The two pages read the rules from `config/types/*.yaml` and from the code. Thus the configuration is the one source of the rules.
+   ```bash
+   uv venv --python 3.13 .venv
+   uv pip sync --python .venv requirements-dev.txt
+   ```
 
-## Measure the quality
+2. Get the data of the organizer:
 
-The data of the organizer must be in `data/uzp/` (see `CLAUDE.md`, section "Data").
+   ```bash
+   git clone https://github.com/Urzad-Zamowien-Publicznych/hacknation-2026.git data/uzp
+   ```
 
-```bash
-PYTHONPATH=src python -m odw2json.evaluate --split dev --errors
-PYTHONPATH=src python -m odw2json.perturb --split dev
-```
+3. Run the tests and the evaluation:
 
-The first command gives the F1 score with the rules of the organizer. The second command changes the form of the text and measures the F1 score again.
+   ```bash
+   .venv/bin/python -m pytest
+   PYTHONPATH=src .venv/bin/python -m odw2json.evaluate --split dev --errors
+   ```
+
+The documentation is in `docs/`. The slides are in [`docs/presentation/CombAIns.pdf`](docs/presentation/CombAIns.pdf).
+
+## License
+
+[MIT](LICENSE)

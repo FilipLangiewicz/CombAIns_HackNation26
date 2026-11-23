@@ -2,6 +2,12 @@
 
 Add new entries at the top. Each entry has the date, the branch and the changes.
 
+## 2026-11-23 (main): the repository for GitHub
+
+- New file `LICENSE`: the MIT license.
+- New `README.md`: a short English text with badges and screenshots. It has no links to `CLAUDE.md`.
+- Removed `docs/presentation/deck.pdf` and `deck.pptx`. The final slides are in `CombAIns.pdf`. Git ignores the two generated files.
+
 ## 2026-11-22 (main): the results and Docker in the README file
 
 - New section "Results" in `README.md`: the F1 score of each test set and the time for one document.
